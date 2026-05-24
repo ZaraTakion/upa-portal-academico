@@ -33,6 +33,9 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return AcademicFile.objects.all().order_by("-uploaded_at")
 
+        if user.groups.filter(name="Professor").exists():
+            return AcademicFile.objects.all().order_by("-uploaded_at")
+
         return AcademicFile.objects.filter(user=user).order_by("-uploaded_at")
 
     def perform_create(self, serializer):
