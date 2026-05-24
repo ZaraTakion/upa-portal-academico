@@ -9,7 +9,9 @@ function MainLayout({ children }) {
       <div>
         <Sidebar />
 
-        <main>{children}</main>
+        <main>
+          {children}
+        </main>
       </div>
     </div>
   );

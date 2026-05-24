@@ -84,7 +84,7 @@ function Files() {
         </button>
       </form>
 
-      <h2>Meus arquivos</h2>
+      <h2>Arquivos disponíveis</h2>
 
       {files.length === 0 ? (
         <p>Nenhum arquivo enviado.</p>
@@ -93,7 +93,7 @@ function Files() {
           {files.map((item) => (
             <li key={item.id}>
               <strong>{item.title}</strong>
-              <br />
+              <p>Autor: {item.full_name || item.username}</p>
               <a href={item.file} target="_blank" rel="noreferrer">
                 Abrir arquivo
               </a>

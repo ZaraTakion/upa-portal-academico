@@ -1,9 +1,5 @@
-function Alert({ message }) {
-  if (!message) {
-    return null;
-  }
-
-  return <p>{message}</p>;
+function Loading({ text = "Carregando..." }) {
+  return <p>{text}</p>;
 }
 
-export default Alert;
+export default Loading;

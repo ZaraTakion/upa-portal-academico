@@ -6,8 +6,8 @@ import Alert from "../components/feedback/Alert";
 function Login() {
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin123");
+  const [username, setUsername] = useState("rodrigo");
+  const [password, setPassword] = useState("aluno123");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,9 +26,23 @@ function Login() {
       localStorage.setItem("accessToken", response.data.access);
       localStorage.setItem("refreshToken", response.data.refresh);
 
+      const meResponse = await api.get("/accounts/me/");
+      const user = meResponse.data;
+
+      const role =
+        user.groups.includes("Professor")
+          ? "Professor"
+          : user.groups.includes("Administrador") || user.is_staff
+          ? "Administrador"
+          : "Aluno";
+
+      localStorage.setItem("role", role);
+      localStorage.setItem("username", user.username);
+      localStorage.setItem("fullName", `${user.first_name} ${user.last_name}`);
+
       navigate("/dashboard");
     } catch (error) {
-      console.error(error);
+      console.error("Erro no login:", error);
       setErrorMessage("Usuário ou senha inválidos.");
     } finally {
       setLoading(false);
@@ -38,6 +52,8 @@ function Login() {
   return (
     <main>
       <h1>UPA</h1>
+      <p>Upgrade Portal Aluno</p>
+
       <h2>Login</h2>
 
       <form onSubmit={handleSubmit}>
@@ -63,6 +79,10 @@ function Login() {
           {loading ? "Entrando..." : "Entrar"}
         </button>
       </form>
+
+      <p>Aluno: rodrigo / aluno123</p>
+      <p>Professor: leandro / prof123</p>
+      <p>Admin: admin / admin123</p>
 
       <Link to="/forgot-password">Esqueci minha senha</Link>
     </main>

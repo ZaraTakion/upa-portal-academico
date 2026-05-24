@@ -4,8 +4,8 @@ import api from "../api/axios";
 import Alert from "../components/feedback/Alert";
 
 function ForgotPassword() {
-  const [username, setUsername] = useState("admin");
-  const [newPassword, setNewPassword] = useState("admin123");
+  const [username, setUsername] = useState("rodrigo");
+  const [newPassword, setNewPassword] = useState("aluno123");
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +23,7 @@ function ForgotPassword() {
 
       setFeedback(response.data.detail);
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao recuperar senha:", error);
       setFeedback(error.response?.data?.detail || "Erro ao atualizar senha.");
     } finally {
       setLoading(false);

@@ -6,6 +6,7 @@ import MainLayout from "../layouts/MainLayout";
 function Grades() {
   const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(true);
+  const role = localStorage.getItem("role");
 
   async function loadGrades() {
     try {
@@ -24,7 +25,7 @@ function Grades() {
 
   return (
     <MainLayout>
-      <h1>Notas</h1>
+      <h1>{role === "Professor" ? "Notas dos Alunos" : "Minhas Notas"}</h1>
 
       {loading ? (
         <Loading text="Carregando notas..." />
@@ -34,6 +35,7 @@ function Grades() {
         <table border="1">
           <thead>
             <tr>
+              {role === "Professor" && <th>Aluno</th>}
               <th>Disciplina</th>
               <th>Nota</th>
               <th>Faltas</th>
@@ -43,6 +45,7 @@ function Grades() {
           <tbody>
             {grades.map((grade) => (
               <tr key={grade.id}>
+                {role === "Professor" && <td>{grade.student_full_name}</td>}
                 <td>{grade.subject_name}</td>
                 <td>{grade.grade}</td>
                 <td>{grade.absence}</td>
