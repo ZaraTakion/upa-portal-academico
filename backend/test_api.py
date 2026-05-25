@@ -1,135 +1,82 @@
 import json
-from typing import Optional
-
 import requests
 
 
 BASE_URL = "http://127.0.0.1:8000"
+
 USERS = [
     ("Aluno", "rodrigo", "aluno123"),
     ("Professor", "leandro", "prof123"),
-    ("Administrador", "admin", "admin123"),
+    ("Admin", "admin", "admin123"),
 ]
 
-results = []
 
-
-def print_box(title: str):
-    print("\n" + "=" * 70)
-    print(title)
-    print("=" * 70)
-
-
-def print_response(name: str, response: requests.Response):
+def print_response(name, response):
     ok = 200 <= response.status_code < 300
     icon = "✅" if ok else "❌"
-
-    results.append((name, response.status_code, ok))
-
-    print(f"{icon} {name} — Status {response.status_code}")
+    print(f"{icon} {name} — {response.status_code}")
 
     try:
-        print(json.dumps(response.json(), indent=2, ensure_ascii=False))
+        print(json.dumps(response.json(), indent=2, ensure_ascii=False)[:1200])
     except Exception:
         print(response.text[:800])
 
     print("-" * 70)
 
 
-def request_api(
-    name: str,
-    method: str,
-    endpoint: str,
-    headers: Optional[dict] = None,
-    json_data: Optional[dict] = None,
-):
-    try:
-        response = requests.request(
-            method=method,
-            url=f"{BASE_URL}{endpoint}",
-            headers=headers,
-            json=json_data,
-            timeout=10,
-        )
-        print_response(name, response)
-        return response
-    except requests.exceptions.ConnectionError:
-        print(f"❌ {name} — servidor Django não está rodando.")
-        results.append((name, "CONNECTION_ERROR", False))
-        return None
-
-
 def login(username, password):
-    response = request_api(
-        f"Login {username}",
-        "POST",
-        "/api/token/",
-        json_data={
-            "username": username,
-            "password": password,
-        },
+    response = requests.post(
+        f"{BASE_URL}/api/token/",
+        json={"username": username, "password": password},
+        timeout=10,
     )
+    print_response(f"Login {username}", response)
 
-    if not response or response.status_code != 200:
+    if response.status_code != 200:
         return None
 
-    return response.json().get("access")
+    return response.json()["access"]
 
 
-def run_user_tests(role, username, password):
-    print_box(f"TESTES — {role.upper()}")
+def run_tests(role, username, password):
+    print("\n" + "=" * 70)
+    print(f"TESTANDO {role.upper()}")
+    print("=" * 70)
 
     token = login(username, password)
 
     if not token:
-        print(f"Login falhou para {role}.")
         return
 
-    headers = {
-        "Authorization": f"Bearer {token}",
-    }
+    headers = {"Authorization": f"Bearer {token}"}
 
-    tests = [
-        ("Usuário logado", "GET", "/api/accounts/me/"),
-        ("Resumo do dashboard", "GET", "/api/dashboard/summary/"),
-        ("Perfil aluno", "GET", "/api/academic/students/"),
-        ("Perfil professor", "GET", "/api/academic/teachers/"),
-        ("Disciplinas", "GET", "/api/academic/subjects/"),
-        ("Turmas", "GET", "/api/academic/class-groups/"),
-        ("Matrículas em turmas", "GET", "/api/academic/class-enrollments/"),
-        ("Notas", "GET", "/api/academic/grades/"),
-        ("Calendário", "GET", "/api/academic/calendar/"),
-        ("Notificações", "GET", "/api/notifications/"),
-        ("Contato", "GET", "/api/contact/"),
-        ("Arquivos", "GET", "/api/files/"),
-        ("Busca disciplinas", "GET", "/api/academic/subjects/?search=Front"),
-        ("Notificações não lidas", "GET", "/api/notifications/?unread=true"),
+    endpoints = [
+        "/api/accounts/me/",
+        "/api/dashboard/summary/",
+        "/api/academic/students/",
+        "/api/academic/teachers/",
+        "/api/academic/subjects/",
+        "/api/academic/subjects/?period=4",
+        "/api/academic/grades/",
+        "/api/academic/grades/?status=approved",
+        "/api/academic/calendar/",
+        "/api/academic/calendar/?event_type=holiday",
+        "/api/academic/weekly-schedule/",
+        "/api/notifications/",
+        "/api/notifications/?active_only=true",
+        "/api/contact/",
+        "/api/files/",
+        "/api/financial/",
     ]
 
-    for name, method, endpoint in tests:
-        request_api(f"{role} — {name}", method, endpoint, headers=headers)
-
-
-def print_summary():
-    print_box("RESUMO FINAL")
-
-    success = [item for item in results if item[2]]
-    failed = [item for item in results if not item[2]]
-
-    print(f"✅ Sucesso: {len(success)}")
-    print(f"❌ Falhas: {len(failed)}")
-
-    if failed:
-        print("\nRotas com problema:")
-        for name, status, _ in failed:
-            print(f"- {name}: {status}")
+    for endpoint in endpoints:
+        response = requests.get(f"{BASE_URL}{endpoint}", headers=headers, timeout=10)
+        print_response(f"{role} GET {endpoint}", response)
 
 
 def main():
     for role, username, password in USERS:
-        run_user_tests(role, username, password)
-
-    print_summary()
+        run_tests(role, username, password)
 
 
 if __name__ == "__main__":

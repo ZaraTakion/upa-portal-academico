@@ -1,11 +1,11 @@
 from rest_framework import serializers
-
-from .models import AcademicFile, ContactMessage
+from .models import AcademicFile, ContactMessage, FinancialInvoice
 
 
 class ContactMessageSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
-    full_name = serializers.SerializerMethodField()
+    contact_type_display = serializers.CharField(source="get_contact_type_display", read_only=True)
+    return_channel_display = serializers.CharField(source="get_return_channel_display", read_only=True)
 
     class Meta:
         model = ContactMessage
@@ -13,20 +13,23 @@ class ContactMessageSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "username",
-            "full_name",
+            "destination",
+            "contact_type",
+            "contact_type_display",
+            "return_channel",
+            "return_channel_display",
             "subject",
             "message",
+            "response",
             "created_at",
         ]
-        read_only_fields = ["user"]
-
-    def get_full_name(self, obj):
-        return obj.user.get_full_name() or obj.user.username
+        read_only_fields = ["user", "response"]
 
 
 class AcademicFileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
-    full_name = serializers.SerializerMethodField()
+    subject_name = serializers.CharField(source="subject.name", read_only=True)
+    file_type_display = serializers.CharField(source="get_file_type_display", read_only=True)
 
     class Meta:
         model = AcademicFile
@@ -34,12 +37,34 @@ class AcademicFileSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "username",
-            "full_name",
+            "subject",
+            "subject_name",
             "title",
+            "file_type",
+            "file_type_display",
             "file",
             "uploaded_at",
         ]
         read_only_fields = ["user"]
 
-    def get_full_name(self, obj):
-        return obj.user.get_full_name() or obj.user.username
+
+class FinancialInvoiceSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    payment_method_display = serializers.CharField(source="get_payment_method_display", read_only=True)
+
+    class Meta:
+        model = FinancialInvoice
+        fields = [
+            "id",
+            "user",
+            "username",
+            "description",
+            "amount",
+            "due_date",
+            "status",
+            "status_display",
+            "payment_method",
+            "payment_method_display",
+        ]
+        read_only_fields = ["user"]

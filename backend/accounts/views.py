@@ -11,16 +11,19 @@ class CurrentUserView(APIView):
     def get(self, request):
         user = request.user
 
-        return Response({
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "groups": list(user.groups.values_list("name", flat=True)),
-            "is_staff": user.is_staff,
-            "is_superuser": user.is_superuser,
-        })
+        return Response(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "full_name": user.get_full_name() or user.username,
+                "groups": list(user.groups.values_list("name", flat=True)),
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
+            }
+        )
 
 
 class PasswordResetView(APIView):

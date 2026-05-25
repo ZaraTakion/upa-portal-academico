@@ -1,13 +1,20 @@
+import { ArrowRight, GraduationCap } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 import api from "../api/axios";
 import Alert from "../components/feedback/Alert";
+import Button from "../components/ui/Button";
+import TextInput from "../components/ui/TextInput";
+import { saveTokens } from "../utils/auth";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
   const navigate = useNavigate();
+  const { loadUser } = useAuth();
 
-  const [username, setUsername] = useState("rodrigo");
-  const [password, setPassword] = useState("aluno123");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -18,27 +25,16 @@ function Login() {
     setErrorMessage("");
 
     try {
-      const response = await api.post("/token/", {
+      const tokenResponse = await api.post("/token/", {
         username,
         password,
       });
 
-      localStorage.setItem("accessToken", response.data.access);
-      localStorage.setItem("refreshToken", response.data.refresh);
+      saveTokens(tokenResponse.data.access, tokenResponse.data.refresh);
 
-      const meResponse = await api.get("/accounts/me/");
-      const user = meResponse.data;
-
-      const role =
-        user.groups.includes("Professor")
-          ? "Professor"
-          : user.groups.includes("Administrador") || user.is_staff
-          ? "Administrador"
-          : "Aluno";
-
-      localStorage.setItem("role", role);
-      localStorage.setItem("username", user.username);
-      localStorage.setItem("fullName", `${user.first_name} ${user.last_name}`);
+      if (loadUser) {
+        await loadUser();
+      }
 
       navigate("/dashboard");
     } catch (error) {
@@ -50,41 +46,68 @@ function Login() {
   }
 
   return (
-    <main>
-      <h1>UPA</h1>
-      <p>Upgrade Portal Aluno</p>
+    <main className="auth-page">
+      <section className="auth-panel">
+        <div className="auth-brand">
+          <div className="auth-logo">
+            <GraduationCap size={32} />
+          </div>
 
-      <h2>Login</h2>
+          <div>
+            <strong>UPA</strong>
+            <span>Upgrade Portal Acadêmico</span>
+          </div>
+        </div>
 
-      <form onSubmit={handleSubmit}>
-        <label>Usuário</label>
-        <input
-          type="text"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-          required
-        />
+        <div className="auth-copy">
+          <h1>Bem-vindo de volta</h1>
+          <p>
+            Acesse seu ambiente acadêmico para acompanhar notas, disciplinas,
+            calendário, arquivos e comunicados.
+          </p>
+        </div>
 
-        <label>Senha</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <TextInput
+            label="Usuário"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            placeholder="Digite seu usuário"
+            required
+          />
 
-        <Alert message={errorMessage} />
+          <TextInput
+            label="Senha"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Digite sua senha"
+            required
+          />
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Entrando..." : "Entrar"}
-        </button>
-      </form>
+          <Alert type="error" message={errorMessage} />
 
-      <p>Aluno: rodrigo / aluno123</p>
-      <p>Professor: leandro / prof123</p>
-      <p>Admin: admin / admin123</p>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Entrando..." : "Entrar no Portal"}
+            {!loading && <ArrowRight size={18} />}
+          </Button>
+        </form>
 
-      <Link to="/forgot-password">Esqueci minha senha</Link>
+        <Link to="/forgot-password" className="auth-link">
+          Esqueci minha senha
+        </Link>
+      </section>
+
+      <aside className="auth-visual">
+        <div className="auth-visual-card">
+          <span>Mural Acadêmico</span>
+          <strong>Organize sua vida universitária em um só lugar.</strong>
+          <p>
+            Dashboard moderno, notificações, calendário e desempenho acadêmico
+            com acesso simples e responsivo.
+          </p>
+        </div>
+      </aside>
     </main>
   );
 }

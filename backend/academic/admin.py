@@ -8,13 +8,14 @@ from .models import (
     StudentProfile,
     Subject,
     TeacherProfile,
+    WeeklySchedule,
 )
 
 
 @admin.register(StudentProfile)
 class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "registration", "course", "semester")
-    search_fields = ("user__username", "registration", "course")
+    list_display = ("user", "registration", "course", "semester", "phone")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "registration", "course")
 
 
 @admin.register(TeacherProfile)
@@ -25,8 +26,9 @@ class TeacherProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "workload", "professor")
+    list_display = ("name", "code", "period", "status", "workload", "professor")
     search_fields = ("name", "code", "professor")
+    list_filter = ("period", "status")
 
 
 @admin.register(ClassGroup)
@@ -43,11 +45,20 @@ class ClassEnrollmentAdmin(admin.ModelAdmin):
 
 @admin.register(Grade)
 class GradeAdmin(admin.ModelAdmin):
-    list_display = ("student", "subject", "grade", "absence", "created_at")
+    list_display = ("student", "subject", "grade", "absence", "status", "created_at")
     search_fields = ("student__user__username", "subject__name")
+    list_filter = ("status",)
 
 
 @admin.register(AcademicCalendar)
 class AcademicCalendarAdmin(admin.ModelAdmin):
-    list_display = ("title", "event_date")
-    search_fields = ("title",)
+    list_display = ("title", "event_type", "start_date", "end_date", "visible_until")
+    search_fields = ("title", "description")
+    list_filter = ("event_type",)
+
+
+@admin.register(WeeklySchedule)
+class WeeklyScheduleAdmin(admin.ModelAdmin):
+    list_display = ("subject", "weekday", "start_time", "end_time", "location")
+    search_fields = ("subject__name", "location")
+    list_filter = ("weekday",)

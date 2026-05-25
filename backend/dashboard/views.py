@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,7 +11,9 @@ from academic.models import (
     StudentProfile,
     Subject,
     TeacherProfile,
+    WeeklySchedule,
 )
+from management_app.models import FinancialInvoice
 from notifications_app.models import Notification
 
 
@@ -22,14 +25,14 @@ class DashboardSummaryView(APIView):
         groups = list(user.groups.values_list("name", flat=True))
 
         if user.is_staff or user.is_superuser:
-            return self.get_admin_summary(user, groups)
+            return self.admin_summary(user, groups)
 
         if "Professor" in groups:
-            return self.get_teacher_summary(user, groups)
+            return self.teacher_summary(user, groups)
 
-        return self.get_student_summary(user, groups)
+        return self.student_summary(user, groups)
 
-    def get_student_summary(self, user, groups):
+    def student_summary(self, user, groups):
         student = StudentProfile.objects.filter(user=user).first()
 
         if not student:
@@ -40,61 +43,66 @@ class DashboardSummaryView(APIView):
 
         grades = Grade.objects.filter(student=student)
         enrollments = ClassEnrollment.objects.filter(student=student)
-        subjects_count = enrollments.count() or Subject.objects.count()
+        today = timezone.localdate()
 
         if grades.exists():
-            average_grade = sum(float(item.grade) for item in grades) / grades.count()
+            average_grade = sum(float(item.grade or 0) for item in grades) / grades.count()
             total_absences = sum(item.absence for item in grades)
         else:
             average_grade = 0
             total_absences = 0
-
-        unread_notifications = Notification.objects.filter(
-            user=user,
-            is_read=False,
-        ).count()
-
-        next_events = AcademicCalendar.objects.order_by("event_date")[:5]
 
         data = {
             "role": "Aluno",
             "user": {
                 "id": user.id,
                 "username": user.username,
+                "full_name": user.get_full_name() or user.username,
                 "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
                 "groups": groups,
-                "is_staff": user.is_staff,
-                "is_superuser": user.is_superuser,
             },
             "student": {
                 "id": student.id,
-                "username": student.user.username,
-                "full_name": student.user.get_full_name() or student.user.username,
-                "email": student.user.email,
+                "full_name": user.get_full_name() or user.username,
                 "registration": student.registration,
                 "course": student.course,
                 "semester": student.semester,
+                "phone": student.phone,
+                "address": student.address,
             },
-            "total_subjects": subjects_count,
+            "total_subjects": enrollments.count() or Subject.objects.count(),
             "average_grade": round(average_grade, 2),
             "total_absences": total_absences,
-            "unread_notifications": unread_notifications,
+            "unread_notifications": Notification.objects.filter(user=user, is_read=False).count(),
+            "pending_invoices": FinancialInvoice.objects.filter(user=user, status__in=["pending", "overdue"]).count(),
             "next_events": [
                 {
                     "id": event.id,
                     "title": event.title,
                     "description": event.description,
-                    "event_date": event.event_date,
+                    "event_type": event.event_type,
+                    "event_type_display": event.get_event_type_display(),
+                    "start_date": event.start_date,
+                    "end_date": event.end_date,
                 }
-                for event in next_events
+                for event in AcademicCalendar.objects.filter(start_date__gte=today).order_by("start_date")[:5]
+            ],
+            "weekly_schedule": [
+                {
+                    "id": item.id,
+                    "subject": item.subject.name,
+                    "weekday": item.get_weekday_display(),
+                    "start_time": item.start_time,
+                    "end_time": item.end_time,
+                    "location": item.location,
+                }
+                for item in WeeklySchedule.objects.all().order_by("weekday", "start_time")[:8]
             ],
         }
 
         return Response(data)
 
-    def get_teacher_summary(self, user, groups):
+    def teacher_summary(self, user, groups):
         teacher = TeacherProfile.objects.filter(user=user).first()
 
         if not teacher:
@@ -104,53 +112,27 @@ class DashboardSummaryView(APIView):
             )
 
         class_groups = ClassGroup.objects.filter(teacher=teacher)
-        enrollments = ClassEnrollment.objects.filter(class_group__teacher=teacher)
-        students_count = enrollments.values("student").distinct().count()
-        grades_count = Grade.objects.filter(
-            subject__classgroup__teacher=teacher
-        ).distinct().count()
-
-        unread_notifications = Notification.objects.filter(
-            user=user,
-            is_read=False,
-        ).count()
-
-        next_events = AcademicCalendar.objects.order_by("event_date")[:5]
 
         data = {
             "role": "Professor",
             "user": {
                 "id": user.id,
                 "username": user.username,
+                "full_name": user.get_full_name() or user.username,
                 "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
                 "groups": groups,
-                "is_staff": user.is_staff,
-                "is_superuser": user.is_superuser,
             },
             "teacher": {
                 "id": teacher.id,
-                "username": teacher.user.username,
-                "full_name": teacher.user.get_full_name() or teacher.user.username,
-                "email": teacher.user.email,
+                "full_name": user.get_full_name() or user.username,
                 "employee_code": teacher.employee_code,
                 "department": teacher.department,
                 "title": teacher.title,
             },
             "total_classes": class_groups.count(),
-            "total_students": students_count,
-            "total_grades": grades_count,
-            "unread_notifications": unread_notifications,
-            "next_events": [
-                {
-                    "id": event.id,
-                    "title": event.title,
-                    "description": event.description,
-                    "event_date": event.event_date,
-                }
-                for event in next_events
-            ],
+            "total_students": ClassEnrollment.objects.filter(class_group__teacher=teacher).values("student").distinct().count(),
+            "total_grades": Grade.objects.filter(subject__classgroup__teacher=teacher).distinct().count(),
+            "unread_notifications": Notification.objects.filter(user=user, is_read=False).count(),
             "class_groups": [
                 {
                     "id": group.id,
@@ -166,26 +148,24 @@ class DashboardSummaryView(APIView):
 
         return Response(data)
 
-    def get_admin_summary(self, user, groups):
-        data = {
-            "role": "Administrador",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "groups": groups,
-                "is_staff": user.is_staff,
-                "is_superuser": user.is_superuser,
-            },
-            "total_students": StudentProfile.objects.count(),
-            "total_teachers": TeacherProfile.objects.count(),
-            "total_subjects": Subject.objects.count(),
-            "total_class_groups": ClassGroup.objects.count(),
-            "total_enrollments": ClassEnrollment.objects.count(),
-            "total_notifications": Notification.objects.count(),
-            "total_events": AcademicCalendar.objects.count(),
-        }
-
-        return Response(data)
+    def admin_summary(self, user, groups):
+        return Response(
+            {
+                "role": "Administrador",
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "full_name": user.get_full_name() or user.username,
+                    "email": user.email,
+                    "groups": groups,
+                },
+                "total_students": StudentProfile.objects.count(),
+                "total_teachers": TeacherProfile.objects.count(),
+                "total_subjects": Subject.objects.count(),
+                "total_class_groups": ClassGroup.objects.count(),
+                "total_enrollments": ClassEnrollment.objects.count(),
+                "total_notifications": Notification.objects.count(),
+                "total_events": AcademicCalendar.objects.count(),
+                "total_invoices": FinancialInvoice.objects.count(),
+            }
+        )

@@ -9,6 +9,7 @@ from .views import (
     StudentProfileViewSet,
     SubjectViewSet,
     TeacherProfileViewSet,
+    WeeklyScheduleViewSet,
 )
 
 
@@ -20,6 +21,7 @@ router.register("class-groups", ClassGroupViewSet, basename="class-groups")
 router.register("class-enrollments", ClassEnrollmentViewSet, basename="class-enrollments")
 router.register("grades", GradeViewSet, basename="grades")
 router.register("calendar", AcademicCalendarViewSet, basename="calendar")
+router.register("weekly-schedule", WeeklyScheduleViewSet, basename="weekly-schedule")
 
 urlpatterns = [
     path("", include(router.urls)),

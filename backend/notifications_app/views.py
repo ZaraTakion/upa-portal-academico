@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -20,9 +21,18 @@ class NotificationViewSet(viewsets.ModelViewSet):
             queryset = Notification.objects.filter(user=user)
 
         unread = self.request.query_params.get("unread")
+        active_only = self.request.query_params.get("active_only")
+        notification_type = self.request.query_params.get("type")
 
         if unread == "true":
             queryset = queryset.filter(is_read=False)
+
+        if active_only == "true":
+            today = timezone.localdate()
+            queryset = queryset.filter(expires_at__gte=today)
+
+        if notification_type:
+            queryset = queryset.filter(notification_type=notification_type)
 
         return queryset.order_by("-created_at")
 

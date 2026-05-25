@@ -1,21 +1,43 @@
-import { useNavigate } from "react-router-dom";
+import { Bell, LogOut, Moon, Search, Sun, User } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
+import { logout } from "../../utils/auth";
 
 function Navbar() {
-  const navigate = useNavigate();
-
-  function handleLogout() {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    navigate("/");
-  }
+  const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <header>
-      <h2>UPA</h2>
+    <header className="navbar">
+      <div className="search-box">
+        <Search size={18} />
+        <input type="text" placeholder="Buscar no portal..." />
+      </div>
 
-      <button type="button" onClick={handleLogout}>
-        Sair
-      </button>
+      <div className="navbar-actions">
+        <button type="button" className="icon-button" aria-label="Notificações">
+          <Bell size={20} />
+        </button>
+
+        <button
+          type="button"
+          className="icon-button"
+          onClick={toggleTheme}
+          aria-label="Alternar tema"
+        >
+          {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
+
+        <button type="button" className="profile-button">
+          <User size={18} />
+          <span>{user?.full_name || user?.username || "Usuário"}</span>
+        </button>
+
+        <button type="button" className="logout-button" onClick={logout}>
+          <LogOut size={18} />
+          Sair
+        </button>
+      </div>
     </header>
   );
 }

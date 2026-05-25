@@ -1,11 +1,10 @@
 from rest_framework import serializers
-
 from .models import Notification
 
 
 class NotificationSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
-    full_name = serializers.SerializerMethodField()
+    type_display = serializers.CharField(source="get_notification_type_display", read_only=True)
 
     class Meta:
         model = Notification
@@ -13,12 +12,11 @@ class NotificationSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "username",
-            "full_name",
             "title",
             "message",
+            "notification_type",
+            "type_display",
             "is_read",
+            "expires_at",
             "created_at",
         ]
-
-    def get_full_name(self, obj):
-        return obj.user.get_full_name() or obj.user.username

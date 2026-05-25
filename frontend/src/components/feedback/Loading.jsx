@@ -1,5 +1,10 @@
 function Loading({ text = "Carregando..." }) {
-  return <p>{text}</p>;
+  return (
+    <div className="loading">
+      <div className="loading-spinner" />
+      <span>{text}</span>
+    </div>
+  );
 }
 
 export default Loading;

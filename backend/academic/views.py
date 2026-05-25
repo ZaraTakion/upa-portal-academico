@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
@@ -9,6 +10,7 @@ from .models import (
     StudentProfile,
     Subject,
     TeacherProfile,
+    WeeklySchedule,
 )
 from .serializers import (
     AcademicCalendarSerializer,
@@ -18,6 +20,7 @@ from .serializers import (
     StudentProfileSerializer,
     SubjectSerializer,
     TeacherProfileSerializer,
+    WeeklyScheduleSerializer,
 )
 
 
@@ -53,12 +56,21 @@ class SubjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Subject.objects.all()
+
         search = self.request.query_params.get("search")
+        period = self.request.query_params.get("period")
+        status_param = self.request.query_params.get("status")
 
         if search:
             queryset = queryset.filter(name__icontains=search)
 
-        return queryset
+        if period:
+            queryset = queryset.filter(period=period)
+
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+
+        return queryset.order_by("period", "name")
 
 
 class ClassGroupViewSet(viewsets.ModelViewSet):
@@ -108,11 +120,15 @@ class GradeViewSet(viewsets.ModelViewSet):
             queryset = Grade.objects.filter(student__user=user)
 
         subject = self.request.query_params.get("subject")
+        status_param = self.request.query_params.get("status")
 
         if subject:
             queryset = queryset.filter(subject__id=subject)
 
-        return queryset
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+
+        return queryset.order_by("subject__name")
 
 
 class AcademicCalendarViewSet(viewsets.ModelViewSet):
@@ -120,4 +136,35 @@ class AcademicCalendarViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return AcademicCalendar.objects.all().order_by("event_date")
+        queryset = AcademicCalendar.objects.all().order_by("start_date")
+
+        event_type = self.request.query_params.get("event_type")
+        active_only = self.request.query_params.get("active_only")
+
+        if event_type:
+            queryset = queryset.filter(event_type=event_type)
+
+        if active_only == "true":
+            today = timezone.localdate()
+            queryset = queryset.filter(visible_until__gte=today)
+
+        return queryset
+
+
+class WeeklyScheduleViewSet(viewsets.ModelViewSet):
+    serializer_class = WeeklyScheduleSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = WeeklySchedule.objects.all()
+
+        subject = self.request.query_params.get("subject")
+        weekday = self.request.query_params.get("weekday")
+
+        if subject:
+            queryset = queryset.filter(subject__id=subject)
+
+        if weekday:
+            queryset = queryset.filter(weekday=weekday)
+
+        return queryset.order_by("weekday", "start_time")
