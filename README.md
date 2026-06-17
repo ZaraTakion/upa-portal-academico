@@ -1,270 +1,231 @@
-# 🎓 UPA — Upgrade Portal Acadêmico
+# UPA — Upgrade Portal Aluno
 
-Sistema acadêmico moderno desenvolvido com **Django REST Framework** e **React**, inspirado em plataformas como Alura, Coursera e portais universitários modernos.
+O **UPA — Upgrade Portal Aluno** é um sistema web acadêmico desenvolvido como projeto de faculdade, com o objetivo de modernizar a experiência de alunos e professores em um portal educacional.
 
----
-
-## 📖 Sobre o Projeto
-
-O UPA (Upgrade Portal Acadêmico) foi criado para modernizar a experiência acadêmica de alunos, professores e administradores.
-
-O sistema centraliza informações acadêmicas, financeiras e administrativas em uma única plataforma responsiva, intuitiva e acessível.
+O projeto foi criado para oferecer uma interface mais organizada, moderna e funcional, reunindo informações acadêmicas como disciplinas, notas, calendário, notificações, perfil do aluno e mural de comunicados.
 
 ---
 
-# 🚀 Tecnologias Utilizadas
+## Objetivo do projeto
 
-## Backend
+O objetivo principal do UPA é melhorar a experiência de uso de um portal acadêmico, tornando o acesso às informações mais simples, claro e eficiente.
 
-- Python 3
-- Django
-- Django REST Framework
-- SQLite
-- JWT Authentication
-- CORS Headers
-
-## Frontend
-
-- React
-- Vite
-- React Router DOM
-- Axios
-- Lucide React
-- CSS Moderno Responsivo
+A proposta do sistema é substituir uma experiência antiga e pouco intuitiva por uma plataforma mais moderna, com melhor organização visual, navegação facilitada e integração entre Front-End e Back-End.
 
 ---
 
-# 👥 Perfis do Sistema
+## Minha participação
 
-## 🎓 Aluno
+Este projeto foi desenvolvido durante minha graduação em **Sistemas para Internet**, aplicando conhecimentos de desenvolvimento web, organização de telas, consumo de API, autenticação, banco de dados e estruturação de uma aplicação completa.
 
-Funcionalidades:
-
-- Dashboard Acadêmico
-- Perfil
-- Disciplinas
-- Notas
-- Calendário Acadêmico
-- Arquivos
-- Notificações
-- Financeiro
-- Contato
+Atuei na construção e organização do projeto, trabalhando tanto na parte visual da aplicação quanto na integração com o Back-End.
 
 ---
 
-## 👨‍🏫 Professor
+## Tecnologias utilizadas
 
-Funcionalidades:
+### Front-End
 
-- Dashboard
-- Minhas Turmas
-- Alunos
-- Lançamento de Notas
-- Materiais Didáticos
-- Notificações
-- Contato
+* React
+* Vite
+* JavaScript
+* HTML
+* CSS
 
----
+### Back-End
 
-## 👨‍💼 Administrador
+* Python
+* Django
+* Django REST Framework
+* JWT
+* SQLite
 
-Funcionalidades:
+### Ferramentas
 
-- Painel Administrativo
-- Gestão Acadêmica
-- Gestão Financeira
-- Gestão de Usuários
-- Calendário Acadêmico
-- Notificações
-
----
-
-# 🎯 Principais Funcionalidades
-
-## Sistema Acadêmico
-
-- Controle de disciplinas
-- Histórico acadêmico
-- Controle de notas
-- Controle de faltas
-- Agenda semanal
-
-## Sistema Financeiro
-
-- Mensalidades
-- Pendências
-- Histórico de pagamentos
-- Simulação de boleto
-- Simulação de Pix
-
-## Sistema de Comunicação
-
-- Notificações
-- Avisos acadêmicos
-- Comunicados institucionais
-
-## Sistema de Arquivos
-
-- Materiais didáticos
-- Downloads
-- Documentos acadêmicos
+* Git
+* GitHub
+* VS Code
+* Render
+* Vercel
 
 ---
 
-# 📱 Responsividade
+## Funcionalidades
 
-O sistema foi desenvolvido para:
-
-- Desktop
-- Notebook
-- Tablet
-- Smartphone
-
----
-
-# 🔒 Segurança
-
-- JWT Authentication
-- Rotas protegidas
-- Controle por perfil
-- Permissões por usuário
+* Tela de login
+* Autenticação de usuário
+* Mural do aluno
+* Listagem de disciplinas
+* Visualização de notas
+* Calendário acadêmico
+* Notificações
+* Perfil do usuário
+* Integração entre Front-End e Back-End
+* Consumo de API REST
 
 ---
 
-# 📂 Estrutura do Projeto
+## Estrutura do projeto
 
 ```txt
-UPA/
-│
-├── backend/
-│   ├── accounts/
-│   ├── academic/
-│   ├── financial/
-│   ├── notifications/
-│   ├── files/
-│   └── core/
+upa-portal-academico/
 │
 ├── frontend/
 │   ├── src/
 │   ├── public/
-│   └── package.json
+│   ├── package.json
+│   └── vite.config.js
 │
-├── README.md
-└── .gitignore
+├── backend/
+│   ├── manage.py
+│   ├── requirements.txt
+│   ├── config/
+│   └── apps/
+│
+└── README.md
 ```
 
 ---
 
-# ⚙️ Instalação
+## Como executar o projeto
 
-## Backend
+### Clonar o repositório
+
+```bash
+git clone https://github.com/ZaraTakion/upa-portal-academico.git
+```
+
+```bash
+cd upa-portal-academico
+```
+
+---
+
+## Executando o Back-End
+
+Acesse a pasta do Back-End:
 
 ```bash
 cd backend
+```
 
+Crie o ambiente virtual:
+
+```bash
 python -m venv venv
+```
 
+Ative o ambiente virtual no Windows:
+
+```bash
 venv\Scripts\activate
+```
 
+Instale as dependências:
+
+```bash
 pip install -r requirements.txt
+```
 
+Execute as migrações:
+
+```bash
 python manage.py migrate
+```
 
+Inicie o servidor:
+
+```bash
 python manage.py runserver
 ```
 
-Servidor:
+O Back-End ficará disponível em:
 
 ```txt
-http://127.0.0.1:8000
+http://127.0.0.1:8000/
 ```
 
 ---
 
-## Frontend
+## Executando o Front-End
+
+Em outro terminal, acesse a pasta do Front-End:
 
 ```bash
 cd frontend
+```
 
+Instale as dependências:
+
+```bash
 npm install
+```
 
+Inicie o projeto:
+
+```bash
 npm run dev
 ```
 
-Servidor:
+O Front-End ficará disponível em:
 
 ```txt
-http://localhost:5173
+http://localhost:5173/
 ```
 
 ---
 
-# 🔑 Usuários de Demonstração
+## Principais aprendizados
 
-## Aluno
+Durante o desenvolvimento deste projeto, aprofundei meus conhecimentos em:
+
+* Estruturação de aplicações web
+* Integração entre Front-End e Back-End
+* Criação e consumo de APIs
+* Autenticação com JWT
+* Organização de rotas
+* Manipulação de dados acadêmicos
+* Separação de responsabilidades no projeto
+* Versionamento com Git e GitHub
+
+---
+
+## Status do projeto
+
+Projeto acadêmico concluído e em processo de melhoria para portfólio profissional.
+
+Melhorias planejadas:
+
+* Melhorar a documentação da API
+* Adicionar imagens das telas no README
+* Melhorar responsividade
+* Organizar deploy completo
+* Refinar autenticação e permissões
+* Adicionar testes básicos
+
+---
+
+## Demonstração
+
+Link do projeto online:
 
 ```txt
-Usuário: rodrigo
-Senha: aluno123
+Em breve
 ```
 
-## Professor
+Imagens do projeto:
 
 ```txt
-Usuário: leandro
-Senha: prof123
-```
-
-## Administrador
-
-```txt
-Usuário: admin
-Senha: admin123
+Em breve
 ```
 
 ---
 
-# 🏗️ Arquitetura
+## Autor
 
-Frontend:
+**Rodrigo Pinheiro**
 
-```txt
-React
- ├── Pages
- ├── Components
- ├── Context
- ├── Routes
- └── API Services
-```
+Desenvolvedor Web Júnior com foco em Back-End utilizando Python, Django e APIs REST.
 
-Backend:
-
-```txt
-Django
- ├── Models
- ├── Views
- ├── Serializers
- ├── Permissions
- └── APIs REST
-```
-
----
-
-# 📈 Melhorias Futuras
-
-- Integração com e-mail institucional
-- Recuperação de senha por código
-- Sistema de estágio
-- Sistema de monitoria
-- Chat acadêmico
-- Aplicativo mobile
-- Integração com Google Calendar
-- Integração com Microsoft Teams
-
----
-
-# 👨‍💻 Autor
-
-Rodrigo Araújo Maciel Pinheiro
-
-Projeto acadêmico desenvolvido para modernização de portais universitários utilizando Django REST Framework e React.
+* GitHub: https://github.com/ZaraTakion
+* LinkedIn: adicionar link do LinkedIn
