@@ -4,9 +4,10 @@ from .models import AcademicFile, ContactMessage, FinancialInvoice
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ("user", "destination", "contact_type", "return_channel", "subject", "created_at")
+    list_display = ("protocol", "user", "destination", "contact_type", "status", "created_at")
+    readonly_fields = ("protocol", "created_at", "updated_at", "response_at")
     search_fields = ("user__username", "subject", "message")
-    list_filter = ("contact_type", "return_channel")
+    list_filter = ("status", "contact_type", "return_channel")
 
 
 @admin.register(AcademicFile)
