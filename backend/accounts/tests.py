@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.core import cache
+from django.core.cache import cache
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
