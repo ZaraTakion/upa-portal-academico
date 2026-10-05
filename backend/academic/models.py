@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
+from decimal import Decimal, ROUND_HALF_UP
+
 from django.db import models, transaction
 
 
@@ -279,6 +281,44 @@ class Assessment(models.Model):
         ordering = ("due_date", "title")
         indexes = [models.Index(fields=("class_group", "due_date"), name="academic_as_class_g_26e3e4_idx")]
 
+    def save(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db
+        assessment_manager = Assessment.objects.using(using) if using else Assessment.objects
+        result_manager = AssessmentResult.objects.using(using) if using else AssessmentResult.objects
+        previous_group_id = (
+            assessment_manager.filter(pk=self.pk).values_list("class_group_id", flat=True).first()
+            if self.pk
+            else None
+        )
+        affected_students = set(
+            result_manager.filter(assessment_id=self.pk).values_list("student_id", flat=True)
+        ) if self.pk else set()
+
+        with transaction.atomic(using=using):
+            super().save(*args, **kwargs)
+            affected_students.update(
+                result_manager.filter(assessment_id=self.pk).values_list("student_id", flat=True)
+            )
+            group_ids = {self.class_group_id}
+            if previous_group_id:
+                group_ids.add(previous_group_id)
+            for class_group_id in group_ids:
+                for student_id in affected_students:
+                    sync_assessment_grades(student_id, class_group_id, using=using)
+
+    def delete(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db
+        result_manager = AssessmentResult.objects.using(using) if using else AssessmentResult.objects
+        student_ids = set(
+            result_manager.filter(assessment_id=self.pk).values_list("student_id", flat=True)
+        )
+        class_group_id = self.class_group_id
+        with transaction.atomic(using=using):
+            result = super().delete(*args, **kwargs)
+            for student_id in student_ids:
+                sync_assessment_grades(student_id, class_group_id, using=using)
+            return result
+
     def __str__(self):
         return f"{self.class_group} - {self.title}"
 
@@ -307,8 +347,113 @@ class AssessmentResult(models.Model):
         ]
         indexes = [models.Index(fields=("student", "assessment"), name="academic_as_student_093a27_idx")]
 
+    def save(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db
+        result_manager = AssessmentResult.objects.using(using) if using else AssessmentResult.objects
+        assessment_manager = Assessment.objects.using(using) if using else Assessment.objects
+        previous = (
+            result_manager.filter(pk=self.pk)
+            .values("student_id", "assessment__class_group_id")
+            .first()
+            if self.pk
+            else None
+        )
+        current_group_id = assessment_manager.filter(pk=self.assessment_id).values_list(
+            "class_group_id", flat=True
+        ).first()
+
+        with transaction.atomic(using=using):
+            super().save(*args, **kwargs)
+            affected = {(self.student_id, current_group_id)}
+            if previous:
+                affected.add((previous["student_id"], previous["assessment__class_group_id"]))
+            for student_id, class_group_id in affected:
+                sync_assessment_grades(student_id, class_group_id, using=using)
+
+    def delete(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db
+        result_manager = AssessmentResult.objects.using(using) if using else AssessmentResult.objects
+        result = result_manager.filter(pk=self.pk).values(
+            "student_id", "assessment__class_group_id"
+        ).first()
+        with transaction.atomic(using=using):
+            deleted = super().delete(*args, **kwargs)
+            if result:
+                sync_assessment_grades(
+                    result["student_id"],
+                    result["assessment__class_group_id"],
+                    using=using,
+                )
+            return deleted
+
     def __str__(self):
         return f"{self.student} - {self.assessment}"
+
+
+def sync_assessment_grades(student_id, class_group_id, using=None):
+    if not student_id or not class_group_id:
+        return
+
+    grade_manager = Grade.objects.using(using) if using else Grade.objects
+    result_manager = AssessmentResult.objects.using(using) if using else AssessmentResult.objects
+    assessment_manager = Assessment.objects.using(using) if using else Assessment.objects
+    subject_id = ClassGroup.objects.using(using).filter(pk=class_group_id).values_list(
+        "subject_id", flat=True
+    ).first() if using else ClassGroup.objects.filter(pk=class_group_id).values_list(
+        "subject_id", flat=True
+    ).first()
+    if not subject_id:
+        return
+
+    for attempt in (1, 2):
+        results = result_manager.filter(
+            student_id=student_id,
+            assessment__class_group_id=class_group_id,
+            score__isnull=False,
+        )
+        if attempt == 2:
+            results = results.filter(assessment__category="recovery")
+        else:
+            results = results.exclude(assessment__category="recovery")
+
+        rows = list(results.values(
+            "score", "assessment__maximum_score", "assessment__weight"
+        ))
+        existing_grade = grade_manager.filter(
+            student_id=student_id,
+            subject_id=subject_id,
+            class_group_id=class_group_id,
+            attempt=attempt,
+        ).first()
+        if not rows and existing_grade is None:
+            continue
+
+        weighted_total = Decimal("0")
+        total_weight = Decimal("0")
+        for row in rows:
+            maximum_score = row["assessment__maximum_score"]
+            weight = row["assessment__weight"]
+            if maximum_score <= 0 or weight <= 0:
+                continue
+            normalized_score = row["score"] * Decimal("10") / maximum_score
+            weighted_total += normalized_score * weight
+            total_weight += weight
+
+        calculated_grade = (
+            (weighted_total / total_weight).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if total_weight
+            else None
+        )
+        grade, _ = grade_manager.get_or_create(
+            student_id=student_id,
+            subject_id=subject_id,
+            class_group_id=class_group_id,
+            attempt=attempt,
+            defaults={"grade": calculated_grade},
+        )
+        if grade.grade != calculated_grade:
+            grade.grade = calculated_grade
+            grade.save(using=using, update_fields={"grade"})
 
 
 class AttendanceRecord(models.Model):
