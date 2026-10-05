@@ -300,6 +300,8 @@ class ClassEnrollmentSerializer(serializers.ModelSerializer):
             "student",
             "student_name",
             "subject_name",
+            "status",
+            "enrolled_at",
         ]
 
     def get_student_name(self, obj):
