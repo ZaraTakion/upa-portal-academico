@@ -11,6 +11,7 @@ from .views import (
     ClassGroupViewSet,
     CourseViewSet,
     GradeViewSet,
+    GradePolicyViewSet,
     StudentProfileViewSet,
     SubjectViewSet,
     TeacherProfileViewSet,
@@ -19,6 +20,7 @@ from .views import (
 
 
 router = DefaultRouter()
+router.register("grade-policy", GradePolicyViewSet, basename="grade-policy")
 router.register("courses", CourseViewSet, basename="courses")
 router.register("terms", AcademicTermViewSet, basename="terms")
 router.register("assessments", AssessmentViewSet, basename="assessments")
