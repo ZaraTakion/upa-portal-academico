@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -31,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_spectacular",
     "accounts",
@@ -116,6 +118,14 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+}
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -127,6 +137,7 @@ REST_FRAMEWORK = {
     },
 }
 
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get(
@@ -135,6 +146,9 @@ CORS_ALLOWED_ORIGINS = [
     ).split(",")
     if origin.strip()
 ]
+CSRF_COOKIE_SAMESITE = os.environ.get("CSRF_COOKIE_SAMESITE", "Lax" if DEBUG else "None")
+JWT_REFRESH_COOKIE = os.environ.get("JWT_REFRESH_COOKIE", "upa_refresh")
+JWT_REFRESH_COOKIE_SECURE = env_bool("JWT_REFRESH_COOKIE_SECURE", not DEBUG)
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
