@@ -13,10 +13,8 @@ import os
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Application secrets and production-safe defaults.
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
     raise ImproperlyConfigured("Set SECRET_KEY in the environment.")
@@ -31,7 +29,6 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
-# Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -116,7 +113,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_RATES": {
-        "anon": os.environ.get("ANON_THROTTLE_RATE", "100/hour"),
+        "anon": os.environ.get("ANON_THROTTLE_RATE", "5/hour"),
     },
 }
 
@@ -130,13 +127,21 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
-DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL", "noreply@upa.local"
-)
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@upa.local")
 EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND",
     "django.core.mail.backends.smtp.EmailBackend",
 )
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "25"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "False").lower() in {
+    "1", "true", "yes"
+}
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() in {
+    "1", "true", "yes"
+}
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
