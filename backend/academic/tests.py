@@ -350,16 +350,17 @@ class OptionalPaginationAndGradePolicyTests(TestCase):
         self.assertEqual(len(response.data["results"]), 1)
         self.assertIsNone(response.data["previous"])
 
-    def test_staff_can_create_grade_policy_and_invalid_thresholds_are_rejected(self):
-        response = self.client.post(
-            reverse("grade-policy-list"),
-            {"passing_score": "7.00", "attention_score": "5.00", "maximum_absences": 20},
-            format="json",
-        )
+    def test_staff_can_create_only_one_grade_policy(self):
+        payload = {"passing_score": "7.00", "attention_score": "5.00", "maximum_absences": 20}
+        response = self.client.post(reverse("grade-policy-list"), payload, format="json")
         self.assertEqual(response.status_code, 201)
-        invalid = self.client.post(
+        duplicate = self.client.post(reverse("grade-policy-list"), payload, format="json")
+        self.assertEqual(duplicate.status_code, 400)
+
+    def test_grade_policy_rejects_invalid_thresholds(self):
+        response = self.client.post(
             reverse("grade-policy-list"),
             {"passing_score": "5.00", "attention_score": "6.00"},
             format="json",
         )
-        self.assertEqual(invalid.status_code, 400)
+        self.assertEqual(response.status_code, 400)
