@@ -186,6 +186,20 @@ class GradeSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    def get_fields(self):
+        fields = super().get_fields()
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if (
+            user
+            and user.is_authenticated
+            and not user.is_staff
+            and user.groups.filter(name="Professor").exists()
+        ):
+            for name in ("student", "subject", "status", "created_at"):
+                fields[name].read_only = True
+        return fields
+
     def get_student_full_name(self, obj):
         return obj.student.user.get_full_name() or obj.student.user.username
 
