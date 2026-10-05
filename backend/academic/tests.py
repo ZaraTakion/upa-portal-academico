@@ -99,3 +99,38 @@ class GradePermissionTests(TestCase):
             reverse("grades-detail", args=[other_grade.pk])
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_student_can_update_only_approved_profile_fields(self):
+        self.client.force_authenticate(self.student_user)
+        allowed = self.client.patch(
+            reverse("students-detail", args=[self.student.pk]),
+            {"phone": "555-0100"},
+            format="json",
+        )
+        self.assertEqual(allowed.status_code, 200)
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.phone, "555-0100")
+
+        forbidden = self.client.patch(
+            reverse("students-detail", args=[self.student.pk]),
+            {"cpf": "111.222.333-44"},
+            format="json",
+        )
+        self.assertEqual(forbidden.status_code, 403)
+
+    def test_teacher_sees_only_enrolled_students_without_sensitive_fields(self):
+        other_user = User.objects.create_user(
+            username="other-student", password="student-password"
+        )
+        StudentProfile.objects.create(
+            user=other_user,
+            registration="S-002",
+            course="Sistemas para Internet",
+            semester=4,
+        )
+        self.client.force_authenticate(self.teacher_user)
+        response = self.client.get(reverse("students-list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertNotIn("cpf", response.data[0])
+        self.assertNotIn("address", response.data[0])
