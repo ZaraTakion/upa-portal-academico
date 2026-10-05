@@ -433,3 +433,7 @@ class GradePolicyAbsenceTests(TestCase):
         policy.save()
         self.grade.refresh_from_db()
         self.assertEqual(self.grade.status, "failed")
+
+        policy.delete()
+        self.grade.refresh_from_db()
+        self.assertEqual(self.grade.status, "attention")
