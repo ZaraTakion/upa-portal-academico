@@ -80,7 +80,8 @@ class AcademicFileSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
-    due_at = serializers.SerializerMethodField()
+    due_at = serializers.DateTimeField(required=False, allow_null=True)
+    assignment_due_at = serializers.SerializerMethodField()
     submission_status = serializers.SerializerMethodField()
     reviewed_at = serializers.DateTimeField(read_only=True)
     feedback = serializers.CharField(read_only=True, allow_blank=True)
@@ -102,6 +103,7 @@ class AcademicFileSerializer(serializers.ModelSerializer):
             "file_type_display",
             "assignment",
             "due_at",
+            "assignment_due_at",
             "submission_status",
             "feedback",
             "reviewed_at",
@@ -132,6 +134,7 @@ class AcademicFileSerializer(serializers.ModelSerializer):
         if not user.is_staff and not user.groups.filter(name="Professor").exists():
             fields["file_type"].read_only = True
             fields["due_at"].read_only = True
+            fields["assignment"].required = False
             fields["feedback"].read_only = True
         else:
             fields["feedback"].read_only = True
@@ -141,10 +144,8 @@ class AcademicFileSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         return reverse("files-download", args=[obj.pk], request=request)
 
-    def get_due_at(self, obj):
-        if obj.assignment_id:
-            return obj.assignment.due_at
-        return obj.due_at
+    def get_assignment_due_at(self, obj):
+        return obj.assignment.due_at if obj.assignment_id else None
 
     def get_submission_status(self, obj):
         if obj.file_type != "submission":
