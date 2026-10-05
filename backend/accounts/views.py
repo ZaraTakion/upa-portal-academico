@@ -6,6 +6,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.middleware.csrf import get_token, csrf_protect
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import status
@@ -13,7 +15,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .throttles import LoginRateThrottle
 
@@ -21,8 +26,74 @@ from .throttles import LoginRateThrottle
 logger = logging.getLogger(__name__)
 
 
+def set_refresh_cookie(response, token):
+    if not token:
+        return
+    response.set_cookie(
+        settings.JWT_REFRESH_COOKIE,
+        token,
+        max_age=int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds()),
+        httponly=True,
+        secure=settings.JWT_REFRESH_COOKIE_SECURE,
+        samesite=settings.CSRF_COOKIE_SAMESITE,
+        path="/api/token/",
+    )
+
+
 class LoginTokenObtainPairView(TokenObtainPairView):
     throttle_classes = [LoginRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code < 300:
+            refresh = response.data.pop("refresh", None)
+            set_refresh_cookie(response, refresh)
+            get_token(request)
+        return response
+
+
+class CookieTokenRefreshView(TokenRefreshView):
+    serializer_class = TokenRefreshSerializer
+
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        refresh = request.COOKIES.get(settings.JWT_REFRESH_COOKIE)
+        if not refresh:
+            return Response({"detail": "Refresh token ausente."}, status=401)
+        serializer = self.get_serializer(data={"refresh": refresh})
+        serializer.is_valid(raise_exception=True)
+        data = dict(serializer.validated_data)
+        response = Response(data)
+        if data.get("refresh"):
+            set_refresh_cookie(response, data["refresh"])
+            response.data.pop("refresh", None)
+        return response
+
+
+class LogoutView(APIView):
+    permission_classes = [AllowAny]
+
+    @method_decorator(csrf_protect)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request):
+        refresh = request.COOKIES.get(settings.JWT_REFRESH_COOKIE)
+        if refresh:
+            try:
+                RefreshToken(refresh).blacklist()
+            except TokenError:
+                pass
+        response = Response(status=status.HTTP_205_RESET_CONTENT)
+        response.delete_cookie(
+            settings.JWT_REFRESH_COOKIE,
+            path="/api/token/",
+            samesite=settings.CSRF_COOKIE_SAMESITE,
+        )
+        return response
 
 
 class CurrentUserView(APIView):
