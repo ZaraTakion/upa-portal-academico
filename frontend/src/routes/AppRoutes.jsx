@@ -30,19 +30,19 @@ function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
 
-        <Route path="/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/subjects" element={<ProtectedRoute><Subjects /></ProtectedRoute>} />
-        <Route path="/grades" element={<ProtectedRoute><Grades /></ProtectedRoute>} />
-        <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute roles={["student"]}><StudentDashboard /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute roles={["student"]}><Profile /></ProtectedRoute>} />
+        <Route path="/subjects" element={<ProtectedRoute roles={["student"]}><Subjects /></ProtectedRoute>} />
+        <Route path="/grades" element={<ProtectedRoute roles={["student"]}><Grades /></ProtectedRoute>} />
+        <Route path="/calendar" element={<ProtectedRoute roles={["student"]}><Calendar /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
         <Route path="/files" element={<ProtectedRoute><Files /></ProtectedRoute>} />
-        <Route path="/financial" element={<ProtectedRoute><Financial /></ProtectedRoute>} />
+        <Route path="/financial" element={<ProtectedRoute roles={["student"]}><Financial /></ProtectedRoute>} />
         <Route path="/contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
-        <Route path="/teacher/classes" element={<ProtectedRoute><TeacherClasses /></ProtectedRoute>} />
-        <Route path="/teacher/students" element={<ProtectedRoute><TeacherStudents /></ProtectedRoute>} />
-        <Route path="/teacher/grades" element={<ProtectedRoute><TeacherGrades /></ProtectedRoute>} />
-        <Route path="/admin-panel" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+        <Route path="/teacher/classes" element={<ProtectedRoute roles={["professor"]}><TeacherClasses /></ProtectedRoute>} />
+        <Route path="/teacher/students" element={<ProtectedRoute roles={["professor"]}><TeacherStudents /></ProtectedRoute>} />
+        <Route path="/teacher/grades" element={<ProtectedRoute roles={["professor"]}><TeacherGrades /></ProtectedRoute>} />
+        <Route path="/admin-panel" element={<ProtectedRoute roles={["admin"]}><AdminPanel /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
