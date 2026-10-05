@@ -1,7 +1,7 @@
 {
-  "name": "UPA - Portal Acadêmico UNIESP",
+  "name": "UPA - Portal Acadêmico",
   "short_name": "UPA",
-  "description": "Portal Acadêmico da UNIESP",
+  "description": "Portal Acadêmico",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
