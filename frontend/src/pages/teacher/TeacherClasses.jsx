@@ -1,5 +1,6 @@
-import { Users } from "lucide-react";
+import { CalendarCheck2, ClipboardCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import api from "../../api/axios";
 import EmptyState from "../../components/feedback/EmptyState";
@@ -33,7 +34,7 @@ function TeacherClasses() {
       <PageHeader
         eyebrow="Professor"
         title="Minhas Turmas"
-        description="Consulte suas turmas, disciplinas e quantidade de alunos."
+        description="Escolha uma turma para registrar frequência ou organizar avaliações."
       />
 
       {loading ? (
@@ -43,18 +44,37 @@ function TeacherClasses() {
       ) : (
         <section className="cards-grid">
           {classes.map((item) => (
-            <BaseCard className="subject-card" key={item.id}>
-              <Badge type="primary">Turma</Badge>
+            <BaseCard className="teacher-class-card" key={item.id}>
+              <Badge type="primary">
+                {item.term_code || item.semester}
+              </Badge>
 
-              <h2>{item.name}</h2>
+              <h2>{item.subject_name}</h2>
+              <p className="teacher-class-name">{item.name}</p>
 
-              <p><strong>Disciplina:</strong> {item.subject_name}</p>
-              <p><strong>Professor:</strong> {item.teacher_name}</p>
-              <p><strong>Semestre:</strong> {item.semester}</p>
-              <p><strong>Ano:</strong> {item.year}</p>
-              <p><strong>Alunos:</strong> {item.students_count}</p>
+              <div className="teacher-class-meta">
+                <span><Users size={16} aria-hidden="true" /> {item.students_count} alunos</span>
+                <span>{item.year}</span>
+              </div>
 
-              <Users size={22} />
+              <div className="teacher-class-actions" aria-label={`Ações da turma ${item.name}`}>
+                <Link
+                  className="btn btn-secondary"
+                  to={`/teacher/assessments?class_group=${encodeURIComponent(item.id)}`}
+                  aria-label={`Abrir avaliações de ${item.name}`}
+                >
+                  <ClipboardCheck size={16} aria-hidden="true" />
+                  Avaliações
+                </Link>
+                <Link
+                  className="btn btn-secondary"
+                  to={`/teacher/attendance?class_group=${encodeURIComponent(item.id)}`}
+                  aria-label={`Registrar frequência de ${item.name}`}
+                >
+                  <CalendarCheck2 size={16} aria-hidden="true" />
+                  Frequência
+                </Link>
+              </div>
             </BaseCard>
           ))}
         </section>
