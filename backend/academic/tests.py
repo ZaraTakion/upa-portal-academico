@@ -134,3 +134,10 @@ class GradePermissionTests(TestCase):
         self.assertEqual(len(response.data), 1)
         self.assertNotIn("cpf", response.data[0])
         self.assertNotIn("address", response.data[0])
+
+    def test_teacher_can_list_grades(self):
+        self.client.force_authenticate(self.teacher_user)
+        response = self.client.get(reverse("grades-list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], self.grade.pk)
