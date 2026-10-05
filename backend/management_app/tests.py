@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from academic.models import ClassEnrollment, ClassGroup, StudentProfile, Subject, TeacherProfile
+from academic.models import ClassEnrollment, ClassGroup, Course, StudentProfile, Subject, TeacherProfile
 from .models import AcademicFile
 
 
@@ -31,10 +31,11 @@ class AcademicFileAPITests(TestCase):
         self.teacher_user.groups.add(professor_group)
         self.other_teacher_user.groups.add(professor_group)
 
+        self.course, _ = Course.objects.get_or_create(name="Sistemas para Internet")
         self.student = StudentProfile.objects.create(
             user=self.student_user,
             registration="S-101",
-            course="Sistemas para Internet",
+            course=self.course,
             semester=4,
         )
         self.teacher = TeacherProfile.objects.create(
