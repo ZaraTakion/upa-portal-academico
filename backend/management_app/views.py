@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from django.db.models import Q
+from django.utils import timezone
 from django.http import FileResponse, Http404
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -37,6 +38,13 @@ class ContactMessageViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        update_fields = {}
+        if "response" in serializer.validated_data:
+            update_fields["response_at"] = timezone.now()
+            update_fields["status"] = serializer.validated_data.get("status", "answered")
+        serializer.save(**update_fields)
 
 
 class AcademicFileViewSet(viewsets.ModelViewSet):
