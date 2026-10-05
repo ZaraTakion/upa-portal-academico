@@ -22,11 +22,6 @@ class Migration(migrations.Migration):
             name="protocol",
             field=models.UUIDField(blank=True, null=True),
         ),
-        migrations.AlterField(
-            model_name="contactmessage",
-            name="protocol",
-            field=models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
-        ),
         migrations.AddField(
             model_name="contactmessage",
             name="status",
@@ -47,6 +42,11 @@ class Migration(migrations.Migration):
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.RunPython(populate_protocols, migrations.RunPython.noop),
+        migrations.AlterField(
+            model_name="contactmessage",
+            name="protocol",
+            field=models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
+        ),
         migrations.AlterField(
             model_name="contactmessage",
             name="updated_at",
