@@ -1,10 +1,9 @@
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.utils.http import urlsafe_base64_decode
-from django.utils.encoding import force_str
-from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
 
 
 @override_settings(
@@ -20,13 +19,12 @@ class PasswordResetTests(TestCase):
             password="Original-password-123!",
         )
 
-    def test_request_sends_single_use_reset_link_without_changing_password(self):
+    def test_request_sends_link_without_changing_password(self):
         response = self.client.post(
             reverse("reset-password-request"),
             {"email": self.user.email},
             content_type="application/json",
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(self.user.check_password("Original-password-123!"))
@@ -44,27 +42,22 @@ class PasswordResetTests(TestCase):
             {"email": "unknown@example.test"},
             content_type="application/json",
         )
-
         self.assertEqual(unknown.status_code, known.status_code)
         self.assertEqual(unknown.data, known.data)
         self.assertEqual(mail.outbox, [])
 
     def test_valid_token_changes_password_once(self):
-        uid = force_str(self.user.pk)
-        from django.utils.http import urlsafe_base64_encode
-        uidb64 = urlsafe_base64_encode(uid.encode())
+        uidb64 = urlsafe_base64_encode(str(self.user.pk).encode())
         token = default_token_generator.make_token(self.user)
         confirm_url = reverse(
             "reset-password-confirm",
             kwargs={"uidb64": uidb64, "token": token},
         )
-
         response = self.client.post(
             confirm_url,
             {"new_password": "A-strong-new-password-942!"},
             content_type="application/json",
         )
-
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(self.user.check_password("A-strong-new-password-942!"))
@@ -88,6 +81,5 @@ class PasswordResetTests(TestCase):
             {"new_password": "A-strong-new-password-942!"},
             content_type="application/json",
         )
-
         self.assertEqual(response.status_code, 400)
         self.assertTrue(self.user.check_password("Original-password-123!"))
