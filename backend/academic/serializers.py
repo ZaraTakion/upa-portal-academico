@@ -222,6 +222,7 @@ class AcademicCalendarSerializer(serializers.ModelSerializer):
 
 
 class WeeklyScheduleSerializer(serializers.ModelSerializer):
+    class_group_name = serializers.CharField(source="class_group.name", read_only=True, allow_null=True)
     subject_name = serializers.CharField(source="subject.name", read_only=True)
     teacher_name = serializers.SerializerMethodField()
     weekday_display = serializers.CharField(source="get_weekday_display", read_only=True)
@@ -230,6 +231,8 @@ class WeeklyScheduleSerializer(serializers.ModelSerializer):
         model = WeeklySchedule
         fields = [
             "id",
+            "class_group",
+            "class_group_name",
             "subject",
             "subject_name",
             "teacher",
