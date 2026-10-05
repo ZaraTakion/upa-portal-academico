@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from academic.models import (
     AcademicCalendar,
+    AttendanceRecord,
     ClassEnrollment,
     ClassGroup,
     Grade,
@@ -92,7 +93,8 @@ class DashboardSummaryView(APIView):
             },
             "total_subjects": enrollments.values("class_group__subject_id").distinct().count(),
             "average_grade": round(float(average_grade), 2) if average_grade is not None else 0,
-            "total_absences": grades.aggregate(total=Sum("absence"))["total"] or 0,
+            "total_absences": (grades.aggregate(total=Sum("absence"))["total"] or 0)
+            + AttendanceRecord.objects.filter(student=student, present=False).count(),
             "unread_notifications": Notification.objects.filter(
                 user=user, is_read=False
             ).count(),
@@ -139,8 +141,15 @@ class DashboardSummaryView(APIView):
             "subject", "teacher__user"
         ).annotate(students_count=Count("classenrollment"))
         teacher_grades = Grade.objects.filter(
-            subject__classgroup__teacher=teacher,
-            subject__classgroup__classenrollment__student_id=F("student_id"),
+            Q(
+                class_group__teacher=teacher,
+                class_group__classenrollment__student_id=F("student_id"),
+            )
+            | Q(
+                class_group__isnull=True,
+                subject__classgroup__teacher=teacher,
+                subject__classgroup__classenrollment__student_id=F("student_id"),
+            )
         ).distinct()
 
         data = {
