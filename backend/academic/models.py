@@ -197,6 +197,17 @@ class Grade(models.Model):
         using = kwargs.get("using") or self._state.db
         policy_manager = GradePolicy.objects.using(using) if using else GradePolicy.objects
         policy = policy_manager.order_by("pk").first()
+        if self.class_group_id:
+            attendance_manager = (
+                AttendanceRecord.objects.using(using) if using else AttendanceRecord.objects
+            )
+            self.absence = attendance_manager.filter(
+                class_group_id=self.class_group_id,
+                student_id=self.student_id,
+                present=False,
+            ).count()
+            if kwargs.get("update_fields") is not None:
+                kwargs["update_fields"] = set(kwargs["update_fields"]) | {"absence", "status"}
         self.status = grade_status_for(self.grade, self.absence, policy)
         super().save(*args, **kwargs)
 
@@ -332,8 +343,55 @@ class AttendanceRecord(models.Model):
         ]
         indexes = [models.Index(fields=("class_group", "held_at"), name="academic_at_class_g_a61062_idx")]
 
+    def save(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db
+        manager = AttendanceRecord.objects.using(using) if using else AttendanceRecord.objects
+        previous = (
+            manager.filter(pk=self.pk)
+            .values("student_id", "class_group_id")
+            .first()
+            if self.pk
+            else None
+        )
+
+        with transaction.atomic(using=using):
+            super().save(*args, **kwargs)
+            affected = {(self.student_id, self.class_group_id)}
+            if previous:
+                affected.add((previous["student_id"], previous["class_group_id"]))
+            for student_id, class_group_id in affected:
+                sync_grade_absences(student_id, class_group_id, using=using)
+
+    def delete(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db
+        student_id, class_group_id = self.student_id, self.class_group_id
+        with transaction.atomic(using=using):
+            result = super().delete(*args, **kwargs)
+            sync_grade_absences(student_id, class_group_id, using=using)
+            return result
+
     def __str__(self):
         return f"{self.student} - {self.held_at:%Y-%m-%d}"
+
+
+def sync_grade_absences(student_id, class_group_id, using=None):
+    if not student_id or not class_group_id:
+        return
+
+    attendance_manager = AttendanceRecord.objects.using(using) if using else AttendanceRecord.objects
+    grade_manager = Grade.objects.using(using) if using else Grade.objects
+    absences = attendance_manager.filter(
+        student_id=student_id,
+        class_group_id=class_group_id,
+        present=False,
+    ).count()
+
+    for grade in grade_manager.filter(
+        student_id=student_id,
+        class_group_id=class_group_id,
+    ).only("pk", "student_id", "class_group_id", "grade", "absence", "status"):
+        grade.absence = absences
+        grade.save(using=using, update_fields={"absence", "status"})
 
 
 class AcademicCalendar(models.Model):
