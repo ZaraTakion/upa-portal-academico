@@ -30,7 +30,7 @@ function Login() {
         password,
       });
 
-      saveTokens(tokenResponse.data.access, tokenResponse.data.refresh);
+      saveTokens(tokenResponse.data.access);
 
       if (loadUser) {
         await loadUser();
