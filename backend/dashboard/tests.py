@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
@@ -144,7 +146,7 @@ class DashboardSummaryTests(TestCase):
             title="Evento em andamento",
             description="Evento iniciado ontem.",
             event_type="event",
-            start_date=today - __import__("datetime").timedelta(days=1),
+            start_date=today - timedelta(days=1),
             end_date=today + __import__("datetime").timedelta(days=1),
         )
         AcademicCalendar.objects.create(
