@@ -1,3 +1,4 @@
+from django.db.models import F
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -100,7 +101,10 @@ class GradeViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             queryset = Grade.objects.all()
         elif user.groups.filter(name="Professor").exists():
-            queryset = Grade.objects.filter(subject__classgroup__teacher__user=user).distinct()
+            queryset = Grade.objects.filter(
+                subject__classgroup__teacher__user=user,
+                subject__classgroup__classenrollment__student_id=F("student_id"),
+            ).distinct()
         else:
             queryset = Grade.objects.filter(student__user=user)
 
