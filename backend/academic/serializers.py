@@ -90,6 +90,8 @@ class AssessmentResultSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"student": "O aluno não está matriculado nesta turma."}
                 )
+            if score is not None and score < 0:
+                raise serializers.ValidationError({"score": "A nota não pode ser negativa."})
             if score is not None and score > assessment.maximum_score:
                 raise serializers.ValidationError(
                     {"score": "A nota não pode ultrapassar a nota máxima da avaliação."}
