@@ -59,13 +59,6 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install frontend dependencies
         run: npm ci
-      - name: Update compatible frontend dependency locks
-        run: npm audit fix --package-lock-only --ignore-scripts
-      - name: Upload resolved frontend lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-package-lock
-          path: frontend/package-lock.json
       - name: Audit frontend dependencies
         run: npm audit --audit-level=low
       - name: Run frontend tests
