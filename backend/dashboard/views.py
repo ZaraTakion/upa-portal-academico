@@ -1,4 +1,4 @@
-from django.db.models import Avg, Case, Count, F, IntegerField, Q, Value, When
+from django.db.models import Avg, Case, Count, F, IntegerField, Q, Sum, Value, When
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -92,7 +92,7 @@ class DashboardSummaryView(APIView):
             },
             "total_subjects": enrollments.values("class_group__subject_id").distinct().count(),
             "average_grade": round(float(average_grade), 2) if average_grade is not None else 0,
-            "total_absences": grades.aggregate(total=__import__("django.db.models", fromlist=["Sum"]).Sum("absence"))["total"] or 0,
+            "total_absences": grades.aggregate(total=Sum("absence"))["total"] or 0,
             "unread_notifications": Notification.objects.filter(
                 user=user, is_read=False
             ).count(),
