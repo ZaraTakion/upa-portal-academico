@@ -22,7 +22,7 @@ function useFetch(url, options = {}) {
     } finally {
       setLoading(false);
     }
-  }, [url, JSON.stringify(options.params)]);
+  }, [url, options.params, options.errorMessage]);
 
   useEffect(() => {
     load();
