@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
@@ -386,7 +387,7 @@ class GradePolicyAbsenceTests(TestCase):
         self.grade = Grade.objects.create(
             student=student,
             subject=subject,
-            grade="8.00",
+            grade=Decimal("8.00"),
             absence=3,
         )
 
@@ -414,7 +415,7 @@ class GradePolicyAbsenceTests(TestCase):
             attention_score="5.00",
             maximum_absences=3,
         )
-        self.grade.grade = "6.00"
+        self.grade.grade = Decimal("6.00")
         self.grade.absence = 2
         self.grade.save()
         self.assertEqual(self.grade.status, "attention")
