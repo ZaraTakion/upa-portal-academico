@@ -342,6 +342,15 @@ class AssessmentWorkflowTests(TestCase):
         )
         self.assertEqual(grade.grade, Decimal("8.00"))
 
+        manual_edit = self.client.patch(
+            reverse("grades-detail", args=[grade.pk]),
+            {"grade": "10.00"},
+            format="json",
+        )
+        self.assertEqual(manual_edit.status_code, 400)
+        grade.refresh_from_db()
+        self.assertEqual(grade.grade, Decimal("8.00"))
+
         second_result = self.client.post(
             reverse("assessment-results-list"),
             {"assessment": second.pk, "student": self.student.pk, "score": "9.00"},
