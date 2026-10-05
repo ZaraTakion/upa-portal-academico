@@ -52,6 +52,15 @@ const sections = {
       { name: "year", label: "Ano", type: "number", min: 2000, required: true },
     ],
   },
+  enrollments: {
+    title: "Matrículas",
+    endpoint: "/academic/class-enrollments/",
+    fields: [
+      { name: "class_group", label: "Turma", type: "relation", source: select("/academic/class-groups/", "name"), required: true },
+      { name: "student", label: "Estudante", type: "relation", source: select("/academic/students/", "full_name"), required: true },
+      { name: "status", label: "Situação", type: "select", options: [["active", "Ativa"], ["completed", "Concluída"], ["failed", "Reprovada"], ["withdrawn", "Cancelada"]] },
+    ],
+  },
   calendar: {
     title: "Calendário",
     endpoint: "/academic/calendar/",
