@@ -114,6 +114,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_RATES": {
         "anon": os.environ.get("ANON_THROTTLE_RATE", "5/hour"),
+        "login": os.environ.get("LOGIN_THROTTLE_RATE", "5/min"),
     },
 }
 
@@ -148,4 +149,4 @@ ACADEMIC_FILE_MAX_SIZE = int(
 )
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = BASE_DIR / "media/"
