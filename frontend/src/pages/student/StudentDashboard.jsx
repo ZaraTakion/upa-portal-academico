@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from "react";
 
 import api from "../../api/axios";
+import { formatDate } from "../../utils/dateFormat";
 import Alert from "../../components/feedback/Alert";
 import Loading from "../../components/feedback/Loading";
 import MainLayout from "../../components/layout/MainLayout";
@@ -116,7 +117,7 @@ function StudentDashboard() {
                         <strong>{event.title}</strong>
                         <p>{event.description}</p>
                       </div>
-                      <span>{event.start_date}</span>
+                      <span>{formatDate(event.start_date)}</span>
                     </li>
                   ))}
                 </ul>
