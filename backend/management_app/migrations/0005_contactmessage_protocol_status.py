@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="contactmessage",
-            index=models.Index(fields=["user", "status"], name="management_contact_user_status_idx"),
+            index=models.Index(fields=["user", "status"], name="mgmt_contact_user_status_idx"),
         ),
         migrations.AlterModelOptions(
             name="contactmessage",
