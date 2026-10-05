@@ -1,10 +1,11 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.contrib.auth.tokens import default_token_generator
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -17,7 +18,6 @@ class CurrentUserView(APIView):
 
     def get(self, request):
         user = request.user
-
         return Response(
             {
                 "id": user.id,
@@ -38,7 +38,8 @@ class PasswordResetRequestView(APIView):
     throttle_classes = [AnonRateThrottle]
 
     def post(self, request):
-        email = request.data.get("email", "").strip()
+        email = request.data.get("email")
+        email = email.strip() if isinstance(email, str) else ""
         users = User.objects.filter(email__iexact=email, is_active=True).exclude(email="")
 
         for user in users:
@@ -52,7 +53,7 @@ class PasswordResetRequestView(APIView):
                 subject="Redefinição de senha do UPA",
                 message=(
                     "Recebemos uma solicitação para redefinir sua senha. "
-                    "Use este link para escolher uma nova senha:\n\n"
+                    "Use este link temporário para escolher uma nova senha:\n\n"
                     f"{reset_url}\n\n"
                     "Se você não solicitou a redefinição, ignore esta mensagem."
                 ),
@@ -81,7 +82,13 @@ class PasswordResetConfirmView(APIView):
         try:
             user_id = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=user_id, is_active=True)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        except (
+            TypeError,
+            ValueError,
+            OverflowError,
+            UnicodeDecodeError,
+            User.DoesNotExist,
+        ):
             return Response(
                 {"detail": "Link inválido ou expirado."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -95,15 +102,11 @@ class PasswordResetConfirmView(APIView):
 
         try:
             validate_password(new_password, user=user)
-        except Exception as error:
-            from django.core.exceptions import ValidationError
-
-            if isinstance(error, ValidationError):
-                return Response(
-                    {"detail": list(error.messages)},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            raise
+        except ValidationError as error:
+            return Response(
+                {"detail": list(error.messages)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         user.set_password(new_password)
         user.save(update_fields=["password"])
