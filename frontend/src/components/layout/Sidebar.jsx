@@ -18,13 +18,15 @@ import {
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { buildAdminUrl } from "../../utils/adminUrl";
+import { getUserRole } from "../../utils/roles";
 
 function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
   const { user } = useAuth();
 
-  const isProfessor = user?.groups?.includes("Professor");
-  const isAdmin = user?.is_staff || user?.is_superuser;
-  const isStudent = !isProfessor && !isAdmin;
+  const role = getUserRole(user);
+  const isProfessor = role === "professor";
+  const isAdmin = role === "admin";
+  const isStudent = role === "student";
   const invoiceAdminUrl = buildAdminUrl(
     import.meta.env.VITE_DJANGO_ADMIN_URL,
     "management_app/financialinvoice/",
