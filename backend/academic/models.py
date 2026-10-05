@@ -93,6 +93,7 @@ class ClassGroup(models.Model):
         AcademicTerm,
         on_delete=models.PROTECT,
         related_name="class_groups",
+        blank=True,
     )
     semester = models.CharField(max_length=20)
     year = models.PositiveIntegerField()
@@ -141,8 +142,8 @@ class ClassEnrollment(models.Model):
             )
         ]
         indexes = [
-            models.Index(fields=("student", "status")),
-            models.Index(fields=("class_group", "status")),
+            models.Index(fields=("student", "status"), name="academic_cl_student_165531_idx"),
+            models.Index(fields=("class_group", "status"), name="academic_cl_class_g_156a35_idx"),
         ]
 
     def __str__(self):
@@ -180,8 +181,8 @@ class Grade(models.Model):
             )
         ]
         indexes = [
-            models.Index(fields=("student", "subject")),
-            models.Index(fields=("class_group", "status")),
+            models.Index(fields=("student", "subject"), name="academic_gr_student_eb06bd_idx"),
+            models.Index(fields=("class_group", "status"), name="academic_gr_class_g_1eadd9_idx"),
         ]
 
     def save(self, *args, **kwargs):
@@ -227,7 +228,7 @@ class Assessment(models.Model):
 
     class Meta:
         ordering = ("due_date", "title")
-        indexes = [models.Index(fields=("class_group", "due_date"))]
+        indexes = [models.Index(fields=("class_group", "due_date"), name="academic_as_class_g_26e3e4_idx")]
 
     def __str__(self):
         return f"{self.class_group} - {self.title}"
@@ -255,7 +256,7 @@ class AssessmentResult(models.Model):
                 name="uniq_assessment_result_student",
             )
         ]
-        indexes = [models.Index(fields=("student", "assessment"))]
+        indexes = [models.Index(fields=("student", "assessment"), name="academic_as_student_093a27_idx")]
 
     def __str__(self):
         return f"{self.student} - {self.assessment}"
@@ -291,7 +292,7 @@ class AttendanceRecord(models.Model):
                 name="uniq_attendance_student_session",
             )
         ]
-        indexes = [models.Index(fields=("class_group", "held_at"))]
+        indexes = [models.Index(fields=("class_group", "held_at"), name="academic_at_class_g_a61062_idx")]
 
     def __str__(self):
         return f"{self.student} - {self.held_at:%Y-%m-%d}"
