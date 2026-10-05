@@ -17,18 +17,25 @@ import {
 
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { buildAdminUrl } from "../../utils/adminUrl";
+import { getUserRole } from "../../utils/roles";
 
 function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
   const { user } = useAuth();
 
-  const isProfessor = user?.groups?.includes("Professor");
-  const isAdmin = user?.is_staff || user?.is_superuser;
+  const role = getUserRole(user);
+  const isProfessor = role === "professor";
+  const isAdmin = role === "admin";
+  const isStudent = role === "student";
+  const invoiceAdminUrl = buildAdminUrl(
+    import.meta.env.VITE_DJANGO_ADMIN_URL,
+    "management_app/financialinvoice/",
+    { allowLocalhost: import.meta.env.DEV },
+  );
 
   return (
     <aside
-      className={`sidebar ${isOpen ? "sidebar-open" : ""} ${
-        isCollapsed ? "is-collapsed" : ""
-      }`}
+      className={`sidebar ${isOpen ? "sidebar-open" : ""} ${isCollapsed ? "is-collapsed" : ""}`}
     >
       <div className="sidebar-brand">
         <div className="sidebar-logo">U</div>
@@ -49,10 +56,12 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
       </button>
 
       <nav className="sidebar-nav">
-        <NavLink to="/dashboard" onClick={onClose} title="Dashboard">
-          <Home size={20} />
-          <span>Dashboard</span>
-        </NavLink>
+        {isStudent && (
+          <NavLink to="/dashboard" onClick={onClose} title="Dashboard">
+            <Home size={20} />
+            <span>Dashboard</span>
+          </NavLink>
+        )}
 
         {!isProfessor && !isAdmin && (
           <>
@@ -129,15 +138,17 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
               <span>Painel de Gestão</span>
             </NavLink>
 
-            <NavLink to="/calendar" onClick={onClose} title="Calendário">
+            <NavLink to="/admin/management?section=calendar" onClick={onClose} title="Calendário">
               <CalendarDays size={20} />
               <span>Calendário</span>
             </NavLink>
 
-            <NavLink to="/financial" onClick={onClose} title="Financeiro">
-              <Receipt size={20} />
-              <span>Financeiro</span>
-            </NavLink>
+            {invoiceAdminUrl && (
+              <a href={invoiceAdminUrl} target="_blank" rel="noreferrer" title="Financeiro">
+                <Receipt size={20} />
+                <span>Financeiro</span>
+              </a>
+            )}
           </>
         )}
 

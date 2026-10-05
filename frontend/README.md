@@ -16,4 +16,11 @@ npm run build
 npm run preview
 ```
 
-Defina `VITE_API_URL` para apontar a interface a uma API diferente de `http://localhost:8000/api`.
+## Configuração
+
+Copie `.env.example` para `.env.local` no desenvolvimento.
+
+- `VITE_API_URL`: endereço da API, por padrão `http://localhost:8000/api`.
+- `VITE_DJANGO_ADMIN_URL`: endereço base do Django Admin, por padrão local no desenvolvimento. No deploy, configure a URL HTTPS real do backend antes de gerar o build.
+
+A interface não usa um destino local alternativo quando `VITE_DJANGO_ADMIN_URL` está ausente ou inválida. Nesse caso, os links administrativos de usuários e faturas ficam indisponíveis até a configuração ser feita.

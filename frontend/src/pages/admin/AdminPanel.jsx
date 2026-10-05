@@ -14,10 +14,21 @@ import MainLayout from "../../components/layout/MainLayout";
 import BaseCard from "../../components/ui/BaseCard";
 import PageHeader from "../../components/ui/PageHeader";
 import StatCard from "../../components/ui/StatCard";
+import { buildAdminUrl } from "../../utils/adminUrl";
 
 function AdminPanel() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const adminBaseUrl = buildAdminUrl(
+    import.meta.env.VITE_DJANGO_ADMIN_URL,
+    "",
+    { allowLocalhost: import.meta.env.DEV },
+  );
+  const invoiceAdminUrl = buildAdminUrl(
+    import.meta.env.VITE_DJANGO_ADMIN_URL,
+    "management_app/financialinvoice/",
+    { allowLocalhost: import.meta.env.DEV },
+  );
 
   useEffect(() => {
     api.get("/dashboard/summary/")
@@ -41,11 +52,25 @@ function AdminPanel() {
             <StatCard label="Financeiro" value={summary?.total_invoices ?? 0} />
           </section>
           <section className="cards-grid">
-            <AdminCard icon={<Users />} title="Usuários" text="Gerencie contas, alunos, professores e permissões." to={import.meta.env.VITE_DJANGO_ADMIN_URL || "http://localhost:8000/admin/"} external />
+            <AdminCard
+              icon={<Users />}
+              title="Usuários"
+              text="Gerencie contas, alunos, professores e permissões."
+              to={adminBaseUrl}
+              external
+              unavailableText="Configure VITE_DJANGO_ADMIN_URL para acessar o Django Admin."
+            />
             <AdminCard icon={<GraduationCap />} title="Gestão acadêmica" text="Cursos, períodos, disciplinas, turmas e regra de notas." to="/admin/management?section=courses" />
             <AdminCard icon={<CalendarDays />} title="Calendário" text="Cadastre feriados, provas, eventos e comunicados." to="/admin/management?section=calendar" />
             <AdminCard icon={<Bell />} title="Comunicados" text="Consulte comunicados e notificações institucionais." to="/notifications" />
-            <AdminCard icon={<Receipt />} title="Financeiro" text="Acompanhe mensalidades, vencimentos e pendências." to="/financial" />
+            <AdminCard
+              icon={<Receipt />}
+              title="Financeiro"
+              text="Gerencie faturas e vencimentos no Django Admin."
+              to={invoiceAdminUrl}
+              external
+              unavailableText="Configure VITE_DJANGO_ADMIN_URL para acessar as faturas."
+            />
           </section>
         </>
       )}
@@ -53,15 +78,17 @@ function AdminPanel() {
   );
 }
 
-function AdminCard({ icon, title, text, to, external = false }) {
+function AdminCard({ icon, title, text, to, external = false, unavailableText }) {
   return (
     <BaseCard className="admin-card">
       <div className="admin-card-icon">{icon}</div>
       <h2>{title}</h2>
       <p>{text}</p>
-      {external
-        ? <a href={to} target="_blank" rel="noreferrer">Abrir gestão <span aria-hidden="true">↗</span></a>
-        : <Link to={to}>Abrir gestão</Link>}
+      {to
+        ? external
+          ? <a href={to} target="_blank" rel="noreferrer">Abrir gestão <span aria-hidden="true">↗</span></a>
+          : <Link to={to}>Abrir gestão</Link>
+        : <p className="admin-card-unavailable" role="status">{unavailableText}</p>}
     </BaseCard>
   );
 }
