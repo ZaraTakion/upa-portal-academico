@@ -95,6 +95,9 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
                 raise PermissionDenied(
                     "Você só pode enviar materiais para uma turma sua."
                 )
+            file_type = serializer.validated_data.get("file_type", "material")
+            if file_type not in {"material", "assignment"}:
+                raise ValidationError({"file_type": "Professor só pode enviar material ou atividade."})
             serializer.save(
                 user=user,
                 class_group=class_group,
@@ -122,6 +125,13 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
             assignment=assignment,
             file_type="submission",
         )
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        if not user.is_staff and "feedback" in serializer.validated_data:
+            serializer.save(reviewed_at=timezone.now())
+        else:
+            serializer.save()
 
     @action(detail=True, methods=["get"], url_path="download")
     def download(self, request, pk=None):
