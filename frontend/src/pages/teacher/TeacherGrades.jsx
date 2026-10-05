@@ -98,16 +98,23 @@ function TeacherGrades() {
                   <td>{grade.subject_name}</td>
 
                   <td>
-                    <input
-                      type="number"
-                      min="0"
-                      max="10"
-                      step="0.1"
-                      value={grade.grade ?? ""}
-                      onChange={(event) =>
-                        updateLocalGrade(grade.id, "grade", event.target.value)
-                      }
-                    />
+                    {grade.grade_is_calculated ? (
+                      <span>
+                        {grade.grade ?? "—"}
+                        <small style={{ display: "block" }}>Calculada pelas avaliações</small>
+                      </span>
+                    ) : (
+                      <input
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        value={grade.grade ?? ""}
+                        onChange={(event) =>
+                          updateLocalGrade(grade.id, "grade", event.target.value)
+                        }
+                      />
+                    )}
                   </td>
 
                   <td>
@@ -133,10 +140,14 @@ function TeacherGrades() {
                   </td>
 
                   <td>
-                    <Button variant="secondary" onClick={() => saveGrade(grade)}>
-                      <Save size={16} />
-                      Salvar
-                    </Button>
+                    {grade.grade_is_calculated ? (
+                      <span>Atualização automática</span>
+                    ) : (
+                      <Button variant="secondary" onClick={() => saveGrade(grade)}>
+                        <Save size={16} />
+                        Salvar
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}
