@@ -381,6 +381,23 @@ class GradeSerializer(serializers.ModelSerializer):
     def get_grade_is_calculated(self, obj):
         return bool(obj.class_group_id)
 
+    def validate(self, attrs):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if (
+            self.instance
+            and self.instance.class_group_id
+            and "grade" in attrs
+            and user
+            and user.is_authenticated
+            and not user.is_staff
+            and user.groups.filter(name="Professor").exists()
+        ):
+            raise serializers.ValidationError(
+                {"grade": "A nota desta turma é calculada pelas avaliações registradas."}
+            )
+        return attrs
+
 
 class AcademicCalendarSerializer(serializers.ModelSerializer):
     event_type_display = serializers.CharField(source="get_event_type_display", read_only=True)
