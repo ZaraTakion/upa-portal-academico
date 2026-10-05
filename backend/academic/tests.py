@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from django.contrib.auth.models import Group, User
-from django.utils import timezone
 from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
@@ -9,7 +8,6 @@ from rest_framework.test import APIClient
 
 from .models import (
     AcademicCalendar,
-    AcademicTerm,
     Assessment,
     AssessmentResult,
     AttendanceRecord,
@@ -103,7 +101,7 @@ class GradePermissionTests(TestCase):
         other_student = StudentProfile.objects.create(
             user=other_user,
             registration="S-002",
-            course="Sistemas para Internet",
+            course=self.course,
             semester=4,
         )
         other_grade = Grade.objects.create(
