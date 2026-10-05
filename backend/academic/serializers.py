@@ -42,6 +42,10 @@ class AssessmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at"]
 
+    def get_student_name(self, obj):
+        user = obj.student.user
+        return user.get_full_name() or user.username
+
     def validate(self, attrs):
         request = self.context.get("request")
         user = getattr(request, "user", None)
