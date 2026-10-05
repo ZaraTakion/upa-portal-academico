@@ -59,13 +59,13 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
         elif user.groups.filter(name="Professor").exists():
             queryset = AcademicFile.objects.filter(
                 class_group__teacher__user=user,
-                file_type__in=("material", "submission"),
+                file_type__in=("material", "assignment", "submission"),
             )
         else:
             queryset = AcademicFile.objects.filter(
                 Q(user=user, file_type__in=("submission", "document"))
                 | Q(
-                    file_type="material",
+                    file_type__in=("material", "assignment"),
                     class_group__classenrollment__student__user=user,
                 )
             ).distinct()
@@ -76,10 +76,11 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         class_group = serializer.validated_data.get("class_group")
+        assignment = serializer.validated_data.get("assignment")
 
         if user.is_staff:
             file_type = serializer.validated_data.get("file_type", "submission")
-            if file_type in {"material", "submission"} and class_group is None:
+            if file_type in {"material", "assignment", "submission"} and class_group is None:
                 raise ValidationError(
                     {"class_group": "Selecione a turma para este tipo de arquivo."}
                 )
@@ -98,10 +99,12 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
                 user=user,
                 class_group=class_group,
                 subject=class_group.subject,
-                file_type="material",
+                file_type=file_type,
             )
             return
 
+        if assignment:
+            class_group = assignment.class_group
         if class_group is None or not ClassEnrollment.objects.filter(
             class_group=class_group,
             student__user=user,
@@ -110,10 +113,13 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
                 "Selecione uma turma em que você esteja matriculado."
             )
 
+        if assignment and assignment.due_at and timezone.now() > assignment.due_at:
+            raise ValidationError({"assignment": "O prazo desta atividade já terminou."})
         serializer.save(
             user=user,
             class_group=class_group,
             subject=class_group.subject,
+            assignment=assignment,
             file_type="submission",
         )
 
