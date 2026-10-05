@@ -17,5 +17,16 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    {
+      files: ['**/*.{js,jsx}'],
+      rules: {
+        // API loading effects update React state after external requests.
+        'react-hooks/set-state-in-effect': 'off',
+        'react-refresh/only-export-components': [
+          'error',
+          { allowExportNames: ['useAuth', 'useTheme'] },
+        ],
+      },
+    },
   },
 ])
