@@ -32,11 +32,17 @@ class ContactMessageSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     contact_type_display = serializers.CharField(source="get_contact_type_display", read_only=True)
     return_channel_display = serializers.CharField(source="get_return_channel_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
 
     class Meta:
         model = ContactMessage
         fields = [
             "id",
+            "protocol",
+            "status",
+            "status_display",
+            "response_at",
+            "updated_at",
             "user",
             "username",
             "destination",
@@ -49,7 +55,19 @@ class ContactMessageSerializer(serializers.ModelSerializer):
             "response",
             "created_at",
         ]
-        read_only_fields = ["user", "response"]
+        read_only_fields = [
+            "user", "protocol", "status", "status_display", "response",
+            "response_at", "updated_at",
+        ]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user and user.is_staff:
+            fields["response"].read_only = False
+            fields["status"].read_only = False
+        return fields
 
 
 class AcademicFileSerializer(serializers.ModelSerializer):
