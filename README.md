@@ -207,6 +207,18 @@ Instale as dependências:
 pip install -r requirements.txt
 ```
 
+No PowerShell, configure as variáveis locais antes de iniciar o Django:
+
+```powershell
+$env:SECRET_KEY = python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+$env:DEBUG = "True"
+$env:EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+$env:FRONTEND_URL = "http://localhost:5173"
+$env:CORS_ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+```
+
+Em produção, configure `SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` e as variáveis `EMAIL_HOST*` no provedor de hospedagem. Não use a chave local em produção.
+
 Execute as migrações:
 
 ```bash
