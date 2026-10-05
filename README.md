@@ -1,345 +1,100 @@
-# UPA — Upgrade Portal Aluno
+# UPA — Portal Acadêmico
 
-<div align="center">
+Portal web para estudantes, professores e equipes administrativas. O projeto combina uma API em Django REST Framework com uma interface React.
 
-### Uma experiência acadêmica mais organizada, moderna e integrada.
+## Funcionalidades
 
-Aplicação web acadêmica desenvolvida durante a graduação em **Sistemas para Internet**, com integração entre **Front-End, Back-End e API REST**.
+- Acesso por perfil, recuperação de senha e limitação de tentativas de login.
+- Painel com indicadores acadêmicos, calendário, notificações e horários.
+- Cursos, períodos letivos, turmas, matrículas, notas, avaliações e frequência.
+- Publicação de materiais e atividades, entrega de arquivos e devolutivas.
+- Chamados de atendimento com protocolo e acompanhamento de respostas.
+- Consulta de documentos financeiros e administração de registros.
+- Interface responsiva com navegação acessível e tema claro/escuro.
 
-<br>
+## Estrutura
 
-<a href="https://upa-portal-academico.vercel.app/">
-  <img src="https://img.shields.io/badge/🌐%20Aplicação%20Online-Acessar-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Aplicação online">
-</a>
+- `backend/`: projeto Django, API, migrações e testes.
+- `frontend/`: aplicação React e Vite.
+- `.github/workflows/`: verificações automáticas do backend e frontend.
 
-<a href="https://github.com/ZaraTakion/upa-portal-academico">
-  <img src="https://img.shields.io/badge/📂%20Código-Fonte-181717?style=for-the-badge&logo=github&logoColor=white" alt="Código-fonte">
-</a>
+## Requisitos
 
-</div>
+- Python 3.13.
+- Node.js 22 e npm.
+- PostgreSQL em produção. SQLite é usado por padrão no desenvolvimento local.
 
----
+## Desenvolvimento local
 
-## 📌 Sobre o projeto
-
-O **UPA — Upgrade Portal Aluno** é um sistema web acadêmico desenvolvido como projeto de faculdade, com o objetivo de **modernizar a experiência de alunos e professores em um portal educacional**.
-
-A proposta é substituir uma experiência antiga e pouco intuitiva por uma plataforma mais organizada, moderna e funcional, reunindo informações acadêmicas em um único ambiente.
-
-Entre os recursos planejados e implementados estão:
-
-- Disciplinas;
-- Notas;
-- Calendário acadêmico;
-- Notificações;
-- Perfil do usuário;
-- Mural de comunicados;
-- Autenticação;
-- Integração entre Front-End e Back-End;
-- Consumo de API REST.
-
----
-
-## 🎯 Objetivo
-
-O principal objetivo do projeto é melhorar a experiência de uso de um portal acadêmico, tornando o acesso às informações **mais simples, claro e eficiente**.
-
-Além da experiência visual, o projeto foi utilizado como oportunidade prática para aplicar conceitos de:
-
-- Desenvolvimento Web;
-- Arquitetura de aplicações;
-- Integração entre camadas;
-- APIs REST;
-- Autenticação;
-- Banco de dados;
-- Versionamento de código.
-
----
-
-## 🧑‍💻 Minha participação
-
-O projeto foi desenvolvido durante minha graduação em **Sistemas para Internet**.
-
-Atuei na construção e organização da aplicação, trabalhando tanto na parte visual quanto na integração entre Front-End e Back-End.
-
-Durante o desenvolvimento, foram aplicados conhecimentos relacionados a:
-
-- Estruturação de aplicações web;
-- Organização de interfaces;
-- Consumo de APIs;
-- Autenticação de usuários;
-- Manipulação de dados;
-- Integração entre sistemas;
-- Versionamento com Git e GitHub.
-
----
-
-## ✨ Funcionalidades
-
-| Funcionalidade | Descrição |
-|:---|:---|
-| 🔐 **Login** | Autenticação de usuários |
-| 🏠 **Mural** | Centralização de comunicados acadêmicos |
-| 📚 **Disciplinas** | Visualização das disciplinas |
-| 📝 **Notas** | Visualização de informações acadêmicas |
-| 📅 **Calendário** | Organização de eventos acadêmicos |
-| 🔔 **Notificações** | Exibição de avisos ao usuário |
-| 👤 **Perfil** | Informações do usuário |
-| 🔄 **Integração** | Comunicação entre Front-End e Back-End |
-| 🔌 **API REST** | Comunicação e gerenciamento de dados |
-
----
-
-## 🛠️ Tecnologias
-
-### Front-End
-
-<p>
-<img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
-<img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite">
-<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
-<img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5">
-<img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3">
-</p>
-
-### Back-End
-
-<p>
-<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-<img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white" alt="Django">
-<img src="https://img.shields.io/badge/Django%20REST%20Framework-A30000?style=for-the-badge&logo=django&logoColor=white" alt="Django REST Framework">
-<img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT">
-<img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
-</p>
-
-### Ferramentas e Deploy
-
-<p>
-<img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git">
-<img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
-<img src="https://img.shields.io/badge/VS%20Code-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="VS Code">
-<img src="https://img.shields.io/badge/Render-000000?style=for-the-badge&logo=render&logoColor=white" alt="Render">
-<img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel">
-</p>
-
----
-
-## 🏗️ Estrutura do projeto
-
-```text
-upa-portal-academico/
-│
-├── backend/
-│   ├── manage.py
-│   ├── requirements.txt
-│   ├── config/
-│   └── apps/
-│
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── vite.config.js
-│
-├── docs/
-│
-├── .gitignore
-└── README.md
-````
-
-A aplicação está organizada em camadas separadas para **Front-End, Back-End e documentação**, facilitando a manutenção e evolução do projeto.
-
----
-
-## 🌐 Demonstração
-
-A aplicação está disponível online:
-
-<div align="center">
-
-<a href="https://upa-portal-academico.vercel.app/">
-  <img src="https://img.shields.io/badge/🌐%20Acessar%20Aplicação-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Acessar aplicação">
-</a>
-
-</div>
-
----
-
-## 🚀 Como executar localmente
-
-### 1. Clone o repositório
-
-```bash
-git clone https://github.com/ZaraTakion/upa-portal-academico.git
-```
-
-Entre no diretório:
-
-```bash
-cd upa-portal-academico
-```
-
----
-
-### 2. Executando o Back-End
-
-Acesse a pasta:
+### Backend
 
 ```bash
 cd backend
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+cp .env.example .env
 ```
 
-Crie um ambiente virtual:
+Edite `.env` e substitua `SECRET_KEY`. Para carregar as variáveis no terminal:
 
 ```bash
-python -m venv venv
-```
-
-No Windows, ative o ambiente:
-
-```bash
-venv\Scripts\activate
-```
-
-Instale as dependências:
-
-```bash
-pip install -r requirements.txt
-```
-
-No PowerShell, configure as variáveis locais antes de iniciar o Django:
-
-```powershell
-$env:SECRET_KEY = python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-$env:DEBUG = "True"
-$env:EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-$env:FRONTEND_URL = "http://localhost:5173"
-$env:CORS_ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
-```
-
-Em produção, configure `SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` e as variáveis `EMAIL_HOST*` no provedor de hospedagem. Não use a chave local em produção.
-
-Execute as migrações:
-
-```bash
+set -a
+source .env
+set +a
 python manage.py migrate
-```
-
-Inicie o servidor:
-
-```bash
+python manage.py seed_demo
 python manage.py runserver
 ```
 
-O Back-End ficará disponível em:
+A API fica em `http://127.0.0.1:8000/api/`; a verificação de saúde fica em `/health/`. A documentação OpenAPI em `/api/docs/` exige uma conta administrativa.
 
-```text
-http://127.0.0.1:8000/
-```
+### Frontend
 
----
-
-### 3. Executando o Front-End
-
-Abra outro terminal e acesse:
+Em outro terminal:
 
 ```bash
 cd frontend
-```
-
-Instale as dependências:
-
-```bash
-npm install
-```
-
-Inicie o projeto:
-
-```bash
+npm ci
 npm run dev
 ```
 
-O Front-End ficará disponível em:
+Por padrão, a interface usa `http://127.0.0.1:8000/api`. Para mudar, defina `VITE_API_URL` antes de iniciar o Vite.
 
-```text
-http://localhost:5173/
+## Testes e verificações
+
+```bash
+cd backend
+python manage.py check
+python manage.py makemigrations --check --dry-run
+python manage.py test
 ```
 
----
+```bash
+cd frontend
+npm ci
+npm run lint
+npm run build
+```
 
-## 📚 Principais aprendizados
+O GitHub Actions executa as verificações nos pull requests e em atualizações da branch principal.
 
-O desenvolvimento do UPA proporcionou experiência prática em diferentes etapas de uma aplicação web.
+## Configuração de produção
 
-### Desenvolvimento
+Configure variáveis de ambiente; não publique segredos no repositório.
 
-* Estruturação de aplicações Web;
-* Desenvolvimento de interfaces;
-* Integração entre Front-End e Back-End;
-* Criação e consumo de APIs REST;
-* Autenticação utilizando JWT;
-* Organização de rotas;
-* Manipulação de dados acadêmicos.
+- `SECRET_KEY`: chave aleatória exclusiva.
+- `DEBUG=False`.
+- `ALLOWED_HOSTS`: nomes de host exatos da API.
+- `DATABASE_URL`: URL PostgreSQL com TLS.
+- `CORS_ALLOWED_ORIGINS` e `CSRF_TRUSTED_ORIGINS`: origens exatas usadas pelo frontend.
+- `FRONTEND_URL`: endereço do frontend, usado em links de redefinição.
+- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` e `DEFAULT_FROM_EMAIL`.
+- `MEDIA_ROOT`: diretório persistente para arquivos enviados. Configure armazenamento durável no provedor de hospedagem.
+- `SECURE_SSL_REDIRECT`, cookies seguros e HSTS são ativados por padrão quando `DEBUG=False`; ajuste apenas se o proxy exigir configuração específica.
 
-### Engenharia e ferramentas
+O script `backend/build.sh` instala dependências, executa `check --deploy`, coleta arquivos estáticos e aplica migrações. Configure o comando de start do serviço para iniciar Gunicorn no módulo `core.wsgi`.
 
-* Separação de responsabilidades;
-* Organização de projeto;
-* Versionamento com Git;
-* Uso do GitHub;
-* Integração e publicação da aplicação.
+## Dados de demonstração
 
----
-
-## 📈 Status do projeto
-
-**Concluído como projeto acadêmico e em evolução para portfólio profissional.**
-
-Possíveis melhorias futuras:
-
-* [ ] Melhorar a documentação da API;
-* [ ] Adicionar screenshots da aplicação;
-* [ ] Melhorar a responsividade;
-* [ ] Refinar autenticação e permissões;
-* [ ] Adicionar testes automatizados;
-* [ ] Continuar refinando o deploy e a documentação.
-
----
-
-## 🖼️ Screenshots
-
-As imagens da aplicação serão adicionadas posteriormente nesta seção.
-
-> **Nota:** as imagens ainda não estão armazenadas no repositório.
-
-Quando forem adicionadas, elas poderão ser referenciadas diretamente pelo README utilizando caminhos relativos do próprio repositório.
-
----
-
-## 👤 Autor
-
-**Rodrigo Pinheiro**
-
-Desenvolvedor Web Júnior com foco em **Back-End, Python, Django, APIs REST e bancos de dados relacionais**.
-
-<div align="center">
-
-<a href="https://github.com/ZaraTakion">
-  <img src="https://img.shields.io/badge/GitHub-ZaraTakion-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
-</a>
-
-<a href="mailto:rm20022101@gmail.com">
-  <img src="https://img.shields.io/badge/Email-Contato-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email">
-</a>
-
-</div>
-
----
-
-<div align="center">
-
-**UPA — Upgrade Portal Aluno**
-
-Projeto acadêmico desenvolvido durante a graduação em Sistemas para Internet.
-
-</div>
+`python manage.py seed_demo` cria registros demonstrativos idempotentes para desenvolvimento. Não execute esse comando como parte do deploy de produção.
