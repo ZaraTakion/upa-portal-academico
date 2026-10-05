@@ -5,6 +5,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 def env_bool(name, default=False):
