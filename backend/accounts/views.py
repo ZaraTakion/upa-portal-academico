@@ -65,7 +65,10 @@ class CookieTokenRefreshView(TokenRefreshView):
         if not refresh:
             return Response({"detail": "Refresh token ausente."}, status=401)
         serializer = self.get_serializer(data={"refresh": refresh})
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError:
+            return Response({"detail": "Refresh token inválido ou revogado."}, status=401)
         data = dict(serializer.validated_data)
         response = Response(data)
         if data.get("refresh"):
