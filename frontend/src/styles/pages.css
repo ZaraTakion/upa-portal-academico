@@ -335,3 +335,47 @@
 .teacher-card {
   min-height: 220px;
 }
+
+.teacher-class-card {
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+.teacher-class-card h2 {
+  margin: 16px 0 4px;
+}
+
+.teacher-class-name {
+  color: var(--text-secondary);
+}
+
+.teacher-class-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.teacher-class-meta span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.teacher-class-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 22px;
+}
+
+.teacher-class-actions .btn {
+  width: 100%;
+  padding-inline: 10px;
+}
