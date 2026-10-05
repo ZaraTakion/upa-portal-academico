@@ -251,6 +251,16 @@
   padding-inline: 0;
 }
 
+.menu-button {
+  display: none;
+}
+
+.navbar-title {
+  margin-right: auto;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
 .navbar-actions {
   display: flex;
   align-items: center;
