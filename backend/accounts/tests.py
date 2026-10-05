@@ -163,7 +163,7 @@ class RefreshCookieTests(TestCase):
         refresh = self.client.cookies["upa_refresh"].value
         logout = self.client.post(reverse("token_logout"), {}, content_type="application/json")
         self.assertEqual(logout.status_code, 205)
-        self.assertNotIn("upa_refresh", logout.cookies)
+        self.assertEqual(logout.cookies["upa_refresh"].value, "")
         self.client.cookies["upa_refresh"] = refresh
         response = self.client.post(
             reverse("token_refresh"),
