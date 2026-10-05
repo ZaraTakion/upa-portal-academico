@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -25,7 +26,10 @@ class NotificationViewSet(viewsets.ModelViewSet):
         if unread == "true":
             queryset = queryset.filter(is_read=False)
         if active_only == "true":
-            queryset = queryset.filter(expires_at__gte=timezone.localdate())
+            queryset = queryset.filter(
+                Q(expires_at__isnull=True)
+                | Q(expires_at__gte=timezone.localdate())
+            )
         if notification_type:
             queryset = queryset.filter(notification_type=notification_type)
         return queryset.order_by("-created_at")
