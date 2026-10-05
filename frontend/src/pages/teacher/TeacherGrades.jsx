@@ -39,10 +39,14 @@ function TeacherGrades() {
     setFeedback("");
 
     try {
-      await api.patch(`/academic/grades/${grade.id}/`, {
+      const payload = {
         grade: grade.grade === "" ? null : grade.grade,
-        absence: grade.absence,
-      });
+      };
+      if (!grade.absence_is_tracked) {
+        payload.absence = grade.absence;
+      }
+
+      await api.patch(`/academic/grades/${grade.id}/`, payload);
 
       setAlertType("success");
       setFeedback("Nota atualizada com sucesso.");
@@ -64,7 +68,7 @@ function TeacherGrades() {
       <PageHeader
         eyebrow="Professor"
         title="Lançamento de Notas"
-        description="Atualize notas e faltas dos alunos."
+        description="Atualize as notas. Nas turmas com frequência registrada, as faltas são calculadas automaticamente."
       />
 
       <Alert type={alertType} message={feedback} />
@@ -107,14 +111,21 @@ function TeacherGrades() {
                   </td>
 
                   <td>
-                    <input
-                      type="number"
-                      min="0"
-                      value={grade.absence ?? 0}
-                      onChange={(event) =>
-                        updateLocalGrade(grade.id, "absence", event.target.value)
-                      }
-                    />
+                    {grade.absence_is_tracked ? (
+                      <span>
+                        {grade.absence ?? 0}
+                        <small style={{ display: "block" }}>Calculadas pela frequência</small>
+                      </span>
+                    ) : (
+                      <input
+                        type="number"
+                        min="0"
+                        value={grade.absence ?? 0}
+                        onChange={(event) =>
+                          updateLocalGrade(grade.id, "absence", event.target.value)
+                        }
+                      />
+                    )}
                   </td>
 
                   <td>
