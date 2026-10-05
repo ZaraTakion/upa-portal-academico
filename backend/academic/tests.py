@@ -314,6 +314,114 @@ class AssessmentWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(AssessmentResult.objects.count(), 0)
 
+    def test_assessment_results_update_weighted_final_grade(self):
+        first = Assessment.objects.create(
+            class_group=self.group,
+            title="N1",
+            category="n1",
+            weight=2,
+            maximum_score=20,
+        )
+        second = Assessment.objects.create(
+            class_group=self.group,
+            title="N2",
+            category="n2",
+            weight=1,
+            maximum_score=10,
+        )
+        self.client.force_authenticate(self.teacher_user)
+
+        first_result = self.client.post(
+            reverse("assessment-results-list"),
+            {"assessment": first.pk, "student": self.student.pk, "score": "16.00"},
+            format="json",
+        )
+        self.assertEqual(first_result.status_code, 201)
+        grade = Grade.objects.get(
+            student=self.student, class_group=self.group, attempt=1
+        )
+        self.assertEqual(grade.grade, Decimal("8.00"))
+
+        manual_edit = self.client.patch(
+            reverse("grades-detail", args=[grade.pk]),
+            {"grade": "10.00"},
+            format="json",
+        )
+        self.assertEqual(manual_edit.status_code, 400)
+        grade.refresh_from_db()
+        self.assertEqual(grade.grade, Decimal("8.00"))
+
+        second_result = self.client.post(
+            reverse("assessment-results-list"),
+            {"assessment": second.pk, "student": self.student.pk, "score": "9.00"},
+            format="json",
+        )
+        self.assertEqual(second_result.status_code, 201)
+        grade.refresh_from_db()
+        self.assertEqual(grade.grade, Decimal("8.33"))
+
+        changed = self.client.patch(
+            reverse("assessment-results-detail", args=[second_result.data["id"]]),
+            {"score": "5.00"},
+            format="json",
+        )
+        self.assertEqual(changed.status_code, 200)
+        grade.refresh_from_db()
+        self.assertEqual(grade.grade, Decimal("7.00"))
+
+        ungraded = self.client.patch(
+            reverse("assessment-results-detail", args=[second_result.data["id"]]),
+            {"score": None},
+            format="json",
+        )
+        self.assertEqual(ungraded.status_code, 200)
+        grade.refresh_from_db()
+        self.assertEqual(grade.grade, Decimal("8.00"))
+
+        recovery = Assessment.objects.create(
+            class_group=self.group,
+            title="Recuperação",
+            category="recovery",
+            maximum_score=10,
+        )
+        recovery_result = self.client.post(
+            reverse("assessment-results-list"),
+            {"assessment": recovery.pk, "student": self.student.pk, "score": "6.00"},
+            format="json",
+        )
+        self.assertEqual(recovery_result.status_code, 201)
+        recovery_grade = Grade.objects.get(
+            student=self.student, class_group=self.group, attempt=2
+        )
+        self.assertEqual(recovery_grade.grade, Decimal("6.00"))
+
+    def test_deleting_assessment_result_recalculates_final_grade(self):
+        assessment = Assessment.objects.create(
+            class_group=self.group,
+            title="Prova",
+            category="n1",
+            maximum_score=10,
+        )
+        self.client.force_authenticate(self.teacher_user)
+        created = self.client.post(
+            reverse("assessment-results-list"),
+            {"assessment": assessment.pk, "student": self.student.pk, "score": "8.00"},
+            format="json",
+        )
+        self.assertEqual(created.status_code, 201)
+        grade = Grade.objects.get(
+            student=self.student, class_group=self.group, attempt=1
+        )
+        self.assertEqual(grade.grade, Decimal("8.00"))
+
+        deleted = self.client.delete(
+            reverse("assessment-results-detail", args=[created.data["id"]])
+        )
+        self.assertEqual(deleted.status_code, 204)
+        grade.refresh_from_db()
+        self.assertIsNone(grade.grade)
+        self.assertEqual(grade.status, "pending")
+
     def test_teacher_can_record_attendance_for_enrolled_student(self):
         self.client.force_authenticate(self.teacher_user)
         response = self.client.post(

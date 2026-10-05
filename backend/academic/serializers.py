@@ -337,6 +337,7 @@ class GradeSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     class_group = serializers.IntegerField(source="class_group_id", read_only=True, allow_null=True)
     absence_is_tracked = serializers.SerializerMethodField()
+    grade_is_calculated = serializers.SerializerMethodField()
 
     class Meta:
         model = Grade
@@ -349,6 +350,7 @@ class GradeSerializer(serializers.ModelSerializer):
             "subject_name",
             "class_group",
             "grade",
+            "grade_is_calculated",
             "absence",
             "absence_is_tracked",
             "status",
@@ -375,6 +377,26 @@ class GradeSerializer(serializers.ModelSerializer):
 
     def get_absence_is_tracked(self, obj):
         return bool(obj.class_group_id)
+
+    def get_grade_is_calculated(self, obj):
+        return bool(obj.class_group_id)
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if (
+            self.instance
+            and self.instance.class_group_id
+            and "grade" in attrs
+            and user
+            and user.is_authenticated
+            and not user.is_staff
+            and user.groups.filter(name="Professor").exists()
+        ):
+            raise serializers.ValidationError(
+                {"grade": "A nota desta turma é calculada pelas avaliações registradas."}
+            )
+        return attrs
 
 
 class AcademicCalendarSerializer(serializers.ModelSerializer):
