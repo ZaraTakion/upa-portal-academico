@@ -85,7 +85,7 @@ class DashboardSummaryView(APIView):
                 "id": student.id,
                 "full_name": user.get_full_name() or user.username,
                 "registration": student.registration,
-                "course": student.course,
+                "course": student.course.name,
                 "semester": student.semester,
                 "phone": student.phone,
                 "address": student.address,
