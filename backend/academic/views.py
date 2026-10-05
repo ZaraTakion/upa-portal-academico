@@ -75,6 +75,9 @@ class AssessmentViewSet(viewsets.ModelViewSet):
             queryset = Assessment.objects.filter(
                 class_group__classenrollment__student__user=user
             )
+        class_group = self.request.query_params.get("class_group")
+        if class_group:
+            queryset = queryset.filter(class_group_id=class_group)
         return queryset.select_related(
             "class_group__subject", "class_group__teacher__user"
         ).order_by("due_date", "title")
@@ -100,6 +103,16 @@ class AssessmentResultViewSet(viewsets.ModelViewSet):
             student__user=user,
         ).distinct()
 
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        class_group = self.request.query_params.get("class_group")
+        assessment = self.request.query_params.get("assessment")
+        if class_group:
+            queryset = queryset.filter(assessment__class_group_id=class_group)
+        if assessment:
+            queryset = queryset.filter(assessment_id=assessment)
+        return queryset
+
     def perform_create(self, serializer):
         serializer.save(graded_at=timezone.now())
 
@@ -121,6 +134,16 @@ class AttendanceRecordViewSet(viewsets.ModelViewSet):
             class_group__classenrollment__student__user=user,
             student__user=user,
         ).distinct()
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        class_group = self.request.query_params.get("class_group")
+        held_at = self.request.query_params.get("date")
+        if class_group:
+            queryset = queryset.filter(class_group_id=class_group)
+        if held_at:
+            queryset = queryset.filter(held_at__date=held_at)
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(recorded_by=self.request.user)
@@ -190,10 +213,21 @@ class ClassEnrollmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return ClassEnrollment.objects.select_related("student__user", "class_group__subject").all()
-        if user.groups.filter(name="Professor").exists():
-            return ClassEnrollment.objects.filter(class_group__teacher__user=user).select_related("student__user", "class_group__subject")
-        return ClassEnrollment.objects.filter(student__user=user).select_related("student__user", "class_group__subject")
+            queryset = ClassEnrollment.objects.all()
+        elif user.groups.filter(name="Professor").exists():
+            queryset = ClassEnrollment.objects.filter(class_group__teacher__user=user)
+        else:
+            queryset = ClassEnrollment.objects.filter(student__user=user)
+
+        class_group = self.request.query_params.get("class_group")
+        status_param = self.request.query_params.get("status")
+        if class_group:
+            queryset = queryset.filter(class_group_id=class_group)
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+        return queryset.select_related(
+            "student__user", "class_group__subject"
+        ).order_by("student__user__last_name", "student__user__first_name", "pk")
 
 
 class GradeViewSet(viewsets.ModelViewSet):
