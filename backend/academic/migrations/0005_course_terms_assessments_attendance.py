@@ -127,12 +127,7 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(blank=True, on_delete=django.db.models.deletion.PROTECT, related_name="class_groups", to="academic.academicterm"),
         ),
         migrations.AlterUniqueTogether(name="classenrollment", unique_together=set()),
-        migrations.AlterUniqueTogether(name="classgroup", unique_together=set()),
         migrations.AlterUniqueTogether(name="grade", unique_together=set()),
-        migrations.AddConstraint(
-            model_name="classgroup",
-            constraint=models.UniqueConstraint(fields=("name", "subject", "term"), name="uniq_classgroup_subject_term"),
-        ),
         migrations.AddConstraint(
             model_name="classenrollment",
             constraint=models.UniqueConstraint(fields=("class_group", "student"), name="uniq_student_class_enrollment"),
