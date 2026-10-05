@@ -65,7 +65,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="AcademicTerm",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("code", models.CharField(max_length=20, unique=True)),
                 ("starts_on", models.DateField(blank=True, null=True)),
                 ("ends_on", models.DateField(blank=True, null=True)),
@@ -76,7 +76,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="GradePolicy",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("passing_score", models.DecimalField(decimal_places=2, default=7, max_digits=4)),
                 ("attention_score", models.DecimalField(decimal_places=2, default=5, max_digits=4)),
                 ("maximum_absences", models.PositiveSmallIntegerField(blank=True, null=True)),
@@ -160,7 +160,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Assessment",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("title", models.CharField(max_length=200)),
                 ("category", models.CharField(choices=[("n1", "N1"), ("n2", "N2"), ("project", "Projeto"), ("recovery", "Recuperação"), ("other", "Outra")], default="other", max_length=20)),
                 ("weight", models.DecimalField(decimal_places=2, default=1, max_digits=5)),
@@ -178,7 +178,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="AssessmentResult",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("score", models.DecimalField(blank=True, decimal_places=2, max_digits=5, null=True)),
                 ("feedback", models.TextField(blank=True)),
                 ("graded_at", models.DateTimeField(blank=True, null=True)),
@@ -197,7 +197,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="AttendanceRecord",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("held_at", models.DateTimeField()),
                 ("present", models.BooleanField(default=True)),
                 ("notes", models.CharField(blank=True, max_length=255)),
