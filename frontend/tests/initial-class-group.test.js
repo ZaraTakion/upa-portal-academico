@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getInitialClassGroup } from "../src/utils/initialClassGroup.js";
+import {
+  getInitialClassGroup,
+  getRequestedClassGroupId,
+} from "../src/utils/initialClassGroup.js";
 
 const groups = [
   { id: 4, name: "Turma A" },
@@ -18,4 +21,10 @@ test("falls back to the first available class for an invalid request", () => {
 
 test("returns null when the teacher has no classes", () => {
   assert.equal(getInitialClassGroup([], null), null);
+});
+
+test("keeps a requested class filter only when the teacher owns that class", () => {
+  assert.equal(getRequestedClassGroupId(groups, "9"), "9");
+  assert.equal(getRequestedClassGroupId(groups, "999"), "");
+  assert.equal(getRequestedClassGroupId([], "9"), "");
 });
