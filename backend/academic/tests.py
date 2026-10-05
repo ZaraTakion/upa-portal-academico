@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
+from django.utils import timezone
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from .models import ClassEnrollment, ClassGroup, Course, Grade, StudentProfile, Subject, TeacherProfile
+from .models import AcademicCalendar, ClassEnrollment, ClassGroup, Course, Grade, StudentProfile, Subject, TeacherProfile
 
 
 class GradePermissionTests(TestCase):
@@ -142,3 +145,40 @@ class GradePermissionTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["id"], self.grade.pk)
+
+
+class AcademicCalendarFilteringTests(TestCase):
+    def test_active_only_keeps_events_without_expiry(self):
+        user = User.objects.create_user(username="student")
+        today = timezone.localdate()
+        AcademicCalendar.objects.create(
+            title="Sem expiração",
+            description="Válido sem data final.",
+            event_type="notice",
+            start_date=today,
+            visible_until=None,
+        )
+        AcademicCalendar.objects.create(
+            title="Vigente",
+            description="Ainda está vigente.",
+            event_type="notice",
+            start_date=today,
+            visible_until=today + timedelta(days=1),
+        )
+        AcademicCalendar.objects.create(
+            title="Expirado",
+            description="Não deve aparecer.",
+            event_type="notice",
+            start_date=today - timedelta(days=3),
+            visible_until=today - timedelta(days=1),
+        )
+        client = APIClient()
+        client.force_authenticate(user)
+
+        response = client.get(reverse("calendar-list"), {"active_only": "true"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            {item["title"] for item in response.data},
+            {"Sem expiração", "Vigente"},
+        )
