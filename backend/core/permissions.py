@@ -49,3 +49,25 @@ class IsNotificationOwnerOrStaff(BasePermission):
                 or view.action == "mark_as_read"
             )
         )
+
+
+class IsStudentProfileOwnerOrStaff(BasePermission):
+    editable_fields = {"phone", "address", "guardian_name"}
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if request.method in SAFE_METHODS or user.is_staff:
+            return True
+        return request.method == "PATCH" and view.action == "partial_update"
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS or request.user.is_staff:
+            return True
+        return (
+            request.method == "PATCH"
+            and view.action == "partial_update"
+            and obj.user_id == request.user.id
+            and set(request.data.keys()).issubset(self.editable_fields)
+        )
