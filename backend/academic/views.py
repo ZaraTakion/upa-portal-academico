@@ -4,13 +4,19 @@ from rest_framework import viewsets
 
 from core.permissions import (
     IsStaffOrReadOnly,
+    IsStaffOrTeacherAcademicEditor,
     IsStaffOrTeacherGradeEditor,
     IsStudentProfileOwnerOrStaff,
 )
 from .models import (
     AcademicCalendar,
+    AcademicTerm,
+    Assessment,
+    AssessmentResult,
+    AttendanceRecord,
     ClassEnrollment,
     ClassGroup,
+    Course,
     Grade,
     StudentProfile,
     Subject,
@@ -19,14 +25,105 @@ from .models import (
 )
 from .serializers import (
     AcademicCalendarSerializer,
+    AcademicTermSerializer,
+    AssessmentResultSerializer,
+    AssessmentSerializer,
+    AttendanceRecordSerializer,
     ClassEnrollmentSerializer,
     ClassGroupSerializer,
+    CourseSerializer,
     GradeSerializer,
     StudentProfileSerializer,
     SubjectSerializer,
     TeacherProfileSerializer,
     WeeklyScheduleSerializer,
 )
+
+
+class CourseViewSet(viewsets.ModelViewSet):
+    serializer_class = CourseSerializer
+    permission_classes = [IsStaffOrReadOnly]
+    queryset = Course.objects.all().order_by("name")
+
+
+class AcademicTermViewSet(viewsets.ModelViewSet):
+    serializer_class = AcademicTermSerializer
+    permission_classes = [IsStaffOrReadOnly]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return AcademicTerm.objects.all()
+        if user.groups.filter(name="Professor").exists():
+            return AcademicTerm.objects.filter(class_groups__teacher__user=user).distinct()
+        return AcademicTerm.objects.filter(
+            class_groups__classenrollment__student__user=user
+        ).distinct()
+
+
+class AssessmentViewSet(viewsets.ModelViewSet):
+    serializer_class = AssessmentSerializer
+    permission_classes = [IsStaffOrTeacherAcademicEditor]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            queryset = Assessment.objects.all()
+        elif user.groups.filter(name="Professor").exists():
+            queryset = Assessment.objects.filter(class_group__teacher__user=user)
+        else:
+            queryset = Assessment.objects.filter(
+                class_group__classenrollment__student__user=user
+            )
+        return queryset.select_related(
+            "class_group__subject", "class_group__teacher__user"
+        ).order_by("due_date", "title")
+
+
+class AssessmentResultViewSet(viewsets.ModelViewSet):
+    serializer_class = AssessmentResultSerializer
+    permission_classes = [IsStaffOrTeacherAcademicEditor]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = AssessmentResult.objects.select_related(
+            "assessment__class_group__teacher__user",
+            "assessment__class_group__subject",
+            "student__user",
+        )
+        if user.is_staff:
+            return queryset
+        if user.groups.filter(name="Professor").exists():
+            return queryset.filter(assessment__class_group__teacher__user=user)
+        return queryset.filter(
+            assessment__class_group__classenrollment__student__user=user,
+            student__user=user,
+        ).distinct()
+
+    def perform_create(self, serializer):
+        serializer.save(graded_at=timezone.now())
+
+
+class AttendanceRecordViewSet(viewsets.ModelViewSet):
+    serializer_class = AttendanceRecordSerializer
+    permission_classes = [IsStaffOrTeacherAcademicEditor]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = AttendanceRecord.objects.select_related(
+            "class_group__subject", "student__user", "recorded_by"
+        )
+        if user.is_staff:
+            return queryset
+        if user.groups.filter(name="Professor").exists():
+            return queryset.filter(class_group__teacher__user=user)
+        return queryset.filter(
+            class_group__classenrollment__student__user=user,
+            student__user=user,
+        ).distinct()
+
+    def perform_create(self, serializer):
+        serializer.save(recorded_by=self.request.user)
 
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
@@ -36,12 +133,12 @@ class StudentProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return StudentProfile.objects.all()
+            return StudentProfile.objects.select_related("user", "course").all()
         if user.groups.filter(name="Professor").exists():
             return StudentProfile.objects.filter(
                 classenrollment__class_group__teacher__user=user
             ).distinct()
-        return StudentProfile.objects.filter(user=user)
+        return StudentProfile.objects.filter(user=user).select_related("user", "course")
 
 
 class TeacherProfileViewSet(viewsets.ModelViewSet):
@@ -93,10 +190,10 @@ class ClassEnrollmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return ClassEnrollment.objects.all()
+            return ClassEnrollment.objects.select_related("student__user", "class_group__subject").all()
         if user.groups.filter(name="Professor").exists():
-            return ClassEnrollment.objects.filter(class_group__teacher__user=user)
-        return ClassEnrollment.objects.filter(student__user=user)
+            return ClassEnrollment.objects.filter(class_group__teacher__user=user).select_related("student__user", "class_group__subject")
+        return ClassEnrollment.objects.filter(student__user=user).select_related("student__user", "class_group__subject")
 
 
 class GradeViewSet(viewsets.ModelViewSet):
@@ -121,7 +218,7 @@ class GradeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(subject__id=subject)
         if status_param:
             queryset = queryset.filter(status=status_param)
-        return queryset.order_by("subject__name")
+        return queryset.select_related("student__user", "subject", "class_group").order_by("subject__name")
 
 
 class AcademicCalendarViewSet(viewsets.ModelViewSet):
