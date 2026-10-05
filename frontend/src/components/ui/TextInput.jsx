@@ -6,6 +6,7 @@ function TextInput({
   placeholder,
   required = false,
   disabled = false,
+  ...inputProps
 }) {
   return (
     <label className="field">
@@ -18,6 +19,7 @@ function TextInput({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
+        {...inputProps}
       />
     </label>
   );
