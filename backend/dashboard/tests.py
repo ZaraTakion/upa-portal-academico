@@ -42,7 +42,7 @@ class DashboardSummaryTests(TestCase):
         self.other_student = StudentProfile.objects.create(
             user=self.other_student_user,
             registration="S-302",
-            course="Sistemas para Internet",
+            course=self.course,
             semester=1,
         )
         self.teacher = TeacherProfile.objects.create(
