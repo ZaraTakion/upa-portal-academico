@@ -59,6 +59,12 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install frontend dependencies
         run: npm ci
+      - name: Audit frontend dependencies
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          node -e 'const a=require("/tmp/npm-audit.json"); console.log(JSON.stringify(Object.entries(a.vulnerabilities || {}).map(([name, v]) => ({name, severity:v.severity, via:v.via, fixAvailable:v.fixAvailable})), null, 2))'
+      - name: Run frontend tests
+        run: npm test
       - name: Lint frontend
         run: npm run lint
       - name: Build frontend
