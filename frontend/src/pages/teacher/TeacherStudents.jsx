@@ -1,42 +1,105 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
 import MainLayout from "../../components/layout/MainLayout";
 import PageHeader from "../../components/ui/PageHeader";
+import SelectInput from "../../components/ui/SelectInput";
+import { getRequestedClassGroupId } from "../../utils/initialClassGroup";
 
 function TeacherStudents() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialClassGroupId = useRef(searchParams.get("class_group"));
+  const [groups, setGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState("");
+  const [groupsLoaded, setGroupsLoaded] = useState(false);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  async function loadStudents() {
-    try {
-      const response = await api.get("/academic/class-enrollments/");
-      setStudents(response.data);
-    } catch (error) {
-      console.error("Erro ao carregar alunos:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    api.get("/academic/class-groups/")
+      .then((response) => {
+        setGroups(response.data);
+        setSelectedGroup(
+          getRequestedClassGroupId(response.data, initialClassGroupId.current),
+        );
+      })
+      .catch((error) => {
+        console.error("Erro ao carregar turmas:", error);
+      })
+      .finally(() => setGroupsLoaded(true));
+  }, []);
 
   useEffect(() => {
-    loadStudents();
-  }, []);
+    if (!groupsLoaded) return undefined;
+
+    let active = true;
+    setLoading(true);
+    const query = selectedGroup
+      ? `?class_group=${encodeURIComponent(selectedGroup)}`
+      : "";
+
+    api.get(`/academic/class-enrollments/${query}`)
+      .then((response) => {
+        if (active) setStudents(response.data);
+      })
+      .catch((error) => {
+        if (active) {
+          console.error("Erro ao carregar alunos:", error);
+          setStudents([]);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [groupsLoaded, selectedGroup]);
+
+  function handleGroupChange(event) {
+    const nextGroup = event.target.value;
+    setSelectedGroup(nextGroup);
+    setSearchParams(nextGroup ? { class_group: nextGroup } : {});
+  }
+
+  const groupOptions = [
+    { value: "", label: "Todas as turmas" },
+    ...groups.map((group) => ({
+      value: String(group.id),
+      label: `${group.subject_name} — ${group.name}`,
+    })),
+  ];
 
   return (
     <MainLayout>
       <PageHeader
         eyebrow="Professor"
         title="Alunos por Turma"
-        description="Visualize os alunos vinculados às suas turmas."
+        description="Filtre os alunos de uma turma ou consulte todas as suas turmas."
       />
+
+      <section className="base-card form-card teacher-student-filter">
+        <SelectInput
+          label="Turma"
+          value={selectedGroup}
+          onChange={handleGroupChange}
+          options={groupOptions}
+        />
+      </section>
 
       {loading ? (
         <Loading text="Carregando alunos..." />
       ) : students.length === 0 ? (
-        <EmptyState title="Nenhum aluno" message="Nenhum aluno encontrado nas turmas." />
+        <EmptyState
+          title="Nenhum aluno"
+          message={selectedGroup
+            ? "Não há alunos nesta turma."
+            : "Nenhum aluno encontrado nas suas turmas."}
+        />
       ) : (
         <div className="table-wrapper">
           <table>

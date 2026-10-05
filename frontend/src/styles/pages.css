@@ -361,10 +361,15 @@
   font-weight: 700;
 }
 
-.teacher-class-meta span:first-child {
+.teacher-class-meta a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  color: var(--primary);
+}
+
+.teacher-class-meta a:hover {
+  text-decoration: underline;
 }
 
 .teacher-class-actions {
@@ -378,4 +383,8 @@
 .teacher-class-actions .btn {
   width: 100%;
   padding-inline: 10px;
+}
+
+.teacher-student-filter {
+  margin-bottom: 20px;
 }

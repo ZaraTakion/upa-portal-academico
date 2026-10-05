@@ -5,3 +5,10 @@ export function getInitialClassGroup(groups, requestedId) {
 
   return groups.find((group) => String(group.id) === String(requestedId)) || groups[0];
 }
+
+export function getRequestedClassGroupId(groups, requestedId) {
+  const requestedGroup = groups.find(
+    (group) => String(group.id) === String(requestedId),
+  );
+  return requestedGroup ? String(requestedGroup.id) : "";
+}
