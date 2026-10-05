@@ -48,6 +48,32 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "cpf",
         ]
 
+    def get_fields(self):
+        fields = super().get_fields()
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated or user.is_staff:
+            return fields
+
+        if user.groups.filter(name="Professor").exists():
+            for name in (
+                "email",
+                "cpf",
+                "phone",
+                "address",
+                "mother_name",
+                "father_name",
+                "guardian_name",
+            ):
+                fields.pop(name, None)
+        else:
+            for name in ("user", "username", "email", "first_name", "last_name",
+                         "registration", "course", "semester", "cpf",
+                         "mother_name", "father_name"):
+                if name in fields:
+                    fields[name].read_only = True
+        return fields
+
     def get_full_name(self, obj):
         return obj.user.get_full_name() or obj.user.username
 
