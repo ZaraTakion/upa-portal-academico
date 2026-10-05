@@ -75,6 +75,15 @@ class AcademicFileSerializer(serializers.ModelSerializer):
     class_group_name = serializers.CharField(source="class_group.name", read_only=True)
     subject_name = serializers.CharField(source="subject.name", read_only=True)
     file_type_display = serializers.CharField(source="get_file_type_display", read_only=True)
+    assignment = serializers.PrimaryKeyRelatedField(
+        queryset=AcademicFile.objects.filter(file_type="assignment"),
+        required=False,
+        allow_null=True,
+    )
+    due_at = serializers.SerializerMethodField()
+    submission_status = serializers.SerializerMethodField()
+    reviewed_at = serializers.DateTimeField(read_only=True)
+    feedback = serializers.CharField(read_only=True, allow_blank=True)
     file = serializers.FileField(write_only=True, allow_empty_file=False)
     download_url = serializers.SerializerMethodField()
 
@@ -91,6 +100,11 @@ class AcademicFileSerializer(serializers.ModelSerializer):
             "title",
             "file_type",
             "file_type_display",
+            "assignment",
+            "due_at",
+            "submission_status",
+            "feedback",
+            "reviewed_at",
             "file",
             "download_url",
             "uploaded_at",
@@ -101,6 +115,10 @@ class AcademicFileSerializer(serializers.ModelSerializer):
             "class_group_name",
             "subject_name",
             "file_type_display",
+            "due_at",
+            "submission_status",
+            "feedback",
+            "reviewed_at",
             "download_url",
             "uploaded_at",
         ]
@@ -109,13 +127,51 @@ class AcademicFileSerializer(serializers.ModelSerializer):
         fields = super().get_fields()
         request = self.context.get("request")
         user = getattr(request, "user", None)
-        if user and user.is_authenticated and not user.is_staff:
+        if not user or not user.is_authenticated:
+            return fields
+        if not user.is_staff and not user.groups.filter(name="Professor").exists():
             fields["file_type"].read_only = True
+            fields["due_at"].read_only = True
+            fields["feedback"].read_only = True
+        else:
+            fields["feedback"].read_only = True
         return fields
 
     def get_download_url(self, obj):
         request = self.context.get("request")
         return reverse("files-download", args=[obj.pk], request=request)
+
+    def get_due_at(self, obj):
+        if obj.assignment_id:
+            return obj.assignment.due_at
+        return obj.due_at
+
+    def get_submission_status(self, obj):
+        if obj.file_type != "submission":
+            return None
+        if obj.reviewed_at:
+            return "reviewed"
+        if obj.assignment_id and obj.assignment.due_at and obj.uploaded_at > obj.assignment.due_at:
+            return "late"
+        return "submitted"
+
+    def validate(self, attrs):
+        class_group = attrs.get("class_group", getattr(self.instance, "class_group", None))
+        assignment = attrs.get("assignment", getattr(self.instance, "assignment", None))
+        file_type = attrs.get("file_type", getattr(self.instance, "file_type", "submission"))
+        due_at = attrs.get("due_at", getattr(self.instance, "due_at", None))
+        if assignment:
+            if assignment.file_type != "assignment":
+                raise serializers.ValidationError({"assignment": "Selecione uma atividade válida."})
+            if class_group and class_group.pk != assignment.class_group_id:
+                raise serializers.ValidationError({"class_group": "A atividade pertence a outra turma."})
+            if file_type not in {"submission", "assignment"}:
+                raise serializers.ValidationError({"assignment": "Apenas entregas podem ser vinculadas a uma atividade."})
+        if file_type == "assignment" and not due_at:
+            raise serializers.ValidationError({"due_at": "Informe o prazo para entrega."})
+        if class_group:
+            attrs["subject"] = class_group.subject
+        return attrs
 
     def validate_file(self, uploaded):
         if uploaded.size > settings.ACADEMIC_FILE_MAX_SIZE:
@@ -146,12 +202,6 @@ class AcademicFileSerializer(serializers.ModelSerializer):
         if extension == ".txt" and b"\x00" in sample:
             raise serializers.ValidationError("O arquivo TXT contém dados binários.")
         return uploaded
-
-    def validate(self, attrs):
-        class_group = attrs.get("class_group")
-        if class_group:
-            attrs["subject"] = class_group.subject
-        return attrs
 
 
 class FinancialInvoiceSerializer(serializers.ModelSerializer):
