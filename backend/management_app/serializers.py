@@ -117,7 +117,6 @@ class AcademicFileSerializer(serializers.ModelSerializer):
             "class_group_name",
             "subject_name",
             "file_type_display",
-            "due_at",
             "submission_status",
             "feedback",
             "reviewed_at",
@@ -137,7 +136,7 @@ class AcademicFileSerializer(serializers.ModelSerializer):
             fields["assignment"].required = False
             fields["feedback"].read_only = True
         else:
-            fields["feedback"].read_only = True
+            fields["feedback"].read_only = False
         return fields
 
     def get_download_url(self, obj):
