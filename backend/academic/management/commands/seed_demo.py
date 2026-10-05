@@ -152,11 +152,16 @@ class Command(BaseCommand):
         ]
 
         for code, weekday, start, end, location in schedule_data:
+            subject = Subject.objects.get(code=code)
+            class_group = ClassGroup.objects.filter(
+                subject=subject, teacher=teacher_profile
+            ).first()
             WeeklySchedule.objects.update_or_create(
-                subject=Subject.objects.get(code=code),
+                subject=subject,
                 weekday=weekday,
                 start_time=start,
                 defaults={
+                    "class_group": class_group,
                     "teacher": teacher_profile,
                     "end_time": end,
                     "location": location,
