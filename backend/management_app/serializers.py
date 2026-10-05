@@ -139,7 +139,7 @@ class AcademicFileSerializer(serializers.ModelSerializer):
 class FinancialInvoiceSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
-    payment_method_display = serializers.CharField(source="get_payment_method_display", read_only=True)
+    payment_method_display = serializers.CharField(source="get_payment_method_display", read_only=True, allow_null=True)
 
     class Meta:
         model = FinancialInvoice
