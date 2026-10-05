@@ -10,7 +10,6 @@ import Button from "../../components/ui/Button";
 import PageHeader from "../../components/ui/PageHeader";
 import SelectInput from "../../components/ui/SelectInput";
 import TextInput from "../../components/ui/TextInput";
-import TextareaInput from "../../components/ui/TextareaInput";
 
 function TeacherAssessments() {
   const [groups, setGroups] = useState([]);
