@@ -64,10 +64,10 @@
   --shadow-lg: 0 22px 50px rgba(15, 23, 42, 0.12);
 
   /* Layout */
-  --sidebar-width: 280px;
+  --sidebar-width: 256px;
   --sidebar-collapsed-width: 88px;
   --navbar-height: 72px;
-  --content-max-width: 1440px;
+  --content-max-width: 1360px;
 
   /* Motion */
   --transition-fast: 0.16s ease;
@@ -258,6 +258,31 @@ textarea:focus-visible {
 .text-primary {
   color: var(--text-primary);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 14px;
+  transform: translateY(-150%);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+}
+.skip-link:focus { transform: translateY(0); }
 
 .hidden {
   display: none !important;
