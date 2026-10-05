@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
@@ -15,6 +16,7 @@ from .models import (
     ClassGroup,
     Course,
     Grade,
+    GradePolicy,
     StudentProfile,
     Subject,
     TeacherProfile,
@@ -364,3 +366,75 @@ class OptionalPaginationAndGradePolicyTests(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 400)
+
+
+class GradePolicyAbsenceTests(TestCase):
+    def setUp(self):
+        self.course = Course.objects.create(name="Curso de Políticas")
+        user = User.objects.create_user(username="absence-student")
+        student = StudentProfile.objects.create(
+            user=user,
+            registration="ABS-001",
+            course=self.course,
+            semester=1,
+        )
+        subject = Subject.objects.create(
+            name="Políticas Acadêmicas",
+            code="PA-001",
+            workload=60,
+            professor="Professor",
+        )
+        self.grade = Grade.objects.create(
+            student=student,
+            subject=subject,
+            grade=Decimal("8.00"),
+            absence=3,
+        )
+
+    def test_absence_limit_fails_only_above_the_configured_limit(self):
+        GradePolicy.objects.create(
+            passing_score="7.00",
+            attention_score="5.00",
+            maximum_absences=3,
+        )
+
+        self.grade.refresh_from_db()
+        self.assertEqual(self.grade.status, "approved")
+
+        self.grade.absence = 4
+        self.grade.save()
+        self.assertEqual(self.grade.status, "failed")
+
+        self.grade.grade = None
+        self.grade.save()
+        self.assertEqual(self.grade.status, "failed")
+
+    def test_policy_changes_recalculate_existing_grade_statuses(self):
+        policy = GradePolicy.objects.create(
+            passing_score="7.00",
+            attention_score="5.00",
+            maximum_absences=3,
+        )
+        self.grade.grade = Decimal("6.00")
+        self.grade.absence = 2
+        self.grade.save()
+        self.assertEqual(self.grade.status, "attention")
+
+        policy.maximum_absences = 1
+        policy.save()
+        self.grade.refresh_from_db()
+        self.assertEqual(self.grade.status, "failed")
+
+        policy.maximum_absences = None
+        policy.save()
+        self.grade.refresh_from_db()
+        self.assertEqual(self.grade.status, "attention")
+
+        policy.attention_score = "6.50"
+        policy.save()
+        self.grade.refresh_from_db()
+        self.assertEqual(self.grade.status, "failed")
+
+        policy.delete()
+        self.grade.refresh_from_db()
+        self.assertEqual(self.grade.status, "attention")
