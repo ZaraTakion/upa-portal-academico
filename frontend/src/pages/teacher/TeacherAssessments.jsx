@@ -1,5 +1,6 @@
 import { Plus, Save } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
 import { formatDate } from "../../utils/dateFormat";
@@ -13,6 +14,7 @@ import SelectInput from "../../components/ui/SelectInput";
 import TextInput from "../../components/ui/TextInput";
 
 function TeacherAssessments() {
+  const [searchParams] = useSearchParams();
   const [groups, setGroups] = useState([]);
   const [groupId, setGroupId] = useState("");
   const [assessments, setAssessments] = useState([]);
@@ -52,11 +54,16 @@ function TeacherAssessments() {
     api.get("/academic/class-groups/")
       .then((response) => {
         setGroups(response.data);
-        if (response.data.length) setGroupId(String(response.data[0].id));
+        if (response.data.length) {
+          const requestedId = searchParams.get("class_group");
+          const initialGroup = response.data.find((group) => String(group.id) === requestedId)
+            || response.data[0];
+          setGroupId(String(initialGroup.id));
+        }
       })
       .catch(() => setMessage("Não foi possível carregar suas turmas."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     loadAssessments();
