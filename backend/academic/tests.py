@@ -1,12 +1,26 @@
 from datetime import timedelta
 
 from django.contrib.auth.models import Group, User
+from django.utils import timezone
 from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from .models import AcademicCalendar, ClassEnrollment, ClassGroup, Course, Grade, StudentProfile, Subject, TeacherProfile
+from .models import (
+    AcademicCalendar,
+    AcademicTerm,
+    Assessment,
+    AssessmentResult,
+    AttendanceRecord,
+    ClassEnrollment,
+    ClassGroup,
+    Course,
+    Grade,
+    StudentProfile,
+    Subject,
+    TeacherProfile,
+)
 
 
 class GradePermissionTests(TestCase):
@@ -182,3 +196,137 @@ class AcademicCalendarFilteringTests(TestCase):
             {item["title"] for item in response.data},
             {"Sem expiração", "Vigente"},
         )
+
+
+class AssessmentWorkflowTests(TestCase):
+    def setUp(self):
+        professor_group, _ = Group.objects.get_or_create(name="Professor")
+        self.teacher_user = User.objects.create_user(username="teacher")
+        self.teacher_user.groups.add(professor_group)
+        self.other_teacher_user = User.objects.create_user(username="other-teacher")
+        self.other_teacher_user.groups.add(professor_group)
+        self.student_user = User.objects.create_user(username="student")
+        self.other_student_user = User.objects.create_user(username="other-student")
+        self.teacher = TeacherProfile.objects.create(
+            user=self.teacher_user,
+            employee_code="T-401",
+            department="Tecnologia",
+        )
+        self.other_teacher = TeacherProfile.objects.create(
+            user=self.other_teacher_user,
+            employee_code="T-402",
+            department="Tecnologia",
+        )
+        self.course = Course.objects.create(name="Sistemas para Internet")
+        self.student = StudentProfile.objects.create(
+            user=self.student_user,
+            registration="S-401",
+            course=self.course,
+            semester=4,
+        )
+        self.other_student = StudentProfile.objects.create(
+            user=self.other_student_user,
+            registration="S-402",
+            course=self.course,
+            semester=4,
+        )
+        self.subject = Subject.objects.create(
+            name="Avaliação de Software",
+            code="AS-401",
+            workload=60,
+            professor="Professor",
+        )
+        self.group = ClassGroup.objects.create(
+            name="Turma A",
+            subject=self.subject,
+            teacher=self.teacher,
+            semester="2026.2",
+            year=2026,
+        )
+        self.other_group = ClassGroup.objects.create(
+            name="Turma B",
+            subject=self.subject,
+            teacher=self.other_teacher,
+            semester="2026.1",
+            year=2026,
+        )
+        ClassEnrollment.objects.create(class_group=self.group, student=self.student)
+        self.assessment = Assessment.objects.create(
+            class_group=self.group,
+            title="Prova N1",
+            category="n1",
+            weight=1,
+            maximum_score=10,
+        )
+        self.client = APIClient()
+
+    def test_student_only_sees_assessments_for_enrolled_classes(self):
+        Assessment.objects.create(
+            class_group=self.other_group,
+            title="Avaliação de outra turma",
+        )
+        self.client.force_authenticate(self.student_user)
+
+        response = self.client.get(reverse("assessments-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([row["id"] for row in response.data], [self.assessment.pk])
+
+    def test_teacher_can_create_result_only_for_enrolled_student(self):
+        self.client.force_authenticate(self.teacher_user)
+        wrong_student = self.client.post(
+            reverse("assessment-results-list"),
+            {
+                "assessment": self.assessment.pk,
+                "student": self.other_student.pk,
+                "score": "8.00",
+            },
+            format="json",
+        )
+        self.assertEqual(wrong_student.status_code, 400)
+        self.assertEqual(AssessmentResult.objects.count(), 0)
+
+        valid_result = self.client.post(
+            reverse("assessment-results-list"),
+            {
+                "assessment": self.assessment.pk,
+                "student": self.student.pk,
+                "score": "8.00",
+                "feedback": "Bom trabalho.",
+            },
+            format="json",
+        )
+        self.assertEqual(valid_result.status_code, 201)
+        self.assertEqual(AssessmentResult.objects.count(), 1)
+
+    def test_assessment_result_cannot_exceed_maximum_score(self):
+        self.client.force_authenticate(self.teacher_user)
+        response = self.client.post(
+            reverse("assessment-results-list"),
+            {
+                "assessment": self.assessment.pk,
+                "student": self.student.pk,
+                "score": "11.00",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(AssessmentResult.objects.count(), 0)
+
+    def test_teacher_can_record_attendance_for_enrolled_student(self):
+        self.client.force_authenticate(self.teacher_user)
+        response = self.client.post(
+            reverse("attendance-list"),
+            {
+                "class_group": self.group.pk,
+                "student": self.student.pk,
+                "held_at": timezone.now().isoformat(),
+                "present": False,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(AttendanceRecord.objects.count(), 1)
+        self.assertEqual(response.data["recorded_by"], self.teacher_user.pk)
