@@ -8,6 +8,7 @@ from academic.models import (
     AcademicCalendar,
     ClassEnrollment,
     ClassGroup,
+    Course,
     Grade,
     StudentProfile,
     Subject,
@@ -26,10 +27,11 @@ class DashboardSummaryTests(TestCase):
             username="teacher", password="teacher-password"
         )
         self.teacher_user.groups.add(self.professor_group)
+        self.course, _ = Course.objects.get_or_create(name="Sistemas para Internet")
         self.student = StudentProfile.objects.create(
             user=self.student_user,
             registration="S-301",
-            course="Sistemas para Internet",
+            course=self.course,
             semester=4,
         )
         self.other_student_user = User.objects.create_user(
@@ -95,7 +97,7 @@ class DashboardSummaryTests(TestCase):
         rogue_profile = StudentProfile.objects.create(
             user=rogue_user,
             registration="S-303",
-            course="Outro curso",
+            course=Course.objects.create(name="Outro curso"),
             semester=1,
         )
         Grade.objects.create(
@@ -142,16 +144,16 @@ class DashboardSummaryTests(TestCase):
             title="Evento em andamento",
             description="Evento iniciado ontem.",
             event_type="event",
-            start_date=today - timezone.timedelta(days=1),
-            end_date=today + timezone.timedelta(days=1),
+            start_date=today - __import__("datetime").timedelta(days=1),
+            end_date=today + __import__("datetime").timedelta(days=1),
         )
         AcademicCalendar.objects.create(
             title="Evento expirado",
             description="Evento já expirado.",
             event_type="event",
-            start_date=today - timezone.timedelta(days=4),
-            end_date=today - timezone.timedelta(days=2),
-            visible_until=today - timezone.timedelta(days=1),
+            start_date=today - __import__("datetime").timedelta(days=4),
+            end_date=today - __import__("datetime").timedelta(days=2),
+            visible_until=today - __import__("datetime").timedelta(days=1),
         )
 
         self.client.force_authenticate(self.student_user)
