@@ -95,9 +95,8 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
                 raise PermissionDenied(
                     "Você só pode enviar materiais para uma turma sua."
                 )
-            file_type = serializer.validated_data.get("file_type", "material")
-            if file_type not in {"material", "assignment"}:
-                raise ValidationError({"file_type": "Professor só pode enviar material ou atividade."})
+            requested_type = serializer.validated_data.get("file_type", "material")
+            file_type = requested_type if requested_type in {"material", "assignment"} else "material"
             serializer.save(
                 user=user,
                 class_group=class_group,
