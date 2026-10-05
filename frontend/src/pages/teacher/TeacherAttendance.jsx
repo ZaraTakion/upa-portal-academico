@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
+import { getInitialClassGroup } from "../../utils/initialClassGroup";
 import Alert from "../../components/feedback/Alert";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
@@ -32,9 +33,10 @@ function TeacherAttendance() {
       .then((response) => {
         setGroups(response.data);
         if (response.data.length) {
-          const requestedId = searchParams.get("class_group");
-          const initialGroup = response.data.find((group) => String(group.id) === requestedId)
-            || response.data[0];
+          const initialGroup = getInitialClassGroup(
+            response.data,
+            searchParams.get("class_group"),
+          );
           setSelectedGroup(String(initialGroup.id));
         }
       })
