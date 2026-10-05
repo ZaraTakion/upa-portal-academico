@@ -7,7 +7,7 @@ from django.http import FileResponse, Http404
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -50,7 +50,7 @@ class ContactMessageViewSet(viewsets.ModelViewSet):
 class AcademicFileViewSet(viewsets.ModelViewSet):
     serializer_class = AcademicFileSerializer
     permission_classes = [CanManageAcademicFile]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         user = self.request.user
