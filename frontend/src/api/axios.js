@@ -32,7 +32,7 @@ api.interceptors.response.use(
   async (error) => {
     const request = error.config;
     const requestUrl = request?.url || "";
-    const isSessionEndpoint = /\/token\/(refresh|logout)\//.test(requestUrl);
+    const isSessionEndpoint = /\/token\/(refresh|logout)\/?$|\/token\/?$/.test(requestUrl);
 
     if (error.response?.status !== 401 || !request || request._retried || isSessionEndpoint) {
       return Promise.reject(error);
