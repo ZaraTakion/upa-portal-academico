@@ -89,17 +89,6 @@ class PasswordResetTests(TestCase):
         self.assertTrue(self.user.check_password("Original-password-123!"))
 
 
-@override_settings(
-    REST_FRAMEWORK={
-        "DEFAULT_AUTHENTICATION_CLASSES": (
-            "rest_framework_simplejwt.authentication.JWTAuthentication",
-        ),
-        "DEFAULT_THROTTLE_RATES": {
-            "anon": "5/hour",
-            "login": "1/min",
-        },
-    }
-)
 class LoginThrottlingTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -111,12 +100,67 @@ class LoginThrottlingTests(TestCase):
             "password": "incorrect-password",
         }
 
-        first_attempt = self.client.post(
-            url, credentials, content_type="application/json"
-        )
-        second_attempt = self.client.post(
-            url, credentials, content_type="application/json"
-        )
+        with patch(
+            "accounts.throttles.LoginRateThrottle.get_rate",
+            return_value="1/min",
+        ):
+            first_attempt = self.client.post(
+                url, credentials, content_type="application/json"
+            )
+            second_attempt = self.client.post(
+                url, credentials, content_type="application/json"
+            )
 
         self.assertEqual(first_attempt.status_code, 401)
         self.assertEqual(second_attempt.status_code, 429)
+
+
+class RefreshCookieTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="cookie-user",
+            password="A-strong-password-123!",
+        )
+
+    @override_settings(JWT_REFRESH_COOKIE_SECURE=False)
+    def test_refresh_token_is_http_only_rotated_and_not_returned(self):
+        login = self.client.post(
+            reverse("token_obtain_pair"),
+            {"username": "cookie-user", "password": "A-strong-password-123!"},
+            content_type="application/json",
+        )
+        self.assertEqual(login.status_code, 200)
+        self.assertIn("access", login.data)
+        self.assertNotIn("refresh", login.data)
+        cookie = login.cookies["upa_refresh"]
+        self.assertTrue(cookie["httponly"])
+
+        original_refresh = cookie.value
+        refresh = self.client.post(
+            reverse("token_refresh"),
+            {},
+            content_type="application/json",
+        )
+        self.assertEqual(refresh.status_code, 200)
+        self.assertIn("access", refresh.data)
+        self.assertNotIn("refresh", refresh.data)
+        self.assertNotEqual(self.client.cookies["upa_refresh"].value, original_refresh)
+
+    @override_settings(JWT_REFRESH_COOKIE_SECURE=False)
+    def test_logout_revokes_refresh_cookie(self):
+        self.client.post(
+            reverse("token_obtain_pair"),
+            {"username": "cookie-user", "password": "A-strong-password-123!"},
+            content_type="application/json",
+        )
+        refresh = self.client.cookies["upa_refresh"].value
+        logout = self.client.post(reverse("token_logout"), {}, content_type="application/json")
+        self.assertEqual(logout.status_code, 205)
+        self.assertEqual(logout.cookies["upa_refresh"].value, "")
+        self.client.cookies["upa_refresh"] = refresh
+        response = self.client.post(
+            reverse("token_refresh"),
+            {},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 401)

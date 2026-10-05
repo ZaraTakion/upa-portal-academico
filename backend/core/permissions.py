@@ -80,4 +80,37 @@ class CanManageAcademicFile(BasePermission):
             return False
         if request.method in SAFE_METHODS or user.is_staff:
             return True
-        return request.method == "POST" and view.action == "create"
+        if request.method == "POST" and view.action == "create":
+            return True
+        return (
+            request.method == "PATCH"
+            and view.action == "partial_update"
+            and user.groups.filter(name="Professor").exists()
+        )
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS or request.user.is_staff:
+            return True
+        return (
+            request.method == "PATCH"
+            and view.action == "partial_update"
+            and request.user.groups.filter(name="Professor").exists()
+            and obj.class_group_id is not None
+            and obj.class_group.teacher.user_id == request.user.id
+            and set(request.data.keys()).issubset({"feedback"})
+        )
+
+
+class IsStaffOrTeacherAcademicEditor(BasePermission):
+    edit_actions = {"create", "update", "partial_update", "destroy"}
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if request.method in SAFE_METHODS or user.is_staff or user.is_superuser:
+            return True
+        return (
+            view.action in self.edit_actions
+            and user.groups.filter(name="Professor").exists()
+        )

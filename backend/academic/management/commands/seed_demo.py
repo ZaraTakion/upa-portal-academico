@@ -5,6 +5,7 @@ from academic.models import (
     AcademicCalendar,
     ClassEnrollment,
     ClassGroup,
+    Course,
     Grade,
     StudentProfile,
     Subject,
@@ -49,6 +50,7 @@ class Command(BaseCommand):
         students = []
 
         for username, first_name, last_name, registration, course, semester in students_data:
+            course_record, _ = Course.objects.get_or_create(name=course)
             user = self.create_user(username, "aluno123", first_name, last_name, f"{username}@aluno.upa.edu.br")
             user.groups.add(aluno_group)
 
@@ -56,7 +58,7 @@ class Command(BaseCommand):
                 user=user,
                 defaults={
                     "registration": registration,
-                    "course": course,
+                    "course": course_record,
                     "semester": semester,
                     "cpf": "000.000.000-00",
                     "phone": "(83) 99999-0000",
@@ -152,11 +154,16 @@ class Command(BaseCommand):
         ]
 
         for code, weekday, start, end, location in schedule_data:
+            subject = Subject.objects.get(code=code)
+            class_group = ClassGroup.objects.filter(
+                subject=subject, teacher=teacher_profile
+            ).first()
             WeeklySchedule.objects.update_or_create(
-                subject=Subject.objects.get(code=code),
+                subject=subject,
                 weekday=weekday,
                 start_time=start,
                 defaults={
+                    "class_group": class_group,
                     "teacher": teacher_profile,
                     "end_time": end,
                     "location": location,

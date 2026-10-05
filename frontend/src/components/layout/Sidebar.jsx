@@ -1,5 +1,7 @@
 import {
   Bell,
+  CalendarCheck2,
+  ClipboardCheck,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -96,6 +98,16 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
             <NavLink to="/teacher/students" onClick={onClose} title="Alunos">
               <User size={20} />
               <span>Alunos</span>
+            </NavLink>
+
+            <NavLink to="/teacher/assessments" onClick={onClose} title="Avaliações">
+              <ClipboardCheck size={20} />
+              <span>Avaliações</span>
+            </NavLink>
+
+            <NavLink to="/teacher/attendance" onClick={onClose} title="Frequência">
+              <CalendarCheck2 size={20} />
+              <span>Frequência</span>
             </NavLink>
 
             <NavLink to="/teacher/grades" onClick={onClose} title="Lançar Notas">

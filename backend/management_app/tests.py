@@ -8,8 +8,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from academic.models import ClassEnrollment, ClassGroup, StudentProfile, Subject, TeacherProfile
-from .models import AcademicFile
+from academic.models import ClassEnrollment, ClassGroup, Course, StudentProfile, Subject, TeacherProfile
+from .models import AcademicFile, ContactMessage, FinancialInvoice
 
 
 class AcademicFileAPITests(TestCase):
@@ -31,10 +31,11 @@ class AcademicFileAPITests(TestCase):
         self.teacher_user.groups.add(professor_group)
         self.other_teacher_user.groups.add(professor_group)
 
+        self.course, _ = Course.objects.get_or_create(name="Sistemas para Internet")
         self.student = StudentProfile.objects.create(
             user=self.student_user,
             registration="S-101",
-            course="Sistemas para Internet",
+            course=self.course,
             semester=4,
         )
         self.teacher = TeacherProfile.objects.create(
@@ -237,3 +238,160 @@ class AcademicFileAPITests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(AcademicFile.objects.count(), 0)
+
+
+class FinancialInvoiceAccessTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="invoice-owner")
+        self.other_user = User.objects.create_user(username="invoice-other")
+        self.invoice = FinancialInvoice.objects.create(
+            user=self.owner,
+            description="Mensalidade",
+            amount="599.90",
+            due_date="2026-11-10",
+            status="pending",
+            payment_method=None,
+        )
+        self.client = APIClient()
+
+    def test_students_only_see_their_invoices_and_unpaid_method_is_empty(self):
+        FinancialInvoice.objects.create(
+            user=self.other_user,
+            description="Invoice privada",
+            amount="100.00",
+            due_date="2026-11-10",
+        )
+        self.client.force_authenticate(self.owner)
+
+        response = self.client.get(reverse("financial-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([row["id"] for row in response.data], [self.invoice.pk])
+        self.assertIsNone(response.data[0]["payment_method"])
+        self.assertIsNone(response.data[0]["payment_method_display"])
+
+    def test_students_cannot_create_or_change_invoices(self):
+        self.client.force_authenticate(self.owner)
+        create_response = self.client.post(
+            reverse("financial-list"),
+            {
+                "description": "Cobrança indevida",
+                "amount": "1.00",
+                "due_date": "2026-11-10",
+            },
+            format="json",
+        )
+        patch_response = self.client.patch(
+            reverse("financial-detail", args=[self.invoice.pk]),
+            {"status": "paid"},
+            format="json",
+        )
+
+        self.assertEqual(create_response.status_code, 403)
+        self.assertEqual(patch_response.status_code, 403)
+
+
+class ContactTicketAccessTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="ticket-owner")
+        self.other = User.objects.create_user(username="ticket-other")
+        self.staff = User.objects.create_user(username="ticket-staff", is_staff=True)
+        self.ticket = ContactMessage.objects.create(
+            user=self.owner,
+            subject="Dúvida de matrícula",
+            message="Preciso de ajuda com minha matrícula.",
+        )
+        self.client = APIClient()
+
+    def test_owner_can_see_protocol_and_status_but_cannot_change_ticket(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.get(reverse("contact-list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]["protocol"], str(self.ticket.protocol))
+        self.assertEqual(response.data[0]["status"], "open")
+
+        patch = self.client.patch(
+            reverse("contact-detail", args=[self.ticket.pk]),
+            {"status": "closed", "response": "resposta indevida"},
+            format="json",
+        )
+        self.assertEqual(patch.status_code, 403)
+
+    def test_ticket_is_private_and_staff_can_respond(self):
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.get(reverse("contact-list")).data, [])
+
+        self.client.force_authenticate(self.staff)
+        response = self.client.patch(
+            reverse("contact-detail", args=[self.ticket.pk]),
+            {"response": "Sua solicitação foi recebida."},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["status"], "answered")
+        self.assertTrue(response.data["response_at"])
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.response, "Sua solicitação foi recebida.")
+
+
+class AssignmentWorkflowTests(AcademicFileAPITests):
+    def test_teacher_creates_assignment_student_submits_and_teacher_reviews(self):
+        self.client.force_authenticate(self.teacher_user)
+        assignment_response = self.client.post(
+            reverse("files-list"),
+            {
+                "title": "Entrega de projeto",
+                "class_group": self.class_group.pk,
+                "file_type": "assignment",
+                "due_at": "2026-12-01T23:59:00Z",
+                "file": self.pdf("enunciado.pdf"),
+            },
+            format="multipart",
+        )
+        self.assertEqual(assignment_response.status_code, 201)
+        assignment_id = assignment_response.data["id"]
+
+        self.client.force_authenticate(self.student_user)
+        visible = self.client.get(reverse("files-list"))
+        assignment = next(item for item in visible.data if item["id"] == assignment_id)
+        self.assertEqual(assignment["file_type"], "assignment")
+        self.assertTrue(assignment["due_at"])
+
+        submission = self.client.post(
+            reverse("files-list"),
+            {
+                "title": "Minha entrega",
+                "assignment": assignment_id,
+                "file": self.pdf("entrega.pdf"),
+            },
+            format="multipart",
+        )
+        self.assertEqual(submission.status_code, 201)
+        self.assertEqual(submission.data["submission_status"], "submitted")
+
+        self.client.force_authenticate(self.teacher_user)
+        feedback = self.client.patch(
+            reverse("files-detail", args=[submission.data["id"]]),
+            {"feedback": "Boa análise; revise a conclusão."},
+            format="json",
+        )
+        self.assertEqual(feedback.status_code, 200)
+        self.assertEqual(feedback.data["submission_status"], "reviewed")
+        self.assertEqual(feedback.data["feedback"], "Boa análise; revise a conclusão.")
+
+    def test_teacher_cannot_review_another_teachers_submission(self):
+        submission = AcademicFile.objects.create(
+            user=self.student_user,
+            class_group=self.class_group,
+            subject=self.subject,
+            title="Entrega",
+            file_type="submission",
+            file=self.pdf(),
+        )
+        self.client.force_authenticate(self.other_teacher_user)
+        response = self.client.patch(
+            reverse("files-detail", args=[submission.pk]),
+            {"feedback": "Devolutiva"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 404)

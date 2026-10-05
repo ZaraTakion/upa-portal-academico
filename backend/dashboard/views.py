@@ -1,3 +1,4 @@
+from django.db.models import Avg, Case, Count, F, IntegerField, Q, Sum, Value, When
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -5,6 +6,7 @@ from rest_framework.views import APIView
 
 from academic.models import (
     AcademicCalendar,
+    AttendanceRecord,
     ClassEnrollment,
     ClassGroup,
     Grade,
@@ -15,6 +17,17 @@ from academic.models import (
 )
 from management_app.models import FinancialInvoice
 from notifications_app.models import Notification
+
+
+def ordered_weekday(queryset):
+    weekday_order = Case(
+        *[
+            When(weekday=value, then=Value(index))
+            for index, (value, _) in enumerate(WeeklySchedule.WEEKDAY_CHOICES)
+        ],
+        output_field=IntegerField(),
+    )
+    return queryset.order_by(weekday_order, "start_time")
 
 
 class DashboardSummaryView(APIView):
@@ -41,16 +54,24 @@ class DashboardSummaryView(APIView):
                 status=404,
             )
 
-        grades = Grade.objects.filter(student=student)
         enrollments = ClassEnrollment.objects.filter(student=student)
+        grades = Grade.objects.filter(student=student)
+        graded = grades.filter(grade__isnull=False)
+        average_grade = graded.aggregate(average=Avg("grade"))["average"]
         today = timezone.localdate()
 
-        if grades.exists():
-            average_grade = sum(float(item.grade or 0) for item in grades) / grades.count()
-            total_absences = sum(item.absence for item in grades)
-        else:
-            average_grade = 0
-            total_absences = 0
+        events = AcademicCalendar.objects.filter(
+            Q(start_date__gte=today)
+            | Q(start_date__lt=today, end_date__gte=today)
+        ).filter(
+            Q(visible_until__isnull=True) | Q(visible_until__gte=today)
+        ).order_by("start_date")[:5]
+
+        schedule = ordered_weekday(
+            WeeklySchedule.objects.filter(
+                class_group__classenrollment__student=student
+            ).select_related("class_group__subject", "subject")
+        )[:8]
 
         data = {
             "role": "Aluno",
@@ -65,16 +86,21 @@ class DashboardSummaryView(APIView):
                 "id": student.id,
                 "full_name": user.get_full_name() or user.username,
                 "registration": student.registration,
-                "course": student.course,
+                "course": student.course.name,
                 "semester": student.semester,
                 "phone": student.phone,
                 "address": student.address,
             },
-            "total_subjects": enrollments.count() or Subject.objects.count(),
-            "average_grade": round(average_grade, 2),
-            "total_absences": total_absences,
-            "unread_notifications": Notification.objects.filter(user=user, is_read=False).count(),
-            "pending_invoices": FinancialInvoice.objects.filter(user=user, status__in=["pending", "overdue"]).count(),
+            "total_subjects": enrollments.values("class_group__subject_id").distinct().count(),
+            "average_grade": round(float(average_grade), 2) if average_grade is not None else 0,
+            "total_absences": (grades.aggregate(total=Sum("absence"))["total"] or 0)
+            + AttendanceRecord.objects.filter(student=student, present=False).count(),
+            "unread_notifications": Notification.objects.filter(
+                user=user, is_read=False
+            ).count(),
+            "pending_invoices": FinancialInvoice.objects.filter(
+                user=user, status__in=["pending", "overdue"]
+            ).count(),
             "next_events": [
                 {
                     "id": event.id,
@@ -85,18 +111,18 @@ class DashboardSummaryView(APIView):
                     "start_date": event.start_date,
                     "end_date": event.end_date,
                 }
-                for event in AcademicCalendar.objects.filter(start_date__gte=today).order_by("start_date")[:5]
+                for event in events
             ],
             "weekly_schedule": [
                 {
                     "id": item.id,
-                    "subject": item.subject.name,
+                    "subject": item.class_group.subject.name,
                     "weekday": item.get_weekday_display(),
                     "start_time": item.start_time,
                     "end_time": item.end_time,
                     "location": item.location,
                 }
-                for item in WeeklySchedule.objects.all().order_by("weekday", "start_time")[:8]
+                for item in schedule
             ],
         }
 
@@ -111,7 +137,20 @@ class DashboardSummaryView(APIView):
                 status=404,
             )
 
-        class_groups = ClassGroup.objects.filter(teacher=teacher)
+        class_groups = ClassGroup.objects.filter(teacher=teacher).select_related(
+            "subject", "teacher__user"
+        ).annotate(students_count=Count("classenrollment"))
+        teacher_grades = Grade.objects.filter(
+            Q(
+                class_group__teacher=teacher,
+                class_group__classenrollment__student_id=F("student_id"),
+            )
+            | Q(
+                class_group__isnull=True,
+                subject__classgroup__teacher=teacher,
+                subject__classgroup__classenrollment__student_id=F("student_id"),
+            )
+        ).distinct()
 
         data = {
             "role": "Professor",
@@ -130,9 +169,13 @@ class DashboardSummaryView(APIView):
                 "title": teacher.title,
             },
             "total_classes": class_groups.count(),
-            "total_students": ClassEnrollment.objects.filter(class_group__teacher=teacher).values("student").distinct().count(),
-            "total_grades": Grade.objects.filter(subject__classgroup__teacher=teacher).distinct().count(),
-            "unread_notifications": Notification.objects.filter(user=user, is_read=False).count(),
+            "total_students": ClassEnrollment.objects.filter(
+                class_group__teacher=teacher
+            ).values("student").distinct().count(),
+            "total_grades": teacher_grades.count(),
+            "unread_notifications": Notification.objects.filter(
+                user=user, is_read=False
+            ).count(),
             "class_groups": [
                 {
                     "id": group.id,
@@ -140,7 +183,7 @@ class DashboardSummaryView(APIView):
                     "subject": group.subject.name,
                     "semester": group.semester,
                     "year": group.year,
-                    "students_count": group.classenrollment_set.count(),
+                    "students_count": group.students_count,
                 }
                 for group in class_groups
             ],

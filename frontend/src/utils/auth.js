@@ -2,9 +2,9 @@ export function isAuthenticated() {
   return Boolean(localStorage.getItem("accessToken"));
 }
 
-export function saveTokens(access, refresh) {
+export function saveTokens(access) {
   localStorage.setItem("accessToken", access);
-  localStorage.setItem("refreshToken", refresh);
+  localStorage.removeItem("refreshToken");
 }
 
 export function saveUser(user) {
@@ -16,19 +16,29 @@ export function getUser() {
   return user ? JSON.parse(user) : null;
 }
 
-export function logout() {
+function readCsrfToken() {
+  const cookie = document.cookie
+    .split("; ")
+    .find((item) => item.startsWith("csrftoken="));
+  return cookie ? decodeURIComponent(cookie.slice("csrftoken=".length)) : "";
+}
+
+export function logout({ revoke = true } = {}) {
+  if (revoke) {
+    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+    fetch(`${apiBase.replace(/\/$/, "")}/token/logout/`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "X-CSRFToken": readCsrfToken() },
+    }).catch(() => {});
+  }
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("currentUser");
-  window.location.href = "/";
+  window.location.assign("/");
 }
 
 export function hasGroup(groupName) {
   const user = getUser();
-
-  if (!user?.groups) {
-    return false;
-  }
-
-  return user.groups.includes(groupName);
+  return Boolean(user?.groups?.includes(groupName));
 }
