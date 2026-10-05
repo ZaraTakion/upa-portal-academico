@@ -361,7 +361,7 @@
   font-weight: 700;
 }
 
- .teacher-class-meta a {
+.teacher-class-meta a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
