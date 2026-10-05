@@ -3,7 +3,11 @@ from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from core.permissions import IsStaffOrReadOnly, IsStaffOrTeacherGradeEditor
+from core.permissions import (
+    IsStaffOrReadOnly,
+    IsStaffOrTeacherGradeEditor,
+    IsStudentProfileOwnerOrStaff,
+)
 from .models import (
     AcademicCalendar,
     ClassEnrollment,
@@ -28,12 +32,16 @@ from .serializers import (
 
 class StudentProfileViewSet(viewsets.ModelViewSet):
     serializer_class = StudentProfileSerializer
-    permission_classes = [IsStaffOrReadOnly]
+    permission_classes = [IsStudentProfileOwnerOrStaff]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff or user.groups.filter(name="Professor").exists():
+        if user.is_staff:
             return StudentProfile.objects.all()
+        if user.groups.filter(name="Professor").exists():
+            return StudentProfile.objects.filter(
+                classenrollment__class_group__teacher__user=user
+            ).distinct()
         return StudentProfile.objects.filter(user=user)
 
 
