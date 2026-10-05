@@ -240,8 +240,15 @@ class GradeViewSet(viewsets.ModelViewSet):
             queryset = Grade.objects.all()
         elif user.groups.filter(name="Professor").exists():
             queryset = Grade.objects.filter(
-                subject__classgroup__teacher__user=user,
-                subject__classgroup__classenrollment__student_id=F("student_id"),
+                Q(
+                    class_group__teacher__user=user,
+                    class_group__classenrollment__student_id=F("student_id"),
+                )
+                | Q(
+                    class_group__isnull=True,
+                    subject__classgroup__teacher__user=user,
+                    subject__classgroup__classenrollment__student_id=F("student_id"),
+                )
             ).distinct()
         else:
             queryset = Grade.objects.filter(student__user=user)
