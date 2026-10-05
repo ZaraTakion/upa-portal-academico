@@ -13,7 +13,6 @@ import Alert from "../../components/feedback/Alert";
 import Loading from "../../components/feedback/Loading";
 import MainLayout from "../../components/layout/MainLayout";
 import BaseCard from "../../components/ui/BaseCard";
-import PageHeader from "../../components/ui/PageHeader";
 import StatCard from "../../components/ui/StatCard";
 
 function StudentDashboard() {
