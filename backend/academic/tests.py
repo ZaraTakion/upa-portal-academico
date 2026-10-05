@@ -331,6 +331,69 @@ class AssessmentWorkflowTests(TestCase):
         self.assertEqual(AttendanceRecord.objects.count(), 1)
         self.assertEqual(response.data["recorded_by"], self.teacher_user.pk)
 
+    def test_attendance_updates_linked_grade_absences_and_status(self):
+        GradePolicy.objects.create(
+            passing_score="7.00",
+            attention_score="5.00",
+            maximum_absences=1,
+        )
+        grade = Grade.objects.create(
+            student=self.student,
+            subject=self.subject,
+            class_group=self.group,
+            grade=Decimal("8.00"),
+            absence=99,
+        )
+        self.assertEqual(grade.absence, 0)
+
+        self.client.force_authenticate(self.teacher_user)
+        first_date = timezone.now()
+        response = self.client.post(
+            reverse("attendance-list"),
+            {
+                "class_group": self.group.pk,
+                "student": self.student.pk,
+                "held_at": first_date.isoformat(),
+                "present": False,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        grade.refresh_from_db()
+        self.assertEqual(grade.absence, 1)
+        self.assertEqual(grade.status, "approved")
+
+        second_record = AttendanceRecord.objects.create(
+            class_group=self.group,
+            student=self.student,
+            held_at=first_date + timedelta(days=1),
+            present=False,
+        )
+        grade.refresh_from_db()
+        self.assertEqual(grade.absence, 2)
+        self.assertEqual(grade.status, "failed")
+
+        second_record.present = True
+        second_record.save()
+        grade.refresh_from_db()
+        self.assertEqual(grade.absence, 1)
+        self.assertEqual(grade.status, "approved")
+
+        first_record = AttendanceRecord.objects.get(pk=response.data["id"])
+        first_record.delete()
+        grade.refresh_from_db()
+        self.assertEqual(grade.absence, 0)
+        self.assertEqual(grade.status, "approved")
+
+    def test_legacy_grade_without_class_keeps_manual_absences(self):
+        grade = Grade.objects.create(
+            student=self.student,
+            subject=self.subject,
+            grade=Decimal("8.00"),
+            absence=3,
+        )
+        self.assertEqual(grade.absence, 3)
+
 class OptionalPaginationAndGradePolicyTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_user(username="admin", is_staff=True)
