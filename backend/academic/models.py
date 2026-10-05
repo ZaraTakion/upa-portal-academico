@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 
 
 class Course(models.Model):
@@ -28,6 +28,12 @@ class GradePolicy(models.Model):
     passing_score = models.DecimalField(max_digits=4, decimal_places=2, default=7)
     attention_score = models.DecimalField(max_digits=4, decimal_places=2, default=5)
     maximum_absences = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db
+        with transaction.atomic(using=using):
+            super().save(*args, **kwargs)
+            refresh_grade_statuses(using=using)
 
     def __str__(self):
         return f"Aprovação a partir de {self.passing_score}"
@@ -181,23 +187,53 @@ class Grade(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        policy = GradePolicy.objects.order_by("pk").first()
-        passing_score = policy.passing_score if policy else 7
-        attention_score = policy.attention_score if policy else 5
-
-        if self.grade is None:
-            self.status = "pending"
-        elif self.grade >= passing_score:
-            self.status = "approved"
-        elif self.grade >= attention_score:
-            self.status = "attention"
-        else:
-            self.status = "failed"
-
+        using = kwargs.get("using") or self._state.db
+        policy_manager = GradePolicy.objects.using(using) if using else GradePolicy.objects
+        policy = policy_manager.order_by("pk").first()
+        self.status = grade_status_for(self.grade, self.absence, policy)
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.student.user.username} - {self.subject.name} - {self.grade}"
+
+
+def grade_status_for(grade, absence, policy):
+    if (
+        policy
+        and policy.maximum_absences is not None
+        and absence > policy.maximum_absences
+    ):
+        return "failed"
+
+    if grade is None:
+        return "pending"
+
+    passing_score = policy.passing_score if policy else 7
+    attention_score = policy.attention_score if policy else 5
+    if grade >= passing_score:
+        return "approved"
+    if grade >= attention_score:
+        return "attention"
+    return "failed"
+
+
+def refresh_grade_statuses(using=None):
+    policy_manager = GradePolicy.objects.using(using) if using else GradePolicy.objects
+    grade_manager = Grade.objects.using(using) if using else Grade.objects
+    policy = policy_manager.order_by("pk").first()
+    batch = []
+
+    for grade in grade_manager.only("pk", "grade", "absence", "status").iterator(
+        chunk_size=500
+    ):
+        grade.status = grade_status_for(grade.grade, grade.absence, policy)
+        batch.append(grade)
+        if len(batch) == 500:
+            grade_manager.bulk_update(batch, ["status"], batch_size=500)
+            batch.clear()
+
+    if batch:
+        grade_manager.bulk_update(batch, ["status"], batch_size=500)
 
 
 class Assessment(models.Model):
