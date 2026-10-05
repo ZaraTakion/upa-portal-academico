@@ -4,8 +4,11 @@ from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
+from unittest.mock import patch
 
 
+@patch("accounts.views.PasswordResetRequestView.throttle_classes", [])
+@patch("accounts.views.PasswordResetConfirmView.throttle_classes", [])
 @override_settings(
     EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
     FRONTEND_URL="https://upa.example.test",

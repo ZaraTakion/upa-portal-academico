@@ -1,7 +1,6 @@
 from django.db.models import F
 from django.utils import timezone
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
 
 from core.permissions import (
     IsStaffOrReadOnly,
@@ -123,18 +122,6 @@ class GradeViewSet(viewsets.ModelViewSet):
         if status_param:
             queryset = queryset.filter(status=status_param)
         return queryset.order_by("subject__name")
-
-    def get_serializer(self, *args, **kwargs):
-        serializer = super().get_serializer(*args, **kwargs)
-        user = self.request.user
-        if (
-            user.is_authenticated
-            and not user.is_staff
-            and user.groups.filter(name="Professor").exists()
-        ):
-            for field_name in ("student", "subject", "status", "created_at"):
-                serializer.fields[field_name].read_only = True
-        return serializer
 
 
 class AcademicCalendarViewSet(viewsets.ModelViewSet):

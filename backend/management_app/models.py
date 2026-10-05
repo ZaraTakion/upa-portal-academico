@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-from academic.models import Subject
+from academic.models import ClassGroup, Subject
 
 
 class ContactMessage(models.Model):
@@ -41,6 +41,12 @@ class AcademicFile(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    class_group = models.ForeignKey(
+        ClassGroup,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True)
     title = models.CharField(max_length=200)
     file_type = models.CharField(max_length=20, choices=FILE_TYPES, default="submission")

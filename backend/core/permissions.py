@@ -71,3 +71,13 @@ class IsStudentProfileOwnerOrStaff(BasePermission):
             and obj.user_id == request.user.id
             and set(request.data.keys()).issubset(self.editable_fields)
         )
+
+
+class CanManageAcademicFile(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if request.method in SAFE_METHODS or user.is_staff:
+            return True
+        return request.method == "POST" and view.action == "create"

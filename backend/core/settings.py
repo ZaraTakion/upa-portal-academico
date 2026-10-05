@@ -143,5 +143,9 @@ EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() in {
     "1", "true", "yes"
 }
 
+ACADEMIC_FILE_MAX_SIZE = int(
+    os.environ.get("ACADEMIC_FILE_MAX_SIZE", str(25 * 1024 * 1024))
+)
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
