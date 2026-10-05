@@ -332,3 +332,66 @@ class ContactTicketAccessTests(TestCase):
         self.assertTrue(response.data["response_at"])
         self.ticket.refresh_from_db()
         self.assertEqual(self.ticket.response, "Sua solicitação foi recebida.")
+
+
+class AssignmentWorkflowTests(AcademicFileAPITests):
+    def test_teacher_creates_assignment_student_submits_and_teacher_reviews(self):
+        self.client.force_authenticate(self.teacher_user)
+        assignment_response = self.client.post(
+            reverse("files-list"),
+            {
+                "title": "Entrega de projeto",
+                "class_group": self.class_group.pk,
+                "file_type": "assignment",
+                "due_at": "2026-12-01T23:59:00Z",
+                "file": self.pdf("enunciado.pdf"),
+            },
+            format="multipart",
+        )
+        self.assertEqual(assignment_response.status_code, 201)
+        assignment_id = assignment_response.data["id"]
+
+        self.client.force_authenticate(self.student_user)
+        visible = self.client.get(reverse("files-list"))
+        assignment = next(item for item in visible.data if item["id"] == assignment_id)
+        self.assertEqual(assignment["file_type"], "assignment")
+        self.assertTrue(assignment["due_at"])
+
+        submission = self.client.post(
+            reverse("files-list"),
+            {
+                "title": "Minha entrega",
+                "assignment": assignment_id,
+                "file": self.pdf("entrega.pdf"),
+            },
+            format="multipart",
+        )
+        self.assertEqual(submission.status_code, 201)
+        self.assertEqual(submission.data["submission_status"], "submitted")
+
+        self.client.force_authenticate(self.teacher_user)
+        feedback = self.client.patch(
+            reverse("files-detail", args=[submission.data["id"]]),
+            {"feedback": "Boa análise; revise a conclusão."},
+            format="json",
+        )
+        self.assertEqual(feedback.status_code, 200)
+        self.assertEqual(feedback.data["submission_status"], "reviewed")
+        self.assertEqual(feedback.data["feedback"], "Boa análise; revise a conclusão.")
+
+    def test_teacher_cannot_review_another_teachers_submission(self):
+        submission = AcademicFile.objects.create(
+            user=self.student_user,
+            class_group=self.class_group,
+            subject=self.subject,
+            title="Entrega",
+            file_type="submission",
+            file=self.pdf(),
+        )
+        self.client.force_authenticate(self.other_teacher_user)
+        response = self.client.patch(
+            reverse("files-detail", args=[submission.pk]),
+            {"feedback": "Devolutiva"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 404)
