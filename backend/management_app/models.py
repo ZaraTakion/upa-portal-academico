@@ -53,6 +53,7 @@ class ContactMessage(models.Model):
 class AcademicFile(models.Model):
     FILE_TYPES = [
         ("material", "Material do professor"),
+        ("assignment", "Atividade para entrega"),
         ("submission", "Entrega do aluno"),
         ("document", "Documento acadêmico"),
     ]
@@ -68,6 +69,16 @@ class AcademicFile(models.Model):
     title = models.CharField(max_length=200)
     file_type = models.CharField(max_length=20, choices=FILE_TYPES, default="submission")
     file = models.FileField(upload_to="academic_files/")
+    assignment = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="submissions",
+    )
+    due_at = models.DateTimeField(null=True, blank=True)
+    feedback = models.TextField(blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
