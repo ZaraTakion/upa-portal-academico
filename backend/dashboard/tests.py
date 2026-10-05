@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 
 from academic.models import (
     AcademicCalendar,
+    AttendanceRecord,
     ClassEnrollment,
     ClassGroup,
     Course,
@@ -173,6 +174,56 @@ class DashboardSummaryTests(TestCase):
             [item["title"] for item in response.data["next_events"]],
             ["Evento em andamento"],
         )
+
+    def test_student_summary_uses_latest_attempt_and_counts_absences_once(self):
+        held_at = timezone.now()
+        AttendanceRecord.objects.create(
+            class_group=self.group,
+            student=self.student,
+            held_at=held_at,
+            present=False,
+        )
+        AttendanceRecord.objects.create(
+            class_group=self.group,
+            student=self.student,
+            held_at=held_at + timedelta(days=1),
+            present=False,
+        )
+        Grade.objects.create(
+            student=self.student,
+            subject=self.subject,
+            class_group=self.group,
+            attempt=1,
+            grade=6,
+        )
+        Grade.objects.create(
+            student=self.student,
+            subject=self.subject,
+            class_group=self.group,
+            attempt=2,
+            grade=10,
+        )
+        Grade.objects.create(
+            student=self.student,
+            subject=self.other_subject,
+            attempt=1,
+            grade=4,
+            absence=2,
+        )
+        Grade.objects.create(
+            student=self.student,
+            subject=self.other_subject,
+            attempt=2,
+            grade=8,
+            absence=4,
+        )
+
+        self.client.force_authenticate(self.student_user)
+        response = self.client.get(reverse("dashboard-summary"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["average_grade"], 9.0)
+        self.assertEqual(response.data["total_absences"], 6)
 
     def test_student_without_enrollments_has_zero_subjects(self):
         self.client.force_authenticate(self.other_student_user)

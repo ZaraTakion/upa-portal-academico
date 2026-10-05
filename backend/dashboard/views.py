@@ -1,4 +1,4 @@
-from django.db.models import Avg, Case, Count, F, IntegerField, Q, Sum, Value, When
+from django.db.models import Case, Count, F, IntegerField, Q, Value, When
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -55,9 +55,31 @@ class DashboardSummaryView(APIView):
             )
 
         enrollments = ClassEnrollment.objects.filter(student=student)
-        grades = Grade.objects.filter(student=student)
-        graded = grades.filter(grade__isnull=False)
-        average_grade = graded.aggregate(average=Avg("grade"))["average"]
+        grades = Grade.objects.filter(student=student).only(
+            "subject_id", "class_group_id", "attempt", "grade", "absence"
+        )
+        latest_graded_by_offering = {}
+        legacy_absences_by_offering = {}
+
+        for grade in grades.order_by("attempt", "pk"):
+            offering = (grade.class_group_id, grade.subject_id)
+            if grade.class_group_id is None:
+                legacy_absences_by_offering[offering] = max(
+                    legacy_absences_by_offering.get(offering, 0), grade.absence
+                )
+            if grade.grade is not None:
+                latest_graded_by_offering[offering] = grade
+
+        latest_grades = list(latest_graded_by_offering.values())
+        average_grade = (
+            sum(grade.grade for grade in latest_grades) / len(latest_grades)
+            if latest_grades
+            else None
+        )
+        legacy_absences = sum(legacy_absences_by_offering.values())
+        attendance_absences = AttendanceRecord.objects.filter(
+            student=student, present=False
+        ).count()
         today = timezone.localdate()
 
         events = AcademicCalendar.objects.filter(
@@ -93,8 +115,7 @@ class DashboardSummaryView(APIView):
             },
             "total_subjects": enrollments.values("class_group__subject_id").distinct().count(),
             "average_grade": round(float(average_grade), 2) if average_grade is not None else 0,
-            "total_absences": (grades.aggregate(total=Sum("absence"))["total"] or 0)
-            + AttendanceRecord.objects.filter(student=student, present=False).count(),
+            "total_absences": legacy_absences + attendance_absences,
             "unread_notifications": Notification.objects.filter(
                 user=user, is_read=False
             ).count(),
