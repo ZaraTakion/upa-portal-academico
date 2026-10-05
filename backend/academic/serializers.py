@@ -335,6 +335,8 @@ class GradeSerializer(serializers.ModelSerializer):
     student_full_name = serializers.SerializerMethodField()
     subject_name = serializers.CharField(source="subject.name", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+    class_group = serializers.IntegerField(read_only=True, allow_null=True)
+    absence_is_tracked = serializers.SerializerMethodField()
 
     class Meta:
         model = Grade
@@ -345,8 +347,10 @@ class GradeSerializer(serializers.ModelSerializer):
             "student_full_name",
             "subject",
             "subject_name",
+            "class_group",
             "grade",
             "absence",
+            "absence_is_tracked",
             "status",
             "status_display",
             "created_at",
@@ -368,6 +372,9 @@ class GradeSerializer(serializers.ModelSerializer):
 
     def get_student_full_name(self, obj):
         return obj.student.user.get_full_name() or obj.student.user.username
+
+    def get_absence_is_tracked(self, obj):
+        return bool(obj.class_group_id)
 
 
 class AcademicCalendarSerializer(serializers.ModelSerializer):
