@@ -44,7 +44,7 @@ class ContactMessage(models.Model):
 
     class Meta:
         ordering = ("-created_at",)
-        indexes = [models.Index(fields=("user", "status"), name="management_contact_user_status_idx")]
+        indexes = [models.Index(fields=("user", "status"), name="mgmt_contact_user_status_idx")]
 
     def __str__(self):
         return str(self.protocol)
