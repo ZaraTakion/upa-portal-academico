@@ -146,6 +146,13 @@ class WeeklySchedule(models.Model):
         ("saturday", "Sábado"),
     ]
 
+    class_group = models.ForeignKey(
+        ClassGroup,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="weekly_schedules",
+    )
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, null=True, blank=True)
 
