@@ -35,6 +35,13 @@ class GradePolicy(models.Model):
             super().save(*args, **kwargs)
             refresh_grade_statuses(using=using)
 
+    def delete(self, *args, **kwargs):
+        using = kwargs.get("using") or self._state.db
+        with transaction.atomic(using=using):
+            result = super().delete(*args, **kwargs)
+            refresh_grade_statuses(using=using)
+            return result
+
     def __str__(self):
         return f"Aprovação a partir de {self.passing_score}"
 
