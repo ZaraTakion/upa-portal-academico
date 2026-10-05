@@ -42,10 +42,6 @@ class AssessmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at"]
 
-    def get_student_name(self, obj):
-        user = obj.student.user
-        return user.get_full_name() or user.username
-
     def validate(self, attrs):
         request = self.context.get("request")
         user = getattr(request, "user", None)
@@ -128,6 +124,10 @@ class AttendanceRecordSerializer(serializers.ModelSerializer):
             "id", "class_group", "class_group_name", "student", "student_name",
             "held_at", "present", "notes", "recorded_by",
         ]
+
+    def get_student_name(self, obj):
+        user = obj.student.user
+        return user.get_full_name() or user.username
 
     def validate(self, attrs):
         request = self.context.get("request")
