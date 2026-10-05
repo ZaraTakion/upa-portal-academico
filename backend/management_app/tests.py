@@ -289,3 +289,46 @@ class FinancialInvoiceAccessTests(TestCase):
 
         self.assertEqual(create_response.status_code, 403)
         self.assertEqual(patch_response.status_code, 403)
+
+
+class ContactTicketAccessTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="ticket-owner")
+        self.other = User.objects.create_user(username="ticket-other")
+        self.staff = User.objects.create_user(username="ticket-staff", is_staff=True)
+        self.ticket = ContactMessage.objects.create(
+            user=self.owner,
+            subject="Dúvida de matrícula",
+            message="Preciso de ajuda com minha matrícula.",
+        )
+        self.client = APIClient()
+
+    def test_owner_can_see_protocol_and_status_but_cannot_change_ticket(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.get(reverse("contact-list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]["protocol"], str(self.ticket.protocol))
+        self.assertEqual(response.data[0]["status"], "open")
+
+        patch = self.client.patch(
+            reverse("contact-detail", args=[self.ticket.pk]),
+            {"status": "closed", "response": "resposta indevida"},
+            format="json",
+        )
+        self.assertEqual(patch.status_code, 403)
+
+    def test_ticket_is_private_and_staff_can_respond(self):
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.get(reverse("contact-list")).data, [])
+
+        self.client.force_authenticate(self.staff)
+        response = self.client.patch(
+            reverse("contact-detail", args=[self.ticket.pk]),
+            {"response": "Sua solicitação foi recebida."},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["status"], "answered")
+        self.assertTrue(response.data["response_at"])
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.response, "Sua solicitação foi recebida.")
