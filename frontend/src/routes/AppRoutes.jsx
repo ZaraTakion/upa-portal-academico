@@ -19,6 +19,8 @@ import Contact from "../pages/student/Contact";
 import TeacherClasses from "../pages/teacher/TeacherClasses";
 import TeacherStudents from "../pages/teacher/TeacherStudents";
 import TeacherGrades from "../pages/teacher/TeacherGrades";
+import TeacherAttendance from "../pages/teacher/TeacherAttendance";
+import TeacherAssessments from "../pages/teacher/TeacherAssessments";
 
 import AdminPanel from "../pages/admin/AdminPanel";
 import NotFound from "../pages/NotFound";
@@ -43,6 +45,8 @@ function AppRoutes() {
         <Route path="/teacher/classes" element={<ProtectedRoute roles={["professor"]}><TeacherClasses /></ProtectedRoute>} />
         <Route path="/teacher/students" element={<ProtectedRoute roles={["professor"]}><TeacherStudents /></ProtectedRoute>} />
         <Route path="/teacher/grades" element={<ProtectedRoute roles={["professor"]}><TeacherGrades /></ProtectedRoute>} />
+        <Route path="/teacher/attendance" element={<ProtectedRoute roles={["professor"]}><TeacherAttendance /></ProtectedRoute>} />
+        <Route path="/teacher/assessments" element={<ProtectedRoute roles={["professor"]}><TeacherAssessments /></ProtectedRoute>} />
         <Route path="/admin-panel" element={<ProtectedRoute roles={["admin"]}><AdminPanel /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
