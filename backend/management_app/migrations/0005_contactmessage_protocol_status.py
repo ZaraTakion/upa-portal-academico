@@ -22,7 +22,6 @@ class Migration(migrations.Migration):
             name="protocol",
             field=models.UUIDField(blank=True, null=True),
         ),
-        migrations.RunPython(populate_protocols, migrations.RunPython.noop),
         migrations.AlterField(
             model_name="contactmessage",
             name="protocol",
