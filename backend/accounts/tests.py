@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
@@ -86,3 +87,36 @@ class PasswordResetTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertTrue(self.user.check_password("Original-password-123!"))
+
+
+@override_settings(
+    REST_FRAMEWORK={
+        "DEFAULT_AUTHENTICATION_CLASSES": (
+            "rest_framework_simplejwt.authentication.JWTAuthentication",
+        ),
+        "DEFAULT_THROTTLE_RATES": {
+            "anon": "5/hour",
+            "login": "1/min",
+        },
+    }
+)
+class LoginThrottlingTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def test_login_endpoint_throttles_repeated_attempts(self):
+        url = reverse("token_obtain_pair")
+        credentials = {
+            "username": "unknown-user",
+            "password": "incorrect-password",
+        }
+
+        first_attempt = self.client.post(
+            url, credentials, content_type="application/json"
+        )
+        second_attempt = self.client.post(
+            url, credentials, content_type="application/json"
+        )
+
+        self.assertEqual(first_attempt.status_code, 401)
+        self.assertEqual(second_attempt.status_code, 429)

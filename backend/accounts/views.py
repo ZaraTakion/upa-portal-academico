@@ -11,6 +11,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from .throttles import LoginRateThrottle
+
+
+class LoginTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = [LoginRateThrottle]
 
 
 class CurrentUserView(APIView):
