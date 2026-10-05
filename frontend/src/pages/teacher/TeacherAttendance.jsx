@@ -1,5 +1,6 @@
 import { Save } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
 import Alert from "../../components/feedback/Alert";
@@ -15,6 +16,7 @@ function todayInBrazil() {
 }
 
 function TeacherAttendance() {
+  const [searchParams] = useSearchParams();
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState("");
   const [date, setDate] = useState(todayInBrazil());
@@ -29,11 +31,16 @@ function TeacherAttendance() {
     api.get("/academic/class-groups/")
       .then((response) => {
         setGroups(response.data);
-        if (response.data.length) setSelectedGroup(String(response.data[0].id));
+        if (response.data.length) {
+          const requestedId = searchParams.get("class_group");
+          const initialGroup = response.data.find((group) => String(group.id) === requestedId)
+            || response.data[0];
+          setSelectedGroup(String(initialGroup.id));
+        }
       })
       .catch(() => setMessage("Não foi possível carregar suas turmas."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!selectedGroup || !date) return;
