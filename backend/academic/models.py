@@ -99,12 +99,7 @@ class ClassGroup(models.Model):
     year = models.PositiveIntegerField()
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=("name", "subject", "term"),
-                name="uniq_classgroup_subject_term",
-            )
-        ]
+        unique_together = (("name", "subject", "semester", "year"),)
 
     def save(self, *args, **kwargs):
         if not self.term_id:
