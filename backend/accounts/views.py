@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
@@ -14,6 +16,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .throttles import LoginRateThrottle
+
+
+logger = logging.getLogger(__name__)
 
 
 class LoginTokenObtainPairView(TokenObtainPairView):
@@ -47,27 +52,36 @@ class PasswordResetRequestView(APIView):
     def post(self, request):
         email = request.data.get("email")
         email = email.strip() if isinstance(email, str) else ""
-        users = User.objects.filter(email__iexact=email, is_active=True).exclude(email="")
+        matching_users = User.objects.filter(
+            email__iexact=email, is_active=True
+        ).exclude(email="")
 
-        for user in users:
+        # Duplicate email addresses are ambiguous; never send a reset link to
+        # an arbitrary account when ownership cannot be determined.
+        if email and matching_users.count() == 1:
+            user = matching_users.first()
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             reset_url = (
-                f"{settings.FRONTEND_URL.rstrip('/')}/reset-password/"
-                f"{uid}/{token}"
+                f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
             )
-            send_mail(
-                subject="Redefinição de senha do UPA",
-                message=(
-                    "Recebemos uma solicitação para redefinir sua senha. "
-                    "Use este link temporário para escolher uma nova senha:\n\n"
-                    f"{reset_url}\n\n"
-                    "Se você não solicitou a redefinição, ignore esta mensagem."
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
+            try:
+                send_mail(
+                    subject="Redefinição de senha do Portal Acadêmico",
+                    message=(
+                        "Recebemos uma solicitação para redefinir sua senha. "
+                        "Use este link temporário para escolher uma nova senha:\n\n"
+                        f"{reset_url}\n\n"
+                        "Se você não solicitou a redefinição, ignore esta mensagem."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception:
+                # Keep the public response generic while making mail failures
+                # visible to operators in application logs.
+                logger.exception("Password reset email delivery failed")
 
         return Response(
             {
