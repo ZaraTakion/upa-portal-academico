@@ -13,6 +13,7 @@ from .models import (
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
+    course = serializers.CharField(source="course.name", read_only=True)
     username = serializers.CharField(source="user.username", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
     first_name = serializers.CharField(source="user.first_name", read_only=True)
@@ -122,6 +123,7 @@ class ClassGroupSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source="subject.name", read_only=True)
     teacher_name = serializers.SerializerMethodField()
     students_count = serializers.SerializerMethodField()
+    term_code = serializers.CharField(source="term.code", read_only=True)
 
     class Meta:
         model = ClassGroup
@@ -132,6 +134,8 @@ class ClassGroupSerializer(serializers.ModelSerializer):
             "subject_name",
             "teacher",
             "teacher_name",
+            "term",
+            "term_code",
             "semester",
             "year",
             "students_count",
@@ -141,7 +145,7 @@ class ClassGroupSerializer(serializers.ModelSerializer):
         return obj.teacher.user.get_full_name() or obj.teacher.user.username
 
     def get_students_count(self, obj):
-        return obj.classenrollment_set.count()
+        return getattr(obj, "students_count", obj.classenrollment_set.count())
 
 
 class ClassEnrollmentSerializer(serializers.ModelSerializer):
