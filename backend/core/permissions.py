@@ -1,0 +1,51 @@
+from rest_framework.permissions import BasePermission, SAFE_METHODS
+
+
+class IsStaffOrReadOnly(BasePermission):
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and (request.method in SAFE_METHODS or request.user.is_staff)
+        )
+
+
+class IsStaffOrTeacherGradeEditor(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if request.method in SAFE_METHODS or user.is_staff:
+            return True
+        return (
+            view.action in {"update", "partial_update"}
+            and user.groups.filter(name="Professor").exists()
+        )
+
+
+class IsStaffOrCreateOnly(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(
+            user
+            and user.is_authenticated
+            and (
+                request.method in SAFE_METHODS
+                or user.is_staff
+                or request.method == "POST"
+            )
+        )
+
+
+class IsNotificationOwnerOrStaff(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(
+            user
+            and user.is_authenticated
+            and (
+                request.method in SAFE_METHODS
+                or user.is_staff
+                or view.action == "mark_as_read"
+            )
+        )
