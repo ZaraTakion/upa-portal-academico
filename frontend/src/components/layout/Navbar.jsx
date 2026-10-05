@@ -3,15 +3,17 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import { logout } from "../../utils/auth";
+import { getUserRole } from "../../utils/roles";
 
 function Navbar({ onOpenMenu }) {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const profilePath = user?.is_staff
-    ? "/admin-panel"
-    : user?.groups?.includes("Professor")
+  const role = getUserRole(user);
+  const profilePath = role === "student"
+    ? "/profile"
+    : role === "professor"
       ? "/teacher/classes"
-      : "/profile";
+      : "/admin-panel";
 
   return (
     <header className="navbar">
