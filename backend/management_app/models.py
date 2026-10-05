@@ -76,7 +76,7 @@ class FinancialInvoice(models.Model):
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     due_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default="pix")
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, null=True, blank=True, default=None)
 
     def __str__(self):
         return f"{self.user.username} - {self.description}"
