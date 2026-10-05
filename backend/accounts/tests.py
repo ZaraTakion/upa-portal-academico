@@ -89,17 +89,6 @@ class PasswordResetTests(TestCase):
         self.assertTrue(self.user.check_password("Original-password-123!"))
 
 
-@override_settings(
-    REST_FRAMEWORK={
-        "DEFAULT_AUTHENTICATION_CLASSES": (
-            "rest_framework_simplejwt.authentication.JWTAuthentication",
-        ),
-        "DEFAULT_THROTTLE_RATES": {
-            "anon": "5/hour",
-            "login": "1/min",
-        },
-    }
-)
 class LoginThrottlingTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -111,12 +100,16 @@ class LoginThrottlingTests(TestCase):
             "password": "incorrect-password",
         }
 
-        first_attempt = self.client.post(
-            url, credentials, content_type="application/json"
-        )
-        second_attempt = self.client.post(
-            url, credentials, content_type="application/json"
-        )
+        with patch(
+            "accounts.throttles.LoginRateThrottle.get_rate",
+            return_value="1/min",
+        ):
+            first_attempt = self.client.post(
+                url, credentials, content_type="application/json"
+            )
+            second_attempt = self.client.post(
+                url, credentials, content_type="application/json"
+            )
 
         self.assertEqual(first_attempt.status_code, 401)
         self.assertEqual(second_attempt.status_code, 429)
