@@ -107,7 +107,16 @@ function AdminManagement() {
       const response = await api.get(section.endpoint, { params: { page: targetPage, page_size: 50 } });
       const data = response.data;
       const results = Array.isArray(data) ? data : data.results || [];
-      setRows(section.single ? results.slice(0, 1) : results);
+      const visibleRows = section.single ? results.slice(0, 1) : results;
+      setRows(visibleRows);
+      if (section.single) {
+        const policy = visibleRows[0];
+        setEditing(policy?.id ?? null);
+        setForm(policy ? Object.fromEntries(section.fields.map(({ name, type }) => [
+          name,
+          type === "checkbox" ? Boolean(policy[name]) : policy[name] ?? "",
+        ])) : {});
+      }
       setPageInfo(Array.isArray(data) ? { count: results.length, next: null, previous: null } : data);
       setPage(targetPage);
       setMessage("");
