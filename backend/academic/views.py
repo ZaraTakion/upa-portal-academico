@@ -18,6 +18,7 @@ from .models import (
     ClassGroup,
     Course,
     Grade,
+    GradePolicy,
     StudentProfile,
     Subject,
     TeacherProfile,
@@ -33,11 +34,18 @@ from .serializers import (
     ClassGroupSerializer,
     CourseSerializer,
     GradeSerializer,
+    GradePolicySerializer,
     StudentProfileSerializer,
     SubjectSerializer,
     TeacherProfileSerializer,
     WeeklyScheduleSerializer,
 )
+
+
+class GradePolicyViewSet(viewsets.ModelViewSet):
+    serializer_class = GradePolicySerializer
+    permission_classes = [IsStaffOrReadOnly]
+    queryset = GradePolicy.objects.all().order_by("pk")
 
 
 class CourseViewSet(viewsets.ModelViewSet):

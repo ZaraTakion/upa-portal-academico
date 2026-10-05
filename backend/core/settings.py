@@ -131,6 +131,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "core.pagination.OptionalPageNumberPagination",
     "DEFAULT_THROTTLE_RATES": {
         "anon": os.environ.get("ANON_THROTTLE_RATE", "5/hour"),
         "login": os.environ.get("LOGIN_THROTTLE_RATE", "5/min"),

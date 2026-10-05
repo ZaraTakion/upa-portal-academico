@@ -2,6 +2,7 @@ import { CalendarDays, Filter } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import api from "../../api/axios";
+import { formatDate } from "../../utils/dateFormat";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
 import MainLayout from "../../components/layout/MainLayout";
@@ -79,7 +80,7 @@ function Calendar() {
             >
               <div className="calendar-date">
                 <CalendarDays size={20} />
-                <span>{event.start_date}</span>
+                <span>{formatDate(event.start_date)}</span>
               </div>
 
               <Badge type={event.event_type}>
@@ -89,7 +90,7 @@ function Calendar() {
               <h2>{event.title}</h2>
               <p>{event.description}</p>
 
-              {event.end_date && <small>Até {event.end_date}</small>}
+              {event.end_date && <small>Até {formatDate(event.end_date)}</small>}
             </BaseCard>
           ))}
         </section>

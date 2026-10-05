@@ -10,11 +10,29 @@ from .models import (
     ClassGroup,
     Course,
     Grade,
+    GradePolicy,
     StudentProfile,
     Subject,
     TeacherProfile,
     WeeklySchedule,
 )
+
+
+class GradePolicySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GradePolicy
+        fields = ["id", "passing_score", "attention_score", "maximum_absences"]
+
+    def validate(self, attrs):
+        if self.instance is None and GradePolicy.objects.exists():
+            raise serializers.ValidationError("A regra de notas já está cadastrada. Edite a regra existente.")
+        passing = attrs.get("passing_score", getattr(self.instance, "passing_score", 7))
+        attention = attrs.get("attention_score", getattr(self.instance, "attention_score", 5))
+        if attention > passing:
+            raise serializers.ValidationError({"attention_score": "A nota de atenção não pode superar a nota de aprovação."})
+        if passing > 10 or attention > 10:
+            raise serializers.ValidationError("As notas limite devem estar entre 0 e 10.")
+        return attrs
 
 
 class CourseSerializer(serializers.ModelSerializer):

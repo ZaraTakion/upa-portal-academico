@@ -328,3 +328,39 @@ class AssessmentWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(AttendanceRecord.objects.count(), 1)
         self.assertEqual(response.data["recorded_by"], self.teacher_user.pk)
+
+class OptionalPaginationAndGradePolicyTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(username="admin", is_staff=True)
+        self.client = APIClient()
+        self.client.force_authenticate(self.admin)
+
+    def test_list_responses_remain_arrays_without_page_parameter(self):
+        Course.objects.create(name="Curso A")
+        response = self.client.get(reverse("courses-list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.data, list)
+
+    def test_page_parameter_returns_page_metadata(self):
+        Course.objects.create(name="Curso A")
+        Course.objects.create(name="Curso B")
+        response = self.client.get(reverse("courses-list"), {"page": 1, "page_size": 1})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertIsNone(response.data["previous"])
+
+    def test_staff_can_create_only_one_grade_policy(self):
+        payload = {"passing_score": "7.00", "attention_score": "5.00", "maximum_absences": 20}
+        response = self.client.post(reverse("grade-policy-list"), payload, format="json")
+        self.assertEqual(response.status_code, 201)
+        duplicate = self.client.post(reverse("grade-policy-list"), payload, format="json")
+        self.assertEqual(duplicate.status_code, 400)
+
+    def test_grade_policy_rejects_invalid_thresholds(self):
+        response = self.client.post(
+            reverse("grade-policy-list"),
+            {"passing_score": "5.00", "attention_score": "6.00"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)

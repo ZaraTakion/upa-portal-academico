@@ -6,6 +6,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import api from "../../api/axios";
 import Loading from "../../components/feedback/Loading";
@@ -18,32 +19,17 @@ function AdminPanel() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  async function loadAdminData() {
-    try {
-      const response = await api.get("/dashboard/summary/");
-      setSummary(response.data);
-    } catch (error) {
-      console.error("Erro ao carregar gestão:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    loadAdminData();
+    api.get("/dashboard/summary/")
+      .then((response) => setSummary(response.data))
+      .catch((error) => console.error("Erro ao carregar gestão:", error))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
     <MainLayout>
-      <PageHeader
-        eyebrow="Administração"
-        title="Painel de Gestão"
-        description="Resumo institucional do sistema acadêmico."
-      />
-
-      {loading ? (
-        <Loading text="Carregando painel administrativo..." />
-      ) : (
+      <PageHeader eyebrow="Administração" title="Painel de Gestão" description="Resumo institucional e acesso às ferramentas administrativas." />
+      {loading ? <Loading text="Carregando painel administrativo..." /> : (
         <>
           <section className="stats-grid">
             <StatCard label="Alunos" value={summary?.total_students ?? 0} />
@@ -54,37 +40,12 @@ function AdminPanel() {
             <StatCard label="Notificações" value={summary?.total_notifications ?? 0} />
             <StatCard label="Financeiro" value={summary?.total_invoices ?? 0} />
           </section>
-
           <section className="cards-grid">
-            <AdminCard
-              icon={<Users />}
-              title="Usuários"
-              text="Gerencie alunos, professores e permissões pelo Django Admin."
-            />
-
-            <AdminCard
-              icon={<GraduationCap />}
-              title="Acadêmico"
-              text="Controle disciplinas, turmas, matrículas e notas."
-            />
-
-            <AdminCard
-              icon={<CalendarDays />}
-              title="Calendário"
-              text="Cadastre feriados, provas, eventos e comunicados."
-            />
-
-            <AdminCard
-              icon={<Bell />}
-              title="Comunicados"
-              text="Envie avisos acadêmicos, eventos, estágios e oportunidades."
-            />
-
-            <AdminCard
-              icon={<Receipt />}
-              title="Financeiro"
-              text="Acompanhe mensalidades, vencimentos e pendências."
-            />
+            <AdminCard icon={<Users />} title="Usuários" text="Gerencie contas, alunos, professores e permissões." to={import.meta.env.VITE_DJANGO_ADMIN_URL || "http://localhost:8000/admin/"} external />
+            <AdminCard icon={<GraduationCap />} title="Gestão acadêmica" text="Cursos, períodos, disciplinas, turmas e regra de notas." to="/admin/management?section=courses" />
+            <AdminCard icon={<CalendarDays />} title="Calendário" text="Cadastre feriados, provas, eventos e comunicados." to="/admin/management?section=calendar" />
+            <AdminCard icon={<Bell />} title="Comunicados" text="Consulte comunicados e notificações institucionais." to="/notifications" />
+            <AdminCard icon={<Receipt />} title="Financeiro" text="Acompanhe mensalidades, vencimentos e pendências." to="/financial" />
           </section>
         </>
       )}
@@ -92,12 +53,15 @@ function AdminPanel() {
   );
 }
 
-function AdminCard({ icon, title, text }) {
+function AdminCard({ icon, title, text, to, external = false }) {
   return (
     <BaseCard className="admin-card">
       <div className="admin-card-icon">{icon}</div>
       <h2>{title}</h2>
       <p>{text}</p>
+      {external
+        ? <a href={to} target="_blank" rel="noreferrer">Abrir gestão <span aria-hidden="true">↗</span></a>
+        : <Link to={to}>Abrir gestão</Link>}
     </BaseCard>
   );
 }

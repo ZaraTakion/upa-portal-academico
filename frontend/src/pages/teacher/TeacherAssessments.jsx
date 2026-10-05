@@ -2,6 +2,7 @@ import { Plus, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import api from "../../api/axios";
+import { formatDate } from "../../utils/dateFormat";
 import Alert from "../../components/feedback/Alert";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
@@ -153,7 +154,7 @@ function TeacherAssessments() {
           {assessments.map((assessment) => (
             <article className="base-card" key={assessment.id}>
               <h2>{assessment.title}</h2>
-              <p>{assessment.category.toUpperCase()} · Peso {assessment.weight} · Máximo {assessment.maximum_score}{assessment.due_date ? ` · Prazo ${new Date(`${assessment.due_date}T12:00:00`).toLocaleDateString("pt-BR")}` : ""}</p>
+              <p>{assessment.category.toUpperCase()} · Peso {assessment.weight} · Máximo {assessment.maximum_score}{assessment.due_date ? ` · Prazo ${formatDate(assessment.due_date)}` : ""}</p>
               {roster.length === 0 ? <p>Sem estudantes ativos nesta turma.</p> : (
                 <div className="table-wrapper">
                   <table>
