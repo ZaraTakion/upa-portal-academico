@@ -2,25 +2,7 @@ import { Navigate } from "react-router-dom";
 
 import Loading from "../feedback/Loading";
 import { useAuth } from "../../context/AuthContext";
-
-
-function getRole(user) {
-  if (user?.is_staff || user?.is_superuser) {
-    return "admin";
-  }
-
-  if (user?.groups?.includes("Professor")) {
-    return "professor";
-  }
-
-  return "student";
-}
-
-const roleHome = {
-  admin: "/admin-panel",
-  professor: "/teacher/classes",
-  student: "/dashboard",
-};
+import { getRoleHome, getUserRole } from "../../utils/roles";
 
 function ProtectedRoute({ children, roles }) {
   const { user, loadingUser } = useAuth();
@@ -33,9 +15,9 @@ function ProtectedRoute({ children, roles }) {
     return <Navigate to="/" replace />;
   }
 
-  const role = getRole(user);
+  const role = getUserRole(user);
   if (roles?.length && !roles.includes(role)) {
-    return <Navigate to={roleHome[role]} replace />;
+    return <Navigate to={getRoleHome(user)} replace />;
   }
 
   return children;
