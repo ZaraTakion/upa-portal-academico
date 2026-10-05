@@ -77,3 +77,25 @@ class GradePermissionTests(TestCase):
         self.grade.refresh_from_db()
         self.assertEqual(str(self.grade.grade), "8.50")
         self.assertEqual(self.grade.absence, 2)
+
+    def test_teacher_cannot_access_a_non_enrolled_student_grade(self):
+        other_user = User.objects.create_user(
+            username="other-student", password="student-password"
+        )
+        other_student = StudentProfile.objects.create(
+            user=other_user,
+            registration="S-002",
+            course="Sistemas para Internet",
+            semester=4,
+        )
+        other_grade = Grade.objects.create(
+            student=other_student,
+            subject=self.subject,
+            grade=7,
+            absence=0,
+        )
+        self.client.force_authenticate(self.teacher_user)
+        response = self.client.get(
+            reverse("grades-detail", args=[other_grade.pk])
+        )
+        self.assertEqual(response.status_code, 404)
