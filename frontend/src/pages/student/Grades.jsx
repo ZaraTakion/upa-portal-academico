@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import api from "../../api/axios";
+import { formatDate } from "../../utils/dateFormat";
 import Alert from "../../components/feedback/Alert";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
@@ -101,7 +102,7 @@ function Grades() {
                       <h3>{assessment.title}</h3>
                       <p>{assessment.subject_name} · {assessment.class_group_name}</p>
                       <p>Nota máxima: {assessment.maximum_score}</p>
-                      <p>Prazo: {assessment.due_date ? new Date(`${assessment.due_date}T12:00:00`).toLocaleDateString("pt-BR") : "A definir"}</p>
+                      <p>Prazo: {assessment.due_date ? formatDate(assessment.due_date) : "A definir"}</p>
                       <p><strong>Nota:</strong> {result?.score ?? "Aguardando correção"}</p>
                       {result?.feedback && <p><strong>Devolutiva:</strong> {result.feedback}</p>}
                     </BaseCard>
