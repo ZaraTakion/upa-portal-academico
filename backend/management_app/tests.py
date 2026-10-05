@@ -9,7 +9,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from academic.models import ClassEnrollment, ClassGroup, Course, StudentProfile, Subject, TeacherProfile
-from .models import AcademicFile
+from .models import AcademicFile, FinancialInvoice
 
 
 class AcademicFileAPITests(TestCase):
@@ -238,3 +238,54 @@ class AcademicFileAPITests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(AcademicFile.objects.count(), 0)
+
+
+class FinancialInvoiceAccessTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="invoice-owner")
+        self.other_user = User.objects.create_user(username="invoice-other")
+        self.invoice = FinancialInvoice.objects.create(
+            user=self.owner,
+            description="Mensalidade",
+            amount="599.90",
+            due_date="2026-11-10",
+            status="pending",
+            payment_method=None,
+        )
+        self.client = APIClient()
+
+    def test_students_only_see_their_invoices_and_unpaid_method_is_empty(self):
+        FinancialInvoice.objects.create(
+            user=self.other_user,
+            description="Invoice privada",
+            amount="100.00",
+            due_date="2026-11-10",
+        )
+        self.client.force_authenticate(self.owner)
+
+        response = self.client.get(reverse("financial-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([row["id"] for row in response.data], [self.invoice.pk])
+        self.assertIsNone(response.data[0]["payment_method"])
+        self.assertIsNone(response.data[0]["payment_method_display"])
+
+    def test_students_cannot_create_or_change_invoices(self):
+        self.client.force_authenticate(self.owner)
+        create_response = self.client.post(
+            reverse("financial-list"),
+            {
+                "description": "Cobrança indevida",
+                "amount": "1.00",
+                "due_date": "2026-11-10",
+            },
+            format="json",
+        )
+        patch_response = self.client.patch(
+            reverse("financial-detail", args=[self.invoice.pk]),
+            {"status": "paid"},
+            format="json",
+        )
+
+        self.assertEqual(create_response.status_code, 403)
+        self.assertEqual(patch_response.status_code, 403)
