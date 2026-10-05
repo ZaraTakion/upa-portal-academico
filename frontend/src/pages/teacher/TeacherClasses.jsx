@@ -53,7 +53,13 @@ function TeacherClasses() {
               <p className="teacher-class-name">{item.name}</p>
 
               <div className="teacher-class-meta">
-                <span><Users size={16} aria-hidden="true" /> {item.students_count} alunos</span>
+                <Link
+                  to={`/teacher/students?class_group=${encodeURIComponent(item.id)}`}
+                  aria-label={`Ver alunos de ${item.name}`}
+                >
+                  <Users size={16} aria-hidden="true" />
+                  {item.students_count} alunos · Ver lista
+                </Link>
                 <span>{item.year}</span>
               </div>
 
