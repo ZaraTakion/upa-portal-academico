@@ -3,8 +3,13 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     AcademicCalendarViewSet,
+    AcademicTermViewSet,
+    AssessmentResultViewSet,
+    AssessmentViewSet,
+    AttendanceRecordViewSet,
     ClassEnrollmentViewSet,
     ClassGroupViewSet,
+    CourseViewSet,
     GradeViewSet,
     StudentProfileViewSet,
     SubjectViewSet,
@@ -14,6 +19,11 @@ from .views import (
 
 
 router = DefaultRouter()
+router.register("courses", CourseViewSet, basename="courses")
+router.register("terms", AcademicTermViewSet, basename="terms")
+router.register("assessments", AssessmentViewSet, basename="assessments")
+router.register("assessment-results", AssessmentResultViewSet, basename="assessment-results")
+router.register("attendance", AttendanceRecordViewSet, basename="attendance")
 router.register("students", StudentProfileViewSet, basename="students")
 router.register("teachers", TeacherProfileViewSet, basename="teachers")
 router.register("subjects", SubjectViewSet, basename="subjects")
