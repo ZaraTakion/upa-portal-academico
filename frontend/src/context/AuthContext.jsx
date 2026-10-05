@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
-import { getUser, logout, saveUser } from "../utils/auth";
+import { logout, saveUser } from "../utils/auth";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getUser());
+  const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(() =>
     Boolean(localStorage.getItem("accessToken"))
   );
