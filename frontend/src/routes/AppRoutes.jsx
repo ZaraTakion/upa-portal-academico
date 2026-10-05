@@ -21,6 +21,7 @@ import TeacherStudents from "../pages/teacher/TeacherStudents";
 import TeacherGrades from "../pages/teacher/TeacherGrades";
 
 import AdminPanel from "../pages/admin/AdminPanel";
+import NotFound from "../pages/NotFound";
 
 function AppRoutes() {
   return (
@@ -43,6 +44,7 @@ function AppRoutes() {
         <Route path="/teacher/students" element={<ProtectedRoute roles={["professor"]}><TeacherStudents /></ProtectedRoute>} />
         <Route path="/teacher/grades" element={<ProtectedRoute roles={["professor"]}><TeacherGrades /></ProtectedRoute>} />
         <Route path="/admin-panel" element={<ProtectedRoute roles={["admin"]}><AdminPanel /></ProtectedRoute>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
