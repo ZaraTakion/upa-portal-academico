@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from .models import ClassEnrollment, ClassGroup, Grade, StudentProfile, Subject, TeacherProfile
+from .models import ClassEnrollment, ClassGroup, Course, Grade, StudentProfile, Subject, TeacherProfile
 
 
 class GradePermissionTests(TestCase):
@@ -16,10 +16,11 @@ class GradePermissionTests(TestCase):
             username="teacher", password="teacher-password"
         )
         self.teacher_user.groups.add(self.professor_group)
+        self.course, _ = Course.objects.get_or_create(name="Sistemas para Internet")
         self.student = StudentProfile.objects.create(
             user=self.student_user,
             registration="S-001",
-            course="Sistemas para Internet",
+            course=self.course,
             semester=4,
         )
         self.teacher = TeacherProfile.objects.create(
