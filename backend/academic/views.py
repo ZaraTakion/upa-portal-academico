@@ -1,4 +1,4 @@
-from django.db.models import F
+from django.db.models import Case, Count, F, IntegerField, Q, Value, When
 from django.utils import timezone
 from rest_framework import viewsets
 
@@ -80,10 +80,10 @@ class ClassGroupViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return ClassGroup.objects.all()
+            return ClassGroup.objects.all().select_related("subject", "teacher__user").annotate(students_count=Count("classenrollment"))
         if user.groups.filter(name="Professor").exists():
-            return ClassGroup.objects.filter(teacher__user=user)
-        return ClassGroup.objects.filter(classenrollment__student__user=user)
+            return ClassGroup.objects.filter(teacher__user=user).select_related("subject", "teacher__user").annotate(students_count=Count("classenrollment"))
+        return ClassGroup.objects.filter(classenrollment__student__user=user).select_related("subject", "teacher__user").annotate(students_count=Count("classenrollment"))
 
 
 class ClassEnrollmentViewSet(viewsets.ModelViewSet):
@@ -136,7 +136,7 @@ class AcademicCalendarViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(event_type=event_type)
         if active_only == "true":
             today = timezone.localdate()
-            queryset = queryset.filter(visible_until__gte=today)
+            queryset = queryset.filter(Q(visible_until__isnull=True) | Q(visible_until__gte=today))
         return queryset
 
 
@@ -145,11 +145,29 @@ class WeeklyScheduleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsStaffOrReadOnly]
 
     def get_queryset(self):
-        queryset = WeeklySchedule.objects.all()
+        user = self.request.user
+        if user.is_staff:
+            queryset = WeeklySchedule.objects.all()
+        elif user.groups.filter(name="Professor").exists():
+            queryset = WeeklySchedule.objects.filter(class_group__teacher__user=user)
+        else:
+            queryset = WeeklySchedule.objects.filter(
+                class_group__classenrollment__student__user=user
+            )
+
         subject = self.request.query_params.get("subject")
         weekday = self.request.query_params.get("weekday")
         if subject:
             queryset = queryset.filter(subject__id=subject)
         if weekday:
             queryset = queryset.filter(weekday=weekday)
-        return queryset.order_by("weekday", "start_time")
+        weekday_order = Case(
+            *[
+                When(weekday=value, then=Value(index))
+                for index, (value, _) in enumerate(WeeklySchedule.WEEKDAY_CHOICES)
+            ],
+            output_field=IntegerField(),
+        )
+        return queryset.select_related(
+            "class_group__subject", "teacher__user", "subject"
+        ).order_by(weekday_order, "start_time")
