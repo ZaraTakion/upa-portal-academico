@@ -141,7 +141,7 @@ class GradePermissionTests(TestCase):
         StudentProfile.objects.create(
             user=other_user,
             registration="S-002",
-            course="Sistemas para Internet",
+            course=self.course,
             semester=4,
         )
         self.client.force_authenticate(self.teacher_user)
