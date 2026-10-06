@@ -336,6 +336,7 @@ class GradeSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source="subject.name", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     class_group = serializers.IntegerField(source="class_group_id", read_only=True, allow_null=True)
+    class_group_name = serializers.CharField(source="class_group.name", read_only=True, allow_null=True)
     absence_is_tracked = serializers.SerializerMethodField()
     grade_is_calculated = serializers.SerializerMethodField()
 
@@ -349,6 +350,8 @@ class GradeSerializer(serializers.ModelSerializer):
             "subject",
             "subject_name",
             "class_group",
+            "class_group_name",
+            "attempt",
             "grade",
             "grade_is_calculated",
             "absence",

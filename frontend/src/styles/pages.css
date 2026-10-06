@@ -452,3 +452,16 @@
   flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
 }
+
+
+.grade-filter {
+  width: min(100%, 420px);
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.grade-filter label {
+  color: var(--text-primary);
+  font-weight: 700;
+}

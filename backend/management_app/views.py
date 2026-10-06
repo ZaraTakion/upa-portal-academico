@@ -143,12 +143,15 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
         extension = os.path.splitext(academic_file.file.name)[1].lower()
         mime_type = ALLOWED_UPLOADS.get(extension, ("application/octet-stream", None))[0]
         filename = Path(academic_file.file.name).name
-        return FileResponse(
+        response = FileResponse(
             stored_file,
             as_attachment=True,
             filename=filename,
             content_type=mime_type,
         )
+        response["Cache-Control"] = "private, no-store"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
 
 
 class FinancialInvoiceViewSet(viewsets.ModelViewSet):

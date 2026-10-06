@@ -1,9 +1,7 @@
 import {
   AlertTriangle,
   CheckCircle,
-  Copy,
   CreditCard,
-  FileText,
   Wallet,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -15,7 +13,6 @@ import Loading from "../../components/feedback/Loading";
 import MainLayout from "../../components/layout/MainLayout";
 import Badge from "../../components/ui/Badge";
 import BaseCard from "../../components/ui/BaseCard";
-import Button from "../../components/ui/Button";
 import PageHeader from "../../components/ui/PageHeader";
 import StatCard from "../../components/ui/StatCard";
 
@@ -57,20 +54,6 @@ function Financial() {
     }).format(toNumber(value));
   }
 
-  function simulatePix(invoice) {
-    const pixCode = `UPA-PIX-${invoice.id}-${invoice.amount}`;
-
-    navigator.clipboard?.writeText(pixCode);
-
-    setAlertType("success");
-    setFeedback(`Código Pix copiado para ${invoice.description}.`);
-  }
-
-  function simulateBoleto(invoice) {
-    setAlertType("info");
-    setFeedback(`Boleto de ${invoice.description} gerado para demonstração.`);
-  }
-
   const summary = useMemo(() => {
     const paid = invoices
       .filter((item) => item.status === "paid")
@@ -105,8 +88,13 @@ function Financial() {
       <PageHeader
         eyebrow="Financeiro"
         title="Mensalidades e Pendências"
-        description="Consulte cobranças, vencimentos, status de pagamento e opções simuladas."
+        description="Consulte suas faturas e vencimentos registrados pela administração."
       />
+
+      <div className="alert alert-info" role="status">
+        Este portal não processa pagamentos. Use as instruções de pagamento
+        fornecidas pela administração da instituição.
+      </div>
 
       <Alert type={alertType} message={feedback} />
 
@@ -179,24 +167,10 @@ function Financial() {
                 <strong>Status:</strong> {invoice.status_display}
               </p>
 
-              {invoice.status !== "paid" && (
-                <div className="finance-actions">
-                  <Button
-                    variant="secondary"
-                    onClick={() => simulateBoleto(invoice)}
-                  >
-                    <FileText size={16} />
-                    Gerar boleto
-                  </Button>
-
-                  <Button
-                    variant="secondary"
-                    onClick={() => simulatePix(invoice)}
-                  >
-                    <Copy size={16} />
-                    Copiar Pix
-                  </Button>
-                </div>
+              {invoice.payment_method_display && (
+                <p>
+                  <strong>Forma informada:</strong> {invoice.payment_method_display}
+                </p>
               )}
             </BaseCard>
           ))}
