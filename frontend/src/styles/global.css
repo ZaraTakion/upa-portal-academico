@@ -58,8 +58,8 @@
 
 [data-theme="dark"] {
   --background: #101a1b;
-  --primary: #5dd3c5;
-  --primary-hover: #83e3d8;
+  --primary: #b7f7ef;
+  --primary-hover: #d4fff9;
   --primary-soft: rgba(45, 160, 147, 0.18);
   --primary-ring: rgba(93, 211, 197, 0.22);
   --focus-color: #67e8d8;
@@ -67,7 +67,7 @@
   --secondary: #c5d5e2;
   --secondary-soft: rgba(100, 140, 170, 0.18);
 
-  --danger: #fca5a5;
+  --danger: #ffd1d1;
   --surface: #172425;
   --surface-soft: #203131;
   --surface-muted: #304342;
