@@ -1,7 +1,10 @@
 from datetime import timedelta
 from decimal import Decimal
+from importlib import import_module
 
+from django.apps import apps
 from django.contrib.auth.models import Group, User
+from django.db import connection
 from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
@@ -22,6 +25,37 @@ from .models import (
     TeacherProfile,
 )
 
+
+class SubjectCatalogMigrationTests(TestCase):
+    def test_legacy_status_is_preserved_while_catalog_status_is_normalized(self):
+        subject = Subject.objects.create(
+            name="História da disciplina",
+            code="HIST-001",
+            workload=40,
+            period=1,
+            legacy_professor="Docente antigo",
+            legacy_status="failed",
+        )
+        locked_subject = Subject.objects.create(
+            name="Disciplina bloqueada",
+            code="HIST-002",
+            workload=40,
+            period=1,
+            legacy_status="locked",
+        )
+        migration = import_module(
+            "academic.migrations.0006_normalize_subject_catalog"
+        )
+
+        with connection.schema_editor() as schema_editor:
+            migration.normalize_catalog_statuses(apps, schema_editor)
+
+        subject.refresh_from_db()
+        locked_subject.refresh_from_db()
+        self.assertEqual(subject.availability_status, "available")
+        self.assertEqual(subject.legacy_status, "failed")
+        self.assertEqual(subject.legacy_professor, "Docente antigo")
+        self.assertEqual(locked_subject.availability_status, "locked")
 
 class GradePermissionTests(TestCase):
     def setUp(self):
