@@ -197,7 +197,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
         if period:
             queryset = queryset.filter(period=period)
         if status_param:
-            queryset = queryset.filter(status=status_param)
+            queryset = queryset.filter(availability_status=status_param)
         offerings = ClassGroup.objects.select_related(
             "teacher__user", "term"
         ).order_by("-term__code", "name")
