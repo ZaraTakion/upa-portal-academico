@@ -49,7 +49,7 @@ function Subjects() {
       <PageHeader
         eyebrow="Vida acadêmica"
         title="Disciplinas"
-        description="Consulte disciplinas, professores, carga horária, período e situação."
+        description="Consulte disciplinas, docentes das ofertas recentes, carga horária e disponibilidade no catálogo."
       />
 
       <form className="toolbar" onSubmit={handleSearch}>
@@ -94,7 +94,7 @@ function Subjects() {
               <h2>{subject.name}</h2>
 
               <p><strong>Código:</strong> {subject.code}</p>
-              <p><strong>Professor:</strong> {subject.professor}</p>
+              <p><strong>Docente(s) da oferta:</strong> {subject.professor}</p>
               <p><strong>Período:</strong> {subject.period}</p>
               <p><strong>Carga horária:</strong> {subject.workload}h</p>
             </BaseCard>
