@@ -35,9 +35,8 @@ const sections = {
       { name: "name", label: "Nome", required: true },
       { name: "code", label: "Código", required: true },
       { name: "workload", label: "Carga horária", type: "number", min: 1, required: true },
-      { name: "professor", label: "Professor", required: true },
       { name: "period", label: "Semestre", type: "number", min: 1, required: true },
-      { name: "status", label: "Status", type: "select", options: [["available", "Disponível"], ["current", "Em andamento"], ["completed", "Concluída"], ["failed", "Reprovada"], ["locked", "Bloqueada"]] },
+      { name: "status", label: "Disponibilidade no catálogo", type: "select", options: [["available", "Disponível"], ["locked", "Bloqueada"]] },
     ],
   },
   classes: {
