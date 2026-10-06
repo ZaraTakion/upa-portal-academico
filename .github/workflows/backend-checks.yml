@@ -42,7 +42,7 @@ jobs:
         env:
           SECURE_SSL_REDIRECT: "True"
         run: python manage.py check --deploy
-      - name: Check model migrations
+${step}      - name: Check model migrations
         run: python manage.py makemigrations --check --dry-run
       - name: Run Django tests
         run: python manage.py test
