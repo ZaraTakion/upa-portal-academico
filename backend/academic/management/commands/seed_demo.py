@@ -72,25 +72,24 @@ class Command(BaseCommand):
             students.append(profile)
 
         subjects_data = [
-            ("Desenvolvimento Front-End Avançado", "FEA001", 80, "Prof. Leandro Santana", 4, "current"),
-            ("Banco de Dados", "BD001", 80, "Prof. Camila Rocha", 4, "current"),
-            ("Engenharia de Software", "ES001", 60, "Prof. Marcos Lima", 4, "current"),
-            ("UX/UI Design", "UX001", 60, "Prof. Juliana Alves", 4, "available"),
-            ("Programação Web com Django", "DJ001", 80, "Prof. Leandro Santana", 4, "current"),
-            ("Projeto Integrador", "PI001", 100, "Prof. Coordenação Acadêmica", 4, "current"),
+            ("Desenvolvimento Front-End Avançado", "FEA001", 80, 4),
+            ("Banco de Dados", "BD001", 80, 4),
+            ("Engenharia de Software", "ES001", 60, 4),
+            ("UX/UI Design", "UX001", 60, 4),
+            ("Programação Web com Django", "DJ001", 80, 4),
+            ("Projeto Integrador", "PI001", 100, 4),
         ]
 
         subjects = []
 
-        for name, code, workload, professor_name, period, status in subjects_data:
+        for name, code, workload, period in subjects_data:
             subject, _ = Subject.objects.update_or_create(
                 code=code,
                 defaults={
                     "name": name,
                     "workload": workload,
-                    "professor": professor_name,
                     "period": period,
-                    "status": status,
+                    "availability_status": "available",
                 },
             )
             subjects.append(subject)
