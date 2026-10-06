@@ -263,11 +263,16 @@ class GradeViewSet(viewsets.ModelViewSet):
 
         subject = self.request.query_params.get("subject")
         status_param = self.request.query_params.get("status")
+        class_group = self.request.query_params.get("class_group")
         if subject:
             queryset = queryset.filter(subject__id=subject)
         if status_param:
             queryset = queryset.filter(status=status_param)
-        return queryset.select_related("student__user", "subject", "class_group").order_by("subject__name")
+        if class_group:
+            if not class_group.isdecimal():
+                return queryset.none()
+            queryset = queryset.filter(class_group_id=int(class_group))
+        return queryset.select_related("student__user", "subject", "class_group").order_by("subject__name", "attempt")
 
 
 class AcademicCalendarViewSet(viewsets.ModelViewSet):
