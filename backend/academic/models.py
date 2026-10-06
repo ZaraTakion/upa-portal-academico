@@ -81,20 +81,32 @@ class TeacherProfile(models.Model):
 
 
 class Subject(models.Model):
-    STATUS_CHOICES = [
+    AVAILABILITY_CHOICES = [
         ("available", "Disponível"),
-        ("current", "Em andamento"),
-        ("completed", "Concluída"),
-        ("failed", "Reprovada"),
         ("locked", "Bloqueada"),
     ]
 
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=20, unique=True)
     workload = models.PositiveIntegerField()
-    professor = models.CharField(max_length=100)
     period = models.PositiveIntegerField(default=1)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="available")
+    availability_status = models.CharField(
+        max_length=20,
+        choices=AVAILABILITY_CHOICES,
+        default="available",
+    )
+    legacy_professor = models.CharField(
+        max_length=100,
+        blank=True,
+        editable=False,
+        help_text="Valor histórico. O docente atual pertence à oferta/turma.",
+    )
+    legacy_status = models.CharField(
+        max_length=20,
+        blank=True,
+        editable=False,
+        help_text="Status antigo, preservado somente para auditoria dos dados migrados.",
+    )
 
     def __str__(self):
         return f"{self.name} - {self.code}"
