@@ -23,7 +23,7 @@
   --warning: #a16207;
   --warning-soft: #fef3c7;
 
-  --danger: #dc2626;
+  --danger: #b91c1c;
   --danger-soft: #fee2e2;
 
   --info: #0369a1;
@@ -75,6 +75,7 @@
 
 [data-theme="dark"] {
   --background: #0f172a;
+  --danger: #fca5a5;
   --focus-color: #7dd3fc;
   --surface: #111827;
   --surface-soft: #1e293b;
