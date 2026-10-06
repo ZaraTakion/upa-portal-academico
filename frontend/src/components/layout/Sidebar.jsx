@@ -35,6 +35,8 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
 
   return (
     <aside
+      id="primary-navigation"
+      aria-label="Navegação principal"
       className={`sidebar ${isOpen ? "sidebar-open" : ""} ${isCollapsed ? "is-collapsed" : ""}`}
     >
       <div className="sidebar-brand">
@@ -50,7 +52,8 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
         type="button"
         className="sidebar-collapse-button"
         onClick={onToggleCollapse}
-        aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}\n        aria-expanded={!isCollapsed}\n        aria-controls="sidebar-nav"
+        aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+        aria-expanded={!isCollapsed}\n        aria-controls="sidebar-nav"
       >
         {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
       </button>
