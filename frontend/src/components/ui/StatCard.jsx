@@ -3,7 +3,7 @@ import BaseCard from "./BaseCard";
 function StatCard({ icon, label, value, helper }) {
   return (
     <BaseCard className="stat-card">
-      {icon && <div className="stat-icon">{icon}</div>}
+      {icon && <div className="stat-icon" aria-hidden="true">{icon}</div>}
 
       <div>
         <span>{label}</span>
