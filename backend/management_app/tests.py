@@ -184,6 +184,8 @@ class AcademicFileAPITests(TestCase):
 
         self.client.force_authenticate(self.student_user)
         allowed = self.client.get(reverse("files-download", args=[own_file.pk]))
+        self.assertEqual(allowed["Cache-Control"], "private, no-store")
+        self.assertEqual(allowed["X-Content-Type-Options"], "nosniff")
         denied = self.client.get(reverse("files-download", args=[other_file.pk]))
         self.assertEqual(allowed.status_code, 200)
         self.assertEqual(allowed["Content-Type"], "application/pdf")
