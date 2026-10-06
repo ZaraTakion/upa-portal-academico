@@ -71,8 +71,8 @@ function Contact() {
     <MainLayout>
       <PageHeader
         eyebrow="Atendimento"
-        title="Contato"
-        description="Envie uma solicitação e acompanhe as respostas pelo protocolo."
+        title="Atendimento"
+        description="Registre uma solicitação e acompanhe seu protocolo e as respostas recebidas."
       />
 
       <section className="split-grid">
