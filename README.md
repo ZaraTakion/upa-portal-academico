@@ -91,8 +91,9 @@ Configure variáveis de ambiente; não publique segredos no repositório.
 - `FRONTEND_URL`: endereço do frontend, usado em links de redefinição.
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` e `DEFAULT_FROM_EMAIL`.
 - Armazenamento de uploads: escolha uma das opções:
-  - S3 privado ou compatível: defina `USE_S3_STORAGE=True`, `AWS_STORAGE_BUCKET_NAME`, região/endpoint e credenciais ou identidade IAM. URLs assinadas expiram em `AWS_QUERYSTRING_EXPIRE` (900 s por padrão). Bloqueie acesso público ao bucket.
+  - S3 privado ou compatível: defina `USE_S3_STORAGE=True`, `AWS_STORAGE_BUCKET_NAME`, região/endpoint e credenciais ou identidade IAM. Os downloads continuam passando pela rota autenticada da API. Bloqueie acesso público ao bucket.
   - Volume persistente: defina `ALLOW_LOCAL_MEDIA_STORAGE=True` e aponte `MEDIA_ROOT` para um volume persistente montado no serviço. Não use o disco efêmero do container.
+  - Antes de ativar um storage novo com arquivos existentes, faça backup e copie `MEDIA_ROOT/academic_files/` preservando os caminhos; valide download e permissões antes de remover a cópia antiga.
 - `ALLOW_SQLITE_DATABASE=True` e `ALLOW_LOCAL_MEDIA_STORAGE=True` são apenas opções explícitas de desenvolvimento/teste; não as use em produção efêmera.
 - `SECURE_SSL_REDIRECT`, cookies seguros e HSTS são ativados por padrão quando `DEBUG=False`; ajuste apenas se o proxy exigir configuração específica.
 
