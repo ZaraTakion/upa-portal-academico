@@ -388,3 +388,67 @@
 .teacher-student-filter {
   margin-bottom: 20px;
 }
+
+
+/* Student dashboard feedback and empty data states */
+.dashboard-feedback {
+  width: min(100%, 720px);
+  margin: clamp(24px, 8vh, 88px) auto;
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-feedback h1 {
+  max-width: 18ch;
+  margin-bottom: 12px;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-feedback p {
+  max-width: 56ch;
+}
+
+.dashboard-empty-state {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 20px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.dashboard-empty-state .empty-text {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dashboard-empty-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--primary);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dashboard-empty-link:hover {
+  color: var(--primary-hover);
+}
+
+.premium-panel .simple-list li > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.premium-panel .simple-list time,
+.premium-panel .simple-list li > span {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
