@@ -1,5 +1,9 @@
-function BaseCard({ children, className = "" }) {
-  return <article className={`base-card ${className}`}>{children}</article>;
+function BaseCard({ children, className = "", ...props }) {
+  return (
+    <article className={`base-card ${className}`} {...props}>
+      {children}
+    </article>
+  );
 }
 
 export default BaseCard;
