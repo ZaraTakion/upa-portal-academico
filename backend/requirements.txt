@@ -4,6 +4,7 @@ certifi==2026.5.20
 charset-normalizer==3.4.7
 Django==6.0.5
 django-cors-headers==4.9.0
+django-storages[s3]==1.14.6
 djangorestframework==3.17.1
 djangorestframework_simplejwt==5.5.1
 drf-spectacular==0.29.0
