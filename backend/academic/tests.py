@@ -172,6 +172,17 @@ class GradePermissionTests(TestCase):
         self.assertEqual(response.data[0]["attempt"], 2)
         self.assertEqual(response.data[0]["class_group_name"], "Turma A")
 
+    def test_subject_api_uses_current_offering_teacher_and_catalog_status(self):
+        self.client.force_authenticate(self.student_user)
+
+        response = self.client.get(reverse("subjects-list"))
+
+        self.assertEqual(response.status_code, 200)
+        subject = next(row for row in response.data if row["id"] == self.subject.pk)
+        self.assertEqual(subject["professor"], self.teacher_user.username)
+        self.assertEqual(subject["status"], "available")
+        self.assertEqual(subject["status_display"], "Disponível")
+
     def test_teacher_can_list_grades(self):
         self.client.force_authenticate(self.teacher_user)
         response = self.client.get(reverse("grades-list"))
