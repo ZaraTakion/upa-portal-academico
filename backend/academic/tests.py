@@ -86,7 +86,6 @@ class GradePermissionTests(TestCase):
             name="Banco de Dados",
             code="BD-001",
             workload=80,
-            professor="Professor",
             period=4,
         )
         self.class_group = ClassGroup.objects.create(
@@ -301,7 +300,6 @@ class AssessmentWorkflowTests(TestCase):
             name="Avaliação de Software",
             code="AS-401",
             workload=60,
-            professor="Professor",
         )
         self.group = ClassGroup.objects.create(
             name="Turma A",
@@ -620,7 +618,6 @@ class GradePolicyAbsenceTests(TestCase):
             name="Políticas Acadêmicas",
             code="PA-001",
             workload=60,
-            professor="Professor",
         )
         self.grade = Grade.objects.create(
             student=student,
