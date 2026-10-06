@@ -195,11 +195,48 @@
     padding: 18px;
   }
 
-  .stats-grid,
+  .stats-grid.premium-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
   .cards-grid,
   .grade-grid,
   .calendar-grid {
     grid-template-columns: 1fr;
+  }
+
+  .premium-stats .stat-card {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .premium-stats .stat-icon {
+    width: 40px;
+    height: 40px;
+    margin: 0;
+  }
+
+  .premium-stats .stat-card > div:last-child {
+    min-width: 0;
+  }
+
+  .premium-stats .stat-card strong {
+    font-size: 1.55rem;
+    overflow-wrap: anywhere;
+  }
+
+  .premium-panel {
+    min-height: 0;
+  }
+
+  .dashboard-hero > div:first-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .base-card {
@@ -270,6 +307,10 @@
 ========================= */
 
 @media (max-width: 420px) {
+  .stats-grid.premium-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .navbar-actions {
     gap: 8px;
   }
