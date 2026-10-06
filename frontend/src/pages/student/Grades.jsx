@@ -14,6 +14,8 @@ function Grades() {
   const [grades, setGrades] = useState([]);
   const [assessments, setAssessments] = useState([]);
   const [results, setResults] = useState([]);
+  const [classGroups, setClassGroups] = useState([]);
+  const [selectedClassGroup, setSelectedClassGroup] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -21,14 +23,21 @@ function Grades() {
     setLoading(true);
     setError("");
     try {
-      const [gradesResponse, assessmentsResponse, resultsResponse] = await Promise.all([
+      const [
+        gradesResponse,
+        assessmentsResponse,
+        resultsResponse,
+        classGroupsResponse,
+      ] = await Promise.all([
         api.get("/academic/grades/"),
         api.get("/academic/assessments/"),
         api.get("/academic/assessment-results/"),
+        api.get("/academic/class-groups/"),
       ]);
       setGrades(gradesResponse.data);
       setAssessments(assessmentsResponse.data);
       setResults(resultsResponse.data);
+      setClassGroups(classGroupsResponse.data);
     } catch {
       setError("Não foi possível carregar todas as informações acadêmicas.");
     } finally {
@@ -45,6 +54,18 @@ function Grades() {
     loadGrades();
   }, []);
 
+  const matchesSelectedClassGroup = (item) => {
+    if (selectedClassGroup === "all") return true;
+    if (selectedClassGroup === "legacy") return !item.class_group;
+    return String(item.class_group) === selectedClassGroup;
+  };
+  const filteredGrades = grades.filter(matchesSelectedClassGroup);
+  const filteredAssessments = assessments.filter(matchesSelectedClassGroup);
+  const showClassFilter =
+    classGroups.length > 0 ||
+    grades.some((grade) => !grade.class_group) ||
+    assessments.some((assessment) => !assessment.class_group);
+
   const resultByAssessment = new Map(results.map((result) => [result.assessment, result]));
 
   return (
@@ -56,16 +77,44 @@ function Grades() {
       />
 
       {error && <Alert type="error" message={error} />}
+      {showClassFilter && !loading && (
+        <div className="grade-filter">
+          <label htmlFor="grade-class-filter">Filtrar notas por turma</label>
+          <select
+            id="grade-class-filter"
+            value={selectedClassGroup}
+            onChange={(event) => setSelectedClassGroup(event.target.value)}
+          >
+            <option value="all">Todas as turmas</option>
+            {classGroups.map((classGroup) => (
+              <option key={classGroup.id} value={String(classGroup.id)}>
+                {classGroup.name} · {classGroup.subject_name}
+              </option>
+            ))}
+            {(grades.some((grade) => !grade.class_group) ||
+              assessments.some((assessment) => !assessment.class_group)) && (
+              <option value="legacy">Histórico sem turma</option>
+            )}
+          </select>
+        </div>
+      )}
       {loading ? (
         <Loading text="Carregando notas..." />
       ) : (
         <>
           <h2>Notas por disciplina</h2>
-          {grades.length === 0 ? (
-            <EmptyState title="Nenhuma nota" message="Ainda não há notas consolidadas." />
+          {filteredGrades.length === 0 ? (
+            <EmptyState
+              title={grades.length === 0 ? "Nenhuma nota" : "Nenhuma nota nesta turma"}
+              message={
+                grades.length === 0
+                  ? "Ainda não há notas consolidadas."
+                  : "Escolha outra turma ou consulte o histórico sem turma."
+              }
+            />
           ) : (
             <section className="grade-grid">
-              {grades.map((grade) => (
+              {filteredGrades.map((grade) => (
                 <BaseCard key={grade.id} className="grade-card">
                   <div className="card-between">
                     <h2>{grade.subject_name}</h2>
@@ -79,7 +128,16 @@ function Grades() {
                     />
                   </div>
                   <p><strong>Faltas:</strong> {grade.absence}</p>
-                  {grade.class_group && <p><strong>Turma:</strong> {grade.class_group}</p>}
+                  <p>
+                    <strong>Tentativa:</strong>{" "}
+                    {grade.attempt === 2
+                      ? "Recuperação"
+                      : `Tentativa ${grade.attempt}`}
+                  </p>
+                  <p>
+                    <strong>Turma:</strong>{" "}
+                    {grade.class_group_name || "Histórico sem turma"}
+                  </p>
                 </BaseCard>
               ))}
             </section>
@@ -87,11 +145,14 @@ function Grades() {
 
           <section className="assessment-list">
             <h2>Avaliações e devolutivas</h2>
-            {assessments.length === 0 ? (
-              <EmptyState title="Sem avaliações" message="As avaliações publicadas pelas suas turmas aparecerão aqui." />
+            {filteredAssessments.length === 0 ? (
+              <EmptyState
+                title={assessments.length === 0 ? "Sem avaliações" : "Sem avaliações nesta turma"}
+                message="As avaliações publicadas pelas turmas selecionadas aparecerão aqui."
+              />
             ) : (
               <div className="cards-grid">
-                {assessments.map((assessment) => {
+                {filteredAssessments.map((assessment) => {
                   const result = resultByAssessment.get(assessment.id);
                   return (
                     <BaseCard key={assessment.id} className="assessment-card">
