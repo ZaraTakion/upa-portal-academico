@@ -211,13 +211,23 @@ class GradePermissionTests(TestCase):
     def test_subject_api_uses_current_offering_teacher_and_catalog_status(self):
         self.client.force_authenticate(self.student_user)
 
-        response = self.client.get(reverse("subjects-list"))
+        response = self.client.get(
+            reverse("subjects-list"), {"status": "available"}
+        )
 
         self.assertEqual(response.status_code, 200)
         subject = next(row for row in response.data if row["id"] == self.subject.pk)
         self.assertEqual(subject["professor"], self.teacher_user.username)
         self.assertEqual(subject["status"], "available")
         self.assertEqual(subject["status_display"], "Disponível")
+
+        locked_response = self.client.get(
+            reverse("subjects-list"), {"status": "locked"}
+        )
+        self.assertEqual(locked_response.status_code, 200)
+        self.assertNotIn(
+            self.subject.pk, {row["id"] for row in locked_response.data}
+        )
 
     def test_teacher_can_list_grades(self):
         self.client.force_authenticate(self.teacher_user)
