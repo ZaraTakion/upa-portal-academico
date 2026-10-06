@@ -153,6 +153,25 @@ class GradePermissionTests(TestCase):
         self.assertNotIn("cpf", response.data[0])
         self.assertNotIn("address", response.data[0])
 
+    def test_student_can_filter_grades_by_class_and_sees_attempt_details(self):
+        class_grade = Grade.objects.create(
+            student=self.student,
+            subject=self.subject,
+            class_group=self.class_group,
+            attempt=2,
+            grade=8,
+        )
+        self.client.force_authenticate(self.student_user)
+
+        response = self.client.get(
+            reverse("grades-list"), {"class_group": self.class_group.pk}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([row["id"] for row in response.data], [class_grade.pk])
+        self.assertEqual(response.data[0]["attempt"], 2)
+        self.assertEqual(response.data[0]["class_group_name"], "Turma A")
+
     def test_teacher_can_list_grades(self):
         self.client.force_authenticate(self.teacher_user)
         response = self.client.get(reverse("grades-list"))
