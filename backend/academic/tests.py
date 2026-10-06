@@ -1,6 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 from importlib import import_module
+from types import SimpleNamespace
 
 from django.apps import apps
 from django.contrib.auth.models import Group, User
@@ -47,8 +48,10 @@ class SubjectCatalogMigrationTests(TestCase):
             "academic.migrations.0006_normalize_subject_catalog"
         )
 
-        with connection.schema_editor() as schema_editor:
-            migration.normalize_catalog_statuses(apps, schema_editor)
+        migration.normalize_catalog_statuses(
+            apps,
+            SimpleNamespace(connection=connection),
+        )
 
         subject.refresh_from_db()
         locked_subject.refresh_from_db()
