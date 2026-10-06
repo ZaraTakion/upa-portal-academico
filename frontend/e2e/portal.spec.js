@@ -45,6 +45,8 @@ test("student can sign in and cannot open teacher pages", async ({ page }) => {
     page.getByRole("heading", { name: /Olá, Rodrigo Maciel/ }),
   ).toBeVisible();
   await expectNoAccessibilityViolations(page);
+  await page.getByRole("button", { name: "Ativar tema escuro" }).click();
+  await expectNoAccessibilityViolations(page);
 
   await page.goto(`${baseUrl}/teacher/classes`);
   await expect(page).toHaveURL(`${baseUrl}/dashboard`);
