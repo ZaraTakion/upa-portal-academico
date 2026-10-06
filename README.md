@@ -103,7 +103,7 @@ Configure variáveis de ambiente; não publique segredos no repositório.
 - Configure backups automáticos do banco e do bucket/volume; execute ao menos uma restauração de teste antes de receber dados reais.
 - Encaminhe logs do processo para a plataforma e configure alerta de indisponibilidade e falha de backup.
 - O deploy do frontend depende de builds disponíveis no Vercel. Se o check `build-rate-limit` ocorrer, libere cota/capacidade na conta e reexecute o deploy; os checks do GitHub Actions são independentes.
-- A tela financeira registra faturas e status. Não existe cobrança real por gateway; uma integração exige escolher o provedor e cadastrar credenciais e webhooks.
+- A tela financeira registra faturas e status. Não existe cobrança real por gateway; uma integração exige escolher o provedor e cadastrar credenciais e webhooks. A interface informa que não processa pagamentos e não oferece ações de Pix/boleto simuladas.
 
 O script `backend/build.sh` instala dependências, executa `check --deploy`, coleta arquivos estáticos e aplica migrações. Configure o comando de start do serviço para iniciar Gunicorn no módulo `core.wsgi`.
 
