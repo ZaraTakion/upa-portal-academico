@@ -18,7 +18,11 @@ async function expectNoAccessibilityViolations(page) {
       id: violation.id,
       impact: violation.impact,
       help: violation.help,
-      elements: violation.nodes.map((node) => node.target.join(", ")),
+      elements: violation.nodes.map((node) => ({
+        target: node.target.join(", "),
+        summary: node.failureSummary,
+        checks: node.any.map((check) => check.data),
+      })),
     }));
   });
   expect(violations).toEqual([]);
