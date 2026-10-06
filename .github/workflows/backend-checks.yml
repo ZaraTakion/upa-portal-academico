@@ -19,6 +19,7 @@ jobs:
     env:
       SECRET_KEY: ci-only-not-for-deployment-use-72-chars-randomized-value-not-real
       DEBUG: "False"
+      SECURE_SSL_REDIRECT: "False"
       ALLOW_SQLITE_DATABASE: "True"
       ALLOW_LOCAL_MEDIA_STORAGE: "True"
       SECURE_SSL_REDIRECT: "False"
