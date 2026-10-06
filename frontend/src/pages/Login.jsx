@@ -55,7 +55,7 @@ function Login() {
 
           <div>
             <strong>UPA</strong>
-            <span>Upgrade Portal Acadêmico</span>
+            <span>Portal Acadêmico</span>
           </div>
         </div>
 
@@ -100,8 +100,8 @@ function Login() {
 
       <aside className="auth-visual">
         <div className="auth-visual-card">
-          <span>Mural Acadêmico</span>
-          <strong>Organize sua vida universitária em um só lugar.</strong>
+          <span>Sua vida acadêmica</span>
+          <strong>Consulte informações acadêmicas em um único ambiente.</strong>
           <p>
             Dashboard moderno, notificações, calendário e desempenho acadêmico
             com acesso simples e responsivo.
