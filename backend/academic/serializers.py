@@ -263,7 +263,15 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
 
 
 class SubjectSerializer(serializers.ModelSerializer):
-    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    professor = serializers.SerializerMethodField()
+    status = serializers.ChoiceField(
+        source="availability_status",
+        choices=Subject.AVAILABILITY_CHOICES,
+    )
+    status_display = serializers.CharField(
+        source="get_availability_status_display",
+        read_only=True,
+    )
 
     class Meta:
         model = Subject
@@ -277,6 +285,26 @@ class SubjectSerializer(serializers.ModelSerializer):
             "status",
             "status_display",
         ]
+
+    def get_professor(self, obj):
+        offerings = getattr(obj, "offerings_for_subject", ())
+        current = [offering for offering in offerings if offering.term.is_current]
+        if not current and offerings:
+            latest_term_code = offerings[0].term.code
+            current = [
+                offering
+                for offering in offerings
+                if offering.term.code == latest_term_code
+            ]
+
+        teachers = []
+        for offering in current:
+            teacher = offering.teacher.user
+            name = teacher.get_full_name() or teacher.username
+            if name not in teachers:
+                teachers.append(name)
+
+        return ", ".join(teachers) or obj.legacy_professor.strip() or "A definir"
 
 
 class ClassGroupSerializer(serializers.ModelSerializer):

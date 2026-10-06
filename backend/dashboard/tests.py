@@ -55,14 +55,12 @@ class DashboardSummaryTests(TestCase):
             name="Banco de Dados",
             code="DB-301",
             workload=80,
-            professor="Professor",
             period=4,
         )
         self.other_subject = Subject.objects.create(
             name="Desenvolvimento Web",
             code="WEB-301",
             workload=80,
-            professor="Professor",
             period=4,
         )
         self.group = ClassGroup.objects.create(

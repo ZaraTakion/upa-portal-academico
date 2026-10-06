@@ -1,7 +1,11 @@
 from datetime import timedelta
 from decimal import Decimal
+from importlib import import_module
+from types import SimpleNamespace
 
+from django.apps import apps
 from django.contrib.auth.models import Group, User
+from django.db import connection
 from django.test import TestCase
 from django.utils import timezone
 from django.urls import reverse
@@ -22,6 +26,39 @@ from .models import (
     TeacherProfile,
 )
 
+
+class SubjectCatalogMigrationTests(TestCase):
+    def test_legacy_status_is_preserved_while_catalog_status_is_normalized(self):
+        subject = Subject.objects.create(
+            name="História da disciplina",
+            code="HIST-001",
+            workload=40,
+            period=1,
+            legacy_professor="Docente antigo",
+            legacy_status="failed",
+        )
+        locked_subject = Subject.objects.create(
+            name="Disciplina bloqueada",
+            code="HIST-002",
+            workload=40,
+            period=1,
+            legacy_status="locked",
+        )
+        migration = import_module(
+            "academic.migrations.0006_normalize_subject_catalog"
+        )
+
+        migration.normalize_catalog_statuses(
+            apps,
+            SimpleNamespace(connection=connection),
+        )
+
+        subject.refresh_from_db()
+        locked_subject.refresh_from_db()
+        self.assertEqual(subject.availability_status, "available")
+        self.assertEqual(subject.legacy_status, "failed")
+        self.assertEqual(subject.legacy_professor, "Docente antigo")
+        self.assertEqual(locked_subject.availability_status, "locked")
 
 class GradePermissionTests(TestCase):
     def setUp(self):
@@ -49,7 +86,6 @@ class GradePermissionTests(TestCase):
             name="Banco de Dados",
             code="BD-001",
             workload=80,
-            professor="Professor",
             period=4,
         )
         self.class_group = ClassGroup.objects.create(
@@ -172,6 +208,27 @@ class GradePermissionTests(TestCase):
         self.assertEqual(response.data[0]["attempt"], 2)
         self.assertEqual(response.data[0]["class_group_name"], "Turma A")
 
+    def test_subject_api_uses_current_offering_teacher_and_catalog_status(self):
+        self.client.force_authenticate(self.student_user)
+
+        response = self.client.get(
+            reverse("subjects-list"), {"status": "available"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        subject = next(row for row in response.data if row["id"] == self.subject.pk)
+        self.assertEqual(subject["professor"], self.teacher_user.username)
+        self.assertEqual(subject["status"], "available")
+        self.assertEqual(subject["status_display"], "Disponível")
+
+        locked_response = self.client.get(
+            reverse("subjects-list"), {"status": "locked"}
+        )
+        self.assertEqual(locked_response.status_code, 200)
+        self.assertNotIn(
+            self.subject.pk, {row["id"] for row in locked_response.data}
+        )
+
     def test_teacher_can_list_grades(self):
         self.client.force_authenticate(self.teacher_user)
         response = self.client.get(reverse("grades-list"))
@@ -253,7 +310,6 @@ class AssessmentWorkflowTests(TestCase):
             name="Avaliação de Software",
             code="AS-401",
             workload=60,
-            professor="Professor",
         )
         self.group = ClassGroup.objects.create(
             name="Turma A",
@@ -572,7 +628,6 @@ class GradePolicyAbsenceTests(TestCase):
             name="Políticas Acadêmicas",
             code="PA-001",
             workload=60,
-            professor="Professor",
         )
         self.grade = Grade.objects.create(
             student=student,

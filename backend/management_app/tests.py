@@ -52,7 +52,6 @@ class AcademicFileAPITests(TestCase):
             name="Banco de Dados",
             code="BD-101",
             workload=80,
-            professor="Professor",
             period=4,
         )
         self.class_group = ClassGroup.objects.create(

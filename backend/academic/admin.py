@@ -32,9 +32,17 @@ class TeacherProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "period", "status", "workload", "professor")
-    search_fields = ("name", "code", "professor")
-    list_filter = ("period", "status")
+    list_display = (
+        "name",
+        "code",
+        "period",
+        "availability_status",
+        "workload",
+        "legacy_professor",
+    )
+    search_fields = ("name", "code", "legacy_professor")
+    list_filter = ("period", "availability_status")
+    readonly_fields = ("legacy_professor", "legacy_status")
 
 
 @admin.register(ClassGroup)
