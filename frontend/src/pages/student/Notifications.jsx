@@ -72,6 +72,7 @@ function Notifications() {
           <Filter size={18} />
 
           <select
+            aria-label="Filtrar notificações por tipo"
             value={type}
             onChange={(event) => setType(event.target.value)}
           >

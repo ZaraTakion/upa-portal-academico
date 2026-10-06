@@ -5,7 +5,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { logout } from "../../utils/auth";
 import { getUserRole } from "../../utils/roles";
 
-function Navbar({ onOpenMenu }) {
+function Navbar({ onOpenMenu, sidebarOpen = false }) {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const role = getUserRole(user);
@@ -17,7 +17,7 @@ function Navbar({ onOpenMenu }) {
 
   return (
     <header className="navbar">
-      <button type="button" className="icon-button menu-button" onClick={onOpenMenu} aria-label="Abrir menu de navegação">
+      <button type="button" className="icon-button menu-button" onClick={onOpenMenu} aria-label="Abrir menu de navegação" aria-expanded={sidebarOpen} aria-controls="primary-navigation">
         <Menu size={20} />
       </button>
       <span className="navbar-title">Portal Acadêmico UPA</span>

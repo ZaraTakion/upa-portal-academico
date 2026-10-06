@@ -16,10 +16,10 @@ function MainLayout({ children }) {
         onToggleCollapse={() => setSidebarCollapsed((current) => !current)}
       />
       {sidebarOpen && (
-        <button type="button" className="sidebar-overlay" onClick={() => setSidebarOpen(false)} aria-label="Fechar menu" />
+        <button type="button" className="sidebar-overlay" onClick={() => setSidebarOpen(false)} aria-label="Fechar navegação" />
       )}
       <div className="app-content">
-        <Navbar onOpenMenu={() => setSidebarOpen(true)} />
+        <Navbar sidebarOpen={sidebarOpen} onOpenMenu={() => setSidebarOpen(true)} />
         <main id="main-content" className="main-content" tabIndex="-1">{children}</main>
       </div>
     </div>

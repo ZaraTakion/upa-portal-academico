@@ -57,13 +57,14 @@ function Subjects() {
           <Search size={18} />
           <input
             type="text"
+            aria-label="Buscar disciplina"
             placeholder="Buscar disciplina..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
 
-        <select value={period} onChange={(event) => setPeriod(event.target.value)}>
+        <select aria-label="Filtrar disciplinas por período" value={period} onChange={(event) => setPeriod(event.target.value)}>
           <option value="">Todos os períodos</option>
           <option value="1">1º período</option>
           <option value="2">2º período</option>

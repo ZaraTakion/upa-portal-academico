@@ -106,6 +106,7 @@ function TeacherGrades() {
                     ) : (
                       <input
                         type="number"
+                        aria-label={`Nota de ${grade.student_name} em ${grade.subject_name}`}
                         min="0"
                         max="10"
                         step="0.1"
@@ -126,6 +127,7 @@ function TeacherGrades() {
                     ) : (
                       <input
                         type="number"
+                        aria-label={`Faltas de ${grade.student_name} em ${grade.subject_name}`}
                         min="0"
                         value={grade.absence ?? 0}
                         onChange={(event) =>

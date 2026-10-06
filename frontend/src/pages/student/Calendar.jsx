@@ -40,8 +40,8 @@ function Calendar() {
     <MainLayout>
       <PageHeader
         eyebrow="Agenda institucional"
-        title="Calendário Acadêmico"
-        description="Acompanhe aulas, provas, feriados, eventos e comunicados."
+        title="Agenda Acadêmica"
+        description="Consulte aulas, avaliações, feriados e outros eventos acadêmicos."
       />
 
       <div className="toolbar">

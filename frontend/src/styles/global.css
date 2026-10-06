@@ -8,6 +8,7 @@
   --primary-hover: #1e40af;
   --primary-soft: #dbeafe;
   --primary-ring: rgba(37, 99, 235, 0.18);
+  --focus-color: #1d4ed8;
 
   --secondary: #0f766e;
   --secondary-soft: #ccfbf1;
@@ -22,7 +23,7 @@
   --warning: #a16207;
   --warning-soft: #fef3c7;
 
-  --danger: #dc2626;
+  --danger: #b91c1c;
   --danger-soft: #fee2e2;
 
   --info: #0369a1;
@@ -74,6 +75,8 @@
 
 [data-theme="dark"] {
   --background: #0f172a;
+  --danger: #fca5a5;
+  --focus-color: #7dd3fc;
   --surface: #111827;
   --surface-soft: #1e293b;
   --surface-muted: #334155;
@@ -232,7 +235,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid var(--primary-ring);
+  outline: 3px solid var(--focus-color);
   outline-offset: 2px;
 }
 
@@ -280,7 +283,11 @@ textarea:focus-visible {
   color: var(--text-primary);
   box-shadow: var(--shadow-md);
 }
-.skip-link:focus { transform: translateY(0); }
+.skip-link:focus-visible { transform: translateY(0); }
+
+@media (forced-colors: active) {
+  :focus-visible { outline: 3px solid Highlight; }
+}
 
 .hidden {
   display: none !important;
