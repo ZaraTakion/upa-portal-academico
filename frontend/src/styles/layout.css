@@ -336,6 +336,12 @@
   color: var(--text-primary);
 }
 
+[data-theme="dark"] .profile-button:hover {
+  background: rgba(37, 99, 235, 0.2);
+  border-color: #93c5fd;
+  color: #bfdbfe;
+}
+
 /* =========================
    MOBILE TOPBAR
 ========================= */
