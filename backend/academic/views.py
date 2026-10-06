@@ -1,4 +1,4 @@
-from django.db.models import Case, Count, F, IntegerField, Q, Value, When
+from django.db.models import Case, Count, F, IntegerField, Prefetch, Q, Value, When
 from django.utils import timezone
 from rest_framework import viewsets
 
@@ -198,7 +198,16 @@ class SubjectViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(period=period)
         if status_param:
             queryset = queryset.filter(status=status_param)
-        return queryset.order_by("period", "name")
+        offerings = ClassGroup.objects.select_related(
+            "teacher__user", "term"
+        ).order_by("-term__code", "name")
+        return queryset.prefetch_related(
+            Prefetch(
+                "classgroup_set",
+                queryset=offerings,
+                to_attr="offerings_for_subject",
+            )
+        ).order_by("period", "name")
 
 
 class ClassGroupViewSet(viewsets.ModelViewSet):
