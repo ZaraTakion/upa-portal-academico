@@ -53,7 +53,8 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
         className="sidebar-collapse-button"
         onClick={onToggleCollapse}
         aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
-        aria-expanded={!isCollapsed}\n        aria-controls="sidebar-nav"
+        aria-expanded={!isCollapsed}
+        aria-controls="sidebar-nav"
       >
         {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
       </button>
