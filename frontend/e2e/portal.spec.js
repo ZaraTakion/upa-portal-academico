@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { fileURLToPath } from "node:url";
 
 const baseUrl = "http://127.0.0.1:5173";
 
 async function expectNoAccessibilityViolations(page) {
   await page.addScriptTag({
-    path: `${process.cwd()}/node_modules/axe-core/axe.min.js`,
+    path: fileURLToPath(new URL("../node_modules/axe-core/axe.min.js", import.meta.url)),
   });
   const violations = await page.evaluate(async () => {
     const results = await window.axe.run(document, {
