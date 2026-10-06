@@ -127,6 +127,7 @@ function Financial() {
 
       <div className="toolbar">
         <select
+          aria-label="Filtrar faturas por situação"
           value={status}
           onChange={(event) => setStatus(event.target.value)}
         >
