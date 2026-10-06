@@ -104,6 +104,7 @@ class Subject(models.Model):
     legacy_status = models.CharField(
         max_length=20,
         blank=True,
+        default="",
         editable=False,
         help_text="Status antigo, preservado somente para auditoria dos dados migrados.",
     )
