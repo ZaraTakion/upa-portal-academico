@@ -11,11 +11,11 @@
   gap: 8px;
 
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
 
-  padding: 0 18px;
+  padding: 0 17px;
 
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
 
   transition:
@@ -33,12 +33,12 @@
 .btn-primary {
   background: var(--primary);
   color: var(--text-inverse);
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.14);
+  box-shadow: none;
 }
 
 .btn-primary:hover {
   background: var(--primary-hover);
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 3px 8px rgba(21, 94, 89, 0.14);
 }
 
 .btn-secondary {
@@ -159,56 +159,22 @@
 
 .base-card {
   position: relative;
-  overflow: hidden;
-
-  padding: 24px;
-
+  padding: 22px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-
   background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
 
+.base-card:hover {
+  border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
-
-  transition:
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast),
-    border-color var(--transition-fast);
-}
-
-.base-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-
-  border-radius: inherit;
-
-  pointer-events: none;
-
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.24),
-    transparent 38%
-  );
-}
-
-[data-theme="dark"] .base-card::after {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.04),
-    transparent 38%
-  );
-}
-
-
-.base-card > * {
-  position: relative;
-  z-index: 1;
 }
 
 .base-card h2 {
   margin-bottom: 14px;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
 }
 
 /* =========================
