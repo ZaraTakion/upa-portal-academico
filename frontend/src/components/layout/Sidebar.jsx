@@ -50,12 +50,12 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
         type="button"
         className="sidebar-collapse-button"
         onClick={onToggleCollapse}
-        aria-label="Recolher menu"
+        aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}\n        aria-expanded={!isCollapsed}\n        aria-controls="sidebar-nav"
       >
         {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
       </button>
 
-      <nav className="sidebar-nav">
+      <nav id="sidebar-nav" className="sidebar-nav">
         {isStudent && (
           <NavLink to="/dashboard" onClick={onClose} title="Dashboard">
             <Home size={20} />
@@ -157,9 +157,9 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
           <span>Notificações</span>
         </NavLink>
 
-        <NavLink to="/contact" onClick={onClose} title="Contato">
+        <NavLink to="/contact" onClick={onClose} title="Atendimento">
           <Mail size={20} />
-          <span>Contato</span>
+          <span>Atendimento</span>
         </NavLink>
       </nav>
     </aside>
