@@ -172,6 +172,11 @@
   box-shadow: var(--shadow-sm);
 }
 
+.base-card h2 {
+  margin-bottom: 14px;
+  font-size: 1.2rem;
+}
+
 /* =========================
    STAT CARDS
 ========================= */
