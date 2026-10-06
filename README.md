@@ -86,12 +86,23 @@ Configure variáveis de ambiente; não publique segredos no repositório.
 - `SECRET_KEY`: chave aleatória exclusiva.
 - `DEBUG=False`.
 - `ALLOWED_HOSTS`: nomes de host exatos da API.
-- `DATABASE_URL`: URL PostgreSQL com TLS.
+- `DATABASE_URL`: URL PostgreSQL com TLS. Sem ela, o processo recusa usar SQLite em produção.
 - `CORS_ALLOWED_ORIGINS` e `CSRF_TRUSTED_ORIGINS`: origens exatas usadas pelo frontend.
 - `FRONTEND_URL`: endereço do frontend, usado em links de redefinição.
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` e `DEFAULT_FROM_EMAIL`.
-- `MEDIA_ROOT`: diretório persistente para arquivos enviados. Configure armazenamento durável no provedor de hospedagem.
+- Armazenamento de uploads: escolha uma das opções:
+  - S3 privado ou compatível: defina `USE_S3_STORAGE=True`, `AWS_STORAGE_BUCKET_NAME`, região/endpoint e credenciais ou identidade IAM. URLs assinadas expiram em `AWS_QUERYSTRING_EXPIRE` (900 s por padrão). Bloqueie acesso público ao bucket.
+  - Volume persistente: defina `ALLOW_LOCAL_MEDIA_STORAGE=True` e aponte `MEDIA_ROOT` para um volume persistente montado no serviço. Não use o disco efêmero do container.
+- `ALLOW_SQLITE_DATABASE=True` e `ALLOW_LOCAL_MEDIA_STORAGE=True` são apenas opções explícitas de desenvolvimento/teste; não as use em produção efêmera.
 - `SECURE_SSL_REDIRECT`, cookies seguros e HSTS são ativados por padrão quando `DEBUG=False`; ajuste apenas se o proxy exigir configuração específica.
+
+### Operação antes da publicação
+
+- Cadastre as variáveis de ambiente no serviço de API e verifique `/health/`, conexão PostgreSQL, envio de e-mail de redefinição e upload/download autenticado.
+- Configure backups automáticos do banco e do bucket/volume; execute ao menos uma restauração de teste antes de receber dados reais.
+- Encaminhe logs do processo para a plataforma e configure alerta de indisponibilidade e falha de backup.
+- O deploy do frontend depende de builds disponíveis no Vercel. Se o check `build-rate-limit` ocorrer, libere cota/capacidade na conta e reexecute o deploy; os checks do GitHub Actions são independentes.
+- A tela financeira registra faturas e status. Não existe cobrança real por gateway; uma integração exige escolher o provedor e cadastrar credenciais e webhooks.
 
 O script `backend/build.sh` instala dependências, executa `check --deploy`, coleta arquivos estáticos e aplica migrações. Configure o comando de start do serviço para iniciar Gunicorn no módulo `core.wsgi`.
 
