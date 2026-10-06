@@ -92,6 +92,10 @@ if DATABASE_URL.startswith(("postgres://", "postgresql://")):
 elif DATABASE_URL:
     raise ImproperlyConfigured("DATABASE_URL must use PostgreSQL.")
 else:
+    if not DEBUG and not env_bool("ALLOW_SQLITE_DATABASE"):
+        raise ImproperlyConfigured(
+            "Set DATABASE_URL for production or explicitly allow SQLite."
+        )
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -113,8 +117,36 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+USE_S3_STORAGE = env_bool("USE_S3_STORAGE")
+ALLOW_LOCAL_MEDIA_STORAGE = env_bool("ALLOW_LOCAL_MEDIA_STORAGE", DEBUG)
+
+if USE_S3_STORAGE:
+    AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", "").strip()
+    if not AWS_STORAGE_BUCKET_NAME:
+        raise ImproperlyConfigured(
+            "Set AWS_STORAGE_BUCKET_NAME when USE_S3_STORAGE is enabled."
+        )
+    AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "").strip() or None
+    AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", "").strip() or None
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "").strip() or None
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "").strip() or None
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = True
+    AWS_QUERYSTRING_EXPIRE = int(os.environ.get("AWS_QUERYSTRING_EXPIRE", "900"))
+    AWS_S3_FILE_OVERWRITE = False
+elif not DEBUG and not ALLOW_LOCAL_MEDIA_STORAGE:
+    raise ImproperlyConfigured(
+        "Configure S3 storage or explicitly allow a persistent local media volume."
+    )
+
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "default": {
+        "BACKEND": (
+            "storages.backends.s3.S3Storage"
+            if USE_S3_STORAGE
+            else "django.core.files.storage.FileSystemStorage"
+        )
+    },
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 
