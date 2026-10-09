@@ -1,5 +1,7 @@
 """Invalid JSON types must never crash the public password-reset route."""
 
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.test import TestCase
@@ -8,6 +10,7 @@ from django.utils.http import urlsafe_base64_encode
 
 
 class PasswordResetInputTests(TestCase):
+    @patch("accounts.views.PasswordResetConfirmView.throttle_classes", [])
     def test_non_string_passwords_are_rejected_without_modifying_account(self):
         user = get_user_model().objects.create_user(
             username="reset-invalid-type-user",
