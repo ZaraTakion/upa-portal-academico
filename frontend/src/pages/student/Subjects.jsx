@@ -15,34 +15,35 @@ function Subjects() {
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("");
   const [loading, setLoading] = useState(true);
+  const [appliedFilters, setAppliedFilters] = useState({ search: "", period: "" });
 
-  async function loadSubjects() {
-    setLoading(true);
-
-    try {
-      const response = await api.get("/academic/subjects/", {
-        params: {
-          search: search || undefined,
-          period: period || undefined,
-        },
-      });
-
-      setSubjects(response.data);
-    } catch (error) {
-      console.error("Erro ao carregar disciplinas:", error);
-    } finally {
-      setLoading(false);
+  // Keep draft filter input separate from the last submitted query.
+  useEffect(() => {
+    let active = true;
+    async function loadSubjects() {
+      setLoading(true);
+      try {
+        const response = await api.get("/academic/subjects/", {
+          params: {
+            search: appliedFilters.search || undefined,
+            period: appliedFilters.period || undefined,
+          },
+        });
+        if (active) setSubjects(response.data);
+      } catch (error) {
+        console.error("Erro ao carregar disciplinas:", error);
+      } finally {
+        if (active) setLoading(false);
+      }
     }
-  }
+    loadSubjects();
+    return () => { active = false; };
+  }, [appliedFilters]);
 
   function handleSearch(event) {
     event.preventDefault();
-    loadSubjects();
+    setAppliedFilters({ search, period });
   }
-
-  useEffect(() => {
-    loadSubjects();
-  }, []);
 
   return (
     <MainLayout>
