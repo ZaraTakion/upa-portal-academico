@@ -1,4 +1,5 @@
 import axios from "axios";
+import { resolveAllowedApiRequestUrl } from "../utils/apiRequestUrl";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
@@ -15,6 +16,10 @@ function csrfToken() {
 }
 
 api.interceptors.request.use((config) => {
+  // This client includes credentials. Never dispatch an authenticated request
+  // to an untrusted origin or outside the API namespace.
+  resolveAllowedApiRequestUrl(config.url, config.baseURL || api.defaults.baseURL, window.location.origin);
+
   const token = localStorage.getItem("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
