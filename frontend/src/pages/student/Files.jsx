@@ -2,6 +2,7 @@ import { Download, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import api from "../../api/axios";
+import { resolveApiDownloadUrl } from "../../utils/allowedDownloadUrl";
 import Alert from "../../components/feedback/Alert";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
@@ -115,7 +116,12 @@ function Files() {
 
   async function handleDownload(item) {
     try {
-      const response = await api.get(item.download_url, { responseType: "blob" });
+      const safeDownloadUrl = resolveApiDownloadUrl(
+        item.download_url,
+        api.defaults.baseURL,
+        window.location.origin
+      );
+      const response = await api.get(safeDownloadUrl, { responseType: "blob" });
       const objectUrl = URL.createObjectURL(response.data);
       const disposition = response.headers["content-disposition"] || "";
       const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
