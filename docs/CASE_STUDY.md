@@ -29,9 +29,13 @@ O [roteamento React](../frontend/src/routes/AppRoutes.jsx) organiza páginas por
 - [Testes Front-End](../frontend/tests) e [testes de navegador](../frontend/e2e/portal.spec.js).
 - [CI](../.github/workflows/backend-checks.yml) valida Django, migrações, lint, testes React, build, auditoria npm e smoke do navegador.
 - Configuração de proxy HTTPS segura por padrão: `TRUST_PROXY_SSL_HEADER` somente deve ser habilitada quando um proxy confiável remove valores recebidos do cliente.
+- O cliente Axios autenticado valida o destino de **todas as solicitações** antes de anexar Bearer/CSRF: somente a origem e o prefixo da API configurada são autorizados (veja [`apiRequestUrl.js`](../frontend/src/utils/apiRequestUrl.js)). A checagem específica dos links de download continua como uma segunda camada.
+- O cache local de perfil agora descarta JSON inválido sem bloquear a navegação; o servidor permanece a autoridade para identidade e papel.
+- O endpoint público de confirmação de redefinição de senha rejeita `new_password` que não seja string com HTTP 400, evitando exceções de validadores frente a JSON malformado.
+- Regressões específicas: [`api-request-url.test.js`](../frontend/tests/api-request-url.test.js), [`cached-user.test.js`](../frontend/tests/cached-user.test.js) e [`test_reset_validation.py`](../backend/accounts/test_reset_validation.py).
 
 ## Limites da evidência
-Os arquivos e testes demonstram caminhos implementados; não certificam conformidade integral WCAG 2.2 AA, produção pública, back-up restaurado ou fluxos E2E de cada perfil sem execuções específicas. A seção financeira mantém registros, **não processa pagamentos**.
+Os arquivos e testes demonstram caminhos implementados; não certificam conformidade integral WCAG 2.2 AA, proteção completa contra XSS (o access token ainda reside no localStorage), produção pública, back-up restaurado ou fluxos E2E de cada perfil sem execuções específicas. A seção financeira mantém registros, **não processa pagamentos**.
 
 ## Reprodução
 Consulte o [README principal](../README.md) para ambiente, migrations, dados sintéticos e comandos de teste. Mudanças de segurança são propostas em branch separada, sem merge automático.
