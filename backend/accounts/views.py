@@ -175,6 +175,11 @@ class PasswordResetConfirmView(APIView):
 
     def post(self, request, uidb64, token):
         new_password = request.data.get("new_password", "")
+        if not isinstance(new_password, str):
+            return Response(
+                {"detail": "Informe uma senha válida."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
             user_id = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=user_id, is_active=True)
