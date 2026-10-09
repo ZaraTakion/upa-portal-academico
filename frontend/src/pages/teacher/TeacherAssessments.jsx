@@ -1,5 +1,5 @@
 import { Plus, Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
@@ -27,7 +27,7 @@ function TeacherAssessments() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function loadAssessments() {
+  const loadAssessments = useCallback(async () => {
     if (!groupId) return;
     setLoading(true);
     try {
@@ -49,7 +49,7 @@ function TeacherAssessments() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [groupId]);
 
   useEffect(() => {
     api.get("/academic/class-groups/")
@@ -69,7 +69,7 @@ function TeacherAssessments() {
 
   useEffect(() => {
     loadAssessments();
-  }, [groupId]);
+  }, [loadAssessments]);
 
   async function createAssessment(event) {
     event.preventDefault();

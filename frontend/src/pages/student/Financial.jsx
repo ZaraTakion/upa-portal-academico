@@ -4,7 +4,7 @@ import {
   CreditCard,
   Wallet,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import api from "../../api/axios";
 import Alert from "../../components/feedback/Alert";
@@ -23,7 +23,7 @@ function Financial() {
   const [feedback, setFeedback] = useState("");
   const [alertType, setAlertType] = useState("info");
 
-  async function loadInvoices() {
+  const loadInvoices = useCallback(async () => {
     setLoading(true);
 
     try {
@@ -41,7 +41,7 @@ function Financial() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [status]);
 
   function toNumber(value) {
     return Number(String(value).replace(",", ".")) || 0;
@@ -81,7 +81,7 @@ function Financial() {
 
   useEffect(() => {
     loadInvoices();
-  }, [status]);
+  }, [loadInvoices]);
 
   return (
     <MainLayout>

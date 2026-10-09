@@ -77,7 +77,7 @@ npm run lint
 npm run build
 ```
 
-O GitHub Actions executa as verificações nos pull requests e em atualizações da branch principal.
+O GitHub Actions executa as verificações nos pull requests e em atualizações da branch principal. O frontend também possui regressões de validação de URL autenticada e cache de usuário (`cd frontend && npm test`); a API verifica rejeição de JSON malformado na confirmação de senha. Consulte o [estudo de caso técnico](docs/CASE_STUDY.md).
 
 ## Configuração de produção
 
@@ -96,6 +96,7 @@ Configure variáveis de ambiente; não publique segredos no repositório.
   - Antes de ativar um storage novo com arquivos existentes, faça backup e copie `MEDIA_ROOT/academic_files/` preservando os caminhos; valide download e permissões antes de remover a cópia antiga.
 - `ALLOW_SQLITE_DATABASE=True` e `ALLOW_LOCAL_MEDIA_STORAGE=True` são apenas opções explícitas de desenvolvimento/teste; não as use em produção efêmera.
 - `SECURE_SSL_REDIRECT`, cookies seguros e HSTS são ativados por padrão quando `DEBUG=False`; ajuste apenas se o proxy exigir configuração específica.
+- `TRUST_PROXY_SSL_HEADER=False` por padrão: habilite somente se o proxy reverso confiável descartar o valor enviado pelo cliente e definir `X-Forwarded-Proto` corretamente. Não confie nesse cabeçalho em conexões diretas.
 
 ### Operação antes da publicação
 

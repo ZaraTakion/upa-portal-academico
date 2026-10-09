@@ -12,8 +12,18 @@ export function saveUser(user) {
 }
 
 export function getUser() {
-  const user = localStorage.getItem("currentUser");
-  return user ? JSON.parse(user) : null;
+  const stored = localStorage.getItem("currentUser");
+  if (!stored) return null;
+  try {
+    const user = JSON.parse(stored);
+    if (user && typeof user === "object" && !Array.isArray(user)) {
+      return user;
+    }
+  } catch {
+    // Ignore invalid cached profile data; the server remains authoritative.
+  }
+  localStorage.removeItem("currentUser");
+  return null;
 }
 
 function readCsrfToken() {
