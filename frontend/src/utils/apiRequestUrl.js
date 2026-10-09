@@ -10,7 +10,7 @@ export function resolveAllowedApiRequestUrl(requestUrl, apiBaseUrl, browserOrigi
 
   const value = requestUrl.trim();
   // Reject non-HTTP schemes and CR/LF/control characters before URL normalization.
-  if (value.includes("\\") || /[\x00-\x1f\x7f]/.test(value) || (/^[a-z][a-z\d+.-]*:/i.test(value) && !/^https?:\/\//i.test(value))) {
+  if (value.includes("\\") || Array.from(value).some((char) => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127) || (/^[a-z][a-z\d+.-]*:/i.test(value) && !/^https?:\/\//i.test(value))) {
     throw new Error("O endereço da requisição não é permitido.");
   }
 
