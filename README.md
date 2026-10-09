@@ -77,7 +77,7 @@ npm run lint
 npm run build
 ```
 
-O GitHub Actions executa as verificações nos pull requests e em atualizações da branch principal.
+O GitHub Actions executa as verificações nos pull requests e em atualizações da branch principal. O frontend também possui regressões de validação de URL autenticada e cache de usuário (`cd frontend && npm test`); a API verifica rejeição de JSON malformado na confirmação de senha. Consulte o [estudo de caso técnico](docs/CASE_STUDY.md).
 
 ## Configuração de produção
 
