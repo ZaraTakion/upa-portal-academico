@@ -1,5 +1,5 @@
 import { CheckCircle, Filter } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import api from "../../api/axios";
 import Alert from "../../components/feedback/Alert";
@@ -18,7 +18,7 @@ function Notifications() {
   const [feedback, setFeedback] = useState("");
   const [alertType, setAlertType] = useState("success");
 
-  async function loadNotifications() {
+  const loadNotifications = useCallback(async () => {
     setLoading(true);
 
     try {
@@ -38,7 +38,7 @@ function Notifications() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [type, onlyUnread]);
 
   async function markAsRead(id) {
     try {
@@ -57,7 +57,7 @@ function Notifications() {
 
   useEffect(() => {
     loadNotifications();
-  }, [type, onlyUnread]);
+  }, [loadNotifications]);
 
   return (
     <MainLayout>
