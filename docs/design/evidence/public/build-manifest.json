@@ -1,0 +1,236 @@
+{
+  "sourceCommit": "7312a0f34e15f3861fc30f9bc0a6c1654e026890",
+  "config": {
+    "version": 3,
+    "routes": [
+      {
+        "src": "^/api/(.*)$",
+        "dest": "https://takion-campus-api.onrender.com/api/$1",
+        "headers": {
+          "Cache-Control": "private, no-store"
+        }
+      },
+      {
+        "handle": "filesystem"
+      },
+      {
+        "src": "^/(.*)$",
+        "dest": "/index.html"
+      }
+    ]
+  },
+  "files": [
+    {
+      "file": "app-icon.svg",
+      "sha256": "4997c73f8cf053613fd55b3e6f7a9dee411b81f18b2083169d34db6fe6c845f3"
+    },
+    {
+      "file": "assets/AdminManagement-DresJWv5.js",
+      "sha256": "ce75a0923a9517288aae078a468e3616e893274a5bb92bb162dac719113c9386"
+    },
+    {
+      "file": "assets/AdminPanel-7KjqzCHo.js",
+      "sha256": "137031109ff2e75bd49e5b65a7bc8a110b80aa5249ce75a4ab1358a370387bf3"
+    },
+    {
+      "file": "assets/Alert-Cra6rjxu.js",
+      "sha256": "7c8ce49d6cd9c535b4ac59dab06cef510c39b9cf12325c190b410d769a5873db"
+    },
+    {
+      "file": "assets/AuthLayout-lZkxNU0J.js",
+      "sha256": "cc161bba0f768a89d57810b278227dd57594f114e9ff7e2001a54608b5814627"
+    },
+    {
+      "file": "assets/Badge-DhpwQ4t8.js",
+      "sha256": "454a05a66109f6802beef9c38e2e7c12d24c7778afcaa542e6f1f4683180db03"
+    },
+    {
+      "file": "assets/BaseCard-BvGNnUjY.js",
+      "sha256": "e59f8bdaba0e42486eff27c7a68baa54fb9b79dfcba9585ca636039ca384a9d6"
+    },
+    {
+      "file": "assets/Button-Cy3HGH0F.js",
+      "sha256": "9d2ec280f3e15f280fab16ca95188267099236aa464a79e38550f1ddf664386e"
+    },
+    {
+      "file": "assets/Calendar-j7-Nvhc4.js",
+      "sha256": "910a6a70d0ff25426aabf53adaf8b804c3878e84409e2bfe6e8b32c2d5bad4b8"
+    },
+    {
+      "file": "assets/Contact-CIhanRsh.js",
+      "sha256": "c1c16bebc3e5907b28780b39f039cfbde789a0b147c00acedc8a25217b61cfdd"
+    },
+    {
+      "file": "assets/EmptyState-3AN52xB7.js",
+      "sha256": "e1bb3cb8a6939361e2c7090bf31d16efc845aac1418eec944a330aabf3327209"
+    },
+    {
+      "file": "assets/Files-uEOLRO5I.js",
+      "sha256": "3d80a3b7b8b616e420a6fd97d96ddd3e27967f579d6d0c706357a122e711c191"
+    },
+    {
+      "file": "assets/Financial-Dr8vYBFA.js",
+      "sha256": "e568f94e5827e7975dface599f9743ce89d360e710ca17b43e7ad3ec77e0190f"
+    },
+    {
+      "file": "assets/ForgotPassword-C51F5k1i.js",
+      "sha256": "520c2e28696c47e2987067fff1d184c6a5de7aedd7ba37c9dfa3414d743deb88"
+    },
+    {
+      "file": "assets/Grades-4lbQaJpR.js",
+      "sha256": "5b4a567770c09e3c90741c0b60491a1dc2d5ab0051b9182f24412ce225f912c7"
+    },
+    {
+      "file": "assets/Login-B2i-YWi6.js",
+      "sha256": "fbcf26f97ea57df5d518840ecd83d2d326590c6e4264ff78ed0512d4348354af"
+    },
+    {
+      "file": "assets/MainLayout-BPDuTjae.js",
+      "sha256": "61f0f8d0bd1a46730685c2a6126bb95c909fd6ec436e758e1a9bf25ed2db2b31"
+    },
+    {
+      "file": "assets/NotFound-D0uC0U-X.js",
+      "sha256": "1ae2a8c956859ce7c3929766f51e2de749ec5fc2f095a2823f73e8181d3d5b12"
+    },
+    {
+      "file": "assets/Notifications-Czb095Cl.js",
+      "sha256": "e83608c82f919d170bdf2ac200a76d9bfdf8936af36640a06ca0e142fa941603"
+    },
+    {
+      "file": "assets/PageHeader-BvNmuscI.js",
+      "sha256": "ff6ac45fd4496ddcc402eb51647bd6c60250881c35fd5845db049465cd49633e"
+    },
+    {
+      "file": "assets/Profile-B3Xm6iIf.js",
+      "sha256": "a7c396214e1ae08b51274f40d2ab6bc97555ee5d237809f3e8480e8dbc959e93"
+    },
+    {
+      "file": "assets/ResetPassword-kuugukmI.js",
+      "sha256": "5ab059cb8954b64654f4b733b6c5152017828ee2f856fca28d62bf132ac59722"
+    },
+    {
+      "file": "assets/SelectInput-DoSMOzRw.js",
+      "sha256": "ef026df9130077d91038721d3e3699b710b3d5d15b42308d68c306378335dc54"
+    },
+    {
+      "file": "assets/StatCard-BeAijmtx.js",
+      "sha256": "005f8a9c6c14af1a34a9562c58906e0f2c0bb6aecef080c2d19da6d64a408f55"
+    },
+    {
+      "file": "assets/StudentDashboard-BTkb7ejN.js",
+      "sha256": "1a9b7d90ef0884b036d8f277ceb9574b5fa36bcc9cd4efe33d304cd071f6f68f"
+    },
+    {
+      "file": "assets/Subjects-Uj2A5w7U.js",
+      "sha256": "c6d6c02ab5df58f1901f03183c62d093b3c48934ebd2b7f09ecbdf40959c7a8a"
+    },
+    {
+      "file": "assets/TeacherAssessments-B7zKu8Sv.js",
+      "sha256": "052fb778740dfd53bf3bbc891fae235e0f50b1cbb360653035d013c3199c9097"
+    },
+    {
+      "file": "assets/TeacherAttendance-bTX7-Lcb.js",
+      "sha256": "3beb189b407b6e09eb2a293d566224f1f9031c72ebdaa89edec6f2c2ae601992"
+    },
+    {
+      "file": "assets/TeacherClasses-DTEZr6KE.js",
+      "sha256": "7e8e75111be0acf4d32434fdb7fc7baf50276d742e16d4601b120e01dd75ef8a"
+    },
+    {
+      "file": "assets/TeacherGrades-_sklha-i.js",
+      "sha256": "db071e9ef10174c131feea167391f2042ba4fd3d11e04e6b9bef43c0ddeb6a42"
+    },
+    {
+      "file": "assets/TeacherStudents-Bb-YdrOd.js",
+      "sha256": "d4a0cee28c0f9b8f35a456b4ca8c09dc2af7872d30d83f2ff09026249d6a4918"
+    },
+    {
+      "file": "assets/TextInput-k-ARFRP0.js",
+      "sha256": "a555d79075428de9c4c5c2d841f52b49f337cff8adca54413905504c869b92cf"
+    },
+    {
+      "file": "assets/TextareaInput-DwH2OP9I.js",
+      "sha256": "aa3e41c91c5238f4ae5dbda0905c2e16e549d449eff7a52715c2f81f730a9a40"
+    },
+    {
+      "file": "assets/arrow-left-DU3gnqhw.js",
+      "sha256": "38b3943e65c4bbd2f501eda6490177d81755dcd315b60246dda6ea923720a8d3"
+    },
+    {
+      "file": "assets/arrow-up-right-DLx78N_V.js",
+      "sha256": "c0943c1dc9e91392f1d1174eb3809d46e10b68f3b0a860091a7355bf9ab8a503"
+    },
+    {
+      "file": "assets/circle-check-big-B-RRGOES.js",
+      "sha256": "8a9fed822c6bdbe8744369e2cdc41ae54b84d289db7c5eec44aa3cf5d7b9e635"
+    },
+    {
+      "file": "assets/credit-card-kYkSxl9t.js",
+      "sha256": "95f405c0253d0eb68c576244b0cb8b8455c558708ae449f2693af07d263fc81b"
+    },
+    {
+      "file": "assets/dateFormat-CIbL6luG.js",
+      "sha256": "4c0e2e24045b4bb4c13600ebef68db122873efcc851f31542f95f6bc0222b30c"
+    },
+    {
+      "file": "assets/funnel-BpI_wFW4.js",
+      "sha256": "f745aa93f1e4525c550ec302374e38a6157d04018b24a5c0c00803e0ef01c818"
+    },
+    {
+      "file": "assets/index-BeCv2Xme.css",
+      "sha256": "3cb29b29053121fd688598136f30e5f2617c20dfdb719f2c57afd179db062a6a"
+    },
+    {
+      "file": "assets/index-CrO3ZlIY.js",
+      "sha256": "513f9f718c888f50780c85af73543f9b1b3a26a0a0de393a113c3f62c34b1808"
+    },
+    {
+      "file": "assets/initialClassGroup-cL7BeXKU.js",
+      "sha256": "f3a848a95d5bb559ef145f9c4bbf8c40c1af9afea7f0ae8dcd1cb56b43aeba8a"
+    },
+    {
+      "file": "assets/save-B-RDeazQ.js",
+      "sha256": "b658dd92537584b35cd36c8bf25e14d2e7326e65c280cde6fd0aa3f159ba2eaf"
+    },
+    {
+      "file": "brand/wordmark-dark.svg",
+      "sha256": "cbe57fa956f28f5f076b6ef8008607710f95cc7c725ab05b3db28c93a4c34a90"
+    },
+    {
+      "file": "brand/wordmark.svg",
+      "sha256": "bb9e2df71ce71715a649789c58aea2fc4c91d707868b704fb234c17c6d2dfd93"
+    },
+    {
+      "file": "favicon.svg",
+      "sha256": "b0edfcc7afc80f34ff0eb62adc3b3e65d190cbee113acb29d045fb7bf1429083"
+    },
+    {
+      "file": "fonts/Fraunces-OFL.txt",
+      "sha256": "bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b"
+    },
+    {
+      "file": "fonts/Manrope-OFL.txt",
+      "sha256": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b"
+    },
+    {
+      "file": "fonts/README.txt",
+      "sha256": "afd4f8c76c99da26000bd8298eb78257e3557c533b55ba5993ce1044bdacfd3e"
+    },
+    {
+      "file": "fonts/fraunces-editorial.woff2",
+      "sha256": "43f158fe5fa387e1bf6dcfd10e1b1697869aa3182435b15e5285d3c33ff177eb"
+    },
+    {
+      "file": "fonts/manrope-latin-variable.woff2",
+      "sha256": "c7d4355195f88bdcc0e81c14f13ee707b1bba223f5e41930348798388737e01d"
+    },
+    {
+      "file": "index.html",
+      "sha256": "a96808d48520df6310544b43cc51d9cded2207cae4ceade3a89131e11c37e9c4"
+    },
+    {
+      "file": "manifest.json",
+      "sha256": "5338ddbf3a4604fe20235dce15dfdfff096fbe5922f469c984cbb566a2990c7f"
+    }
+  ]
+}

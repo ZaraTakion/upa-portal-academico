@@ -1,9 +1,10 @@
 from datetime import timedelta
 
 from django.conf import settings
-from django.utils import timezone
 from django.contrib.auth.models import Group, User
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
+from django.utils import timezone
 
 from academic.models import (
     AcademicCalendar,
@@ -23,18 +24,18 @@ from notifications_app.models import Notification
 class Command(BaseCommand):
     help = "Cria dados de demonstração para apresentação do UPA"
 
+    @transaction.atomic
     def handle(self, *args, **kwargs):
-        if not settings.DEBUG:
-            raise CommandError('seed_demo é exclusivo do desenvolvimento (DEBUG=True).')
-
+        if not settings.DEBUG and not settings.DEMO_MODE:
+            raise CommandError("seed_demo exige DEBUG=True ou DEMO_MODE=True em banco isolado.")
         aluno_group, _ = Group.objects.get_or_create(name="Aluno")
         professor_group, _ = Group.objects.get_or_create(name="Professor")
         admin_group, _ = Group.objects.get_or_create(name="Administrador")
 
-        admin = self.create_user("admin", "admin123", "Administrador", "UPA", "admin@upa.edu.br", True, True)
+        admin = self.create_user("admin", "admin123", "Administrador", "UPA", "admin@example.test", True, True)
         admin.groups.add(admin_group)
 
-        professor = self.create_user("leandro", "prof123", "Leandro", "Santana", "leandro@upa.edu.br")
+        professor = self.create_user("leandro", "prof123", "Leandro", "Santana", "leandro@example.test")
         professor.groups.add(professor_group)
 
         teacher_profile, _ = TeacherProfile.objects.update_or_create(
@@ -58,7 +59,7 @@ class Command(BaseCommand):
 
         for username, first_name, last_name, registration, course, semester in students_data:
             course_record, _ = Course.objects.get_or_create(name=course)
-            user = self.create_user(username, "aluno123", first_name, last_name, f"{username}@aluno.upa.edu.br")
+            user = self.create_user(username, "aluno123", first_name, last_name, f"{username}@example.test")
             user.groups.add(aluno_group)
 
             profile, _ = StudentProfile.objects.update_or_create(
@@ -69,7 +70,7 @@ class Command(BaseCommand):
                     "semester": semester,
                     "cpf": "000.000.000-00",
                     "phone": "(83) 99999-0000",
-                    "address": "Cabedelo - PB",
+                    "address": "Endereço fictício para demonstração",
                     "mother_name": "Nome da mãe",
                     "father_name": "Nome do pai",
                     "guardian_name": "Responsável financeiro",
@@ -130,12 +131,12 @@ class Command(BaseCommand):
             Grade.objects.update_or_create(
                 student=StudentProfile.objects.get(user__username=username),
                 subject=Subject.objects.get(code=code),
+                class_group=None,
+                attempt=1,
                 defaults={"grade": grade_value, "absence": absence},
             )
 
-        demo_today = timezone.localdate()
         events = [
-            ("Orientações acadêmicas da semana", "Confira as informações e organize sua rotina de estudos.", "event", str(demo_today + timedelta(days=2)), None, str(demo_today + timedelta(days=3))),
             ("Feriado - Confraternização Universal", "Não haverá atividades acadêmicas.", "holiday", "2026-01-01", None, "2026-01-02"),
             ("Renovação de matrícula", "Período de renovação de matrícula para veteranos.", "enrollment", "2026-01-05", "2026-01-31", "2026-01-31"),
             ("Feriado - Tiradentes", "Não haverá atividades acadêmicas e administrativas.", "holiday", "2026-04-21", None, "2026-04-22"),
@@ -181,8 +182,8 @@ class Command(BaseCommand):
         for student in students:
             Notification.objects.get_or_create(
                 user=student.user,
-                title="Bem-vindo ao Takion Campus",
-                message="Seu espaço acadêmico está pronto para uso.",
+                title="Bem-vindo ao UPA",
+                message="Seu mural acadêmico está pronto para uso.",
                 notification_type="academic",
                 expires_at="2026-06-30",
             )
@@ -199,17 +200,6 @@ class Command(BaseCommand):
                 message="Não haverá atividades acadêmicas no feriado informado.",
                 notification_type="notice",
                 expires_at="2026-04-22",
-            )
-
-        for student in students:
-            Notification.objects.update_or_create(
-                user=student.user,
-                title="Seu campus está organizado",
-                defaults={
-                    "message": "Consulte disciplinas e próximos compromissos no painel.",
-                    "notification_type": "academic",
-                    "expires_at": demo_today + timedelta(days=14),
-                },
             )
 
         FinancialInvoice.objects.update_or_create(
@@ -243,13 +233,25 @@ class Command(BaseCommand):
             message="Gostaria de confirmar o horário da apresentação do projeto UPA.",
         )
 
+        today = timezone.localdate()
+        AcademicCalendar.objects.update_or_create(title="Semana acadêmica de demonstração", defaults={"description": "Evento fictício para validar o calendário.", "event_type": "event", "start_date": today + timedelta(days=7), "visible_until": today + timedelta(days=8)})
+        for student in students:
+            Notification.objects.update_or_create(user=student.user, title="Aviso de demonstração", defaults={"message": "Comunicado fictício ativo para validar leitura.", "notification_type": "academic", "expires_at": today + timedelta(days=30)})
+        self.create_user("recuperacao", "Senha-demo-recuperacao-123!", "Conta", "Recuperação", "recuperacao@example.test")
+
         self.stdout.write(self.style.SUCCESS("Dados de demonstração criados com sucesso."))
         self.stdout.write("Aluno: rodrigo / aluno123")
         self.stdout.write("Professor: leandro / prof123")
         self.stdout.write("Admin: admin / admin123")
 
     def create_user(self, username, password, first_name, last_name, email, is_staff=False, is_superuser=False):
-        user, _ = User.objects.get_or_create(username=username)
+        user, created = User.objects.get_or_create(username=username)
+        demo_group, _ = Group.objects.get_or_create(name="UPA Demo")
+        if not created:
+            if not user.groups.filter(pk=demo_group.pk).exists():
+                raise CommandError(f"A conta {username} já existe e não pertence à demonstração. Nenhum dado foi alterado.")
+            return user
+        user.groups.add(demo_group)
         user.set_password(password)
         user.first_name = first_name
         user.last_name = last_name

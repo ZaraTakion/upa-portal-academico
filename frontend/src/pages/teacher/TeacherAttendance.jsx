@@ -17,12 +17,11 @@ function todayInBrazil() {
 }
 
 function TeacherAttendance() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState("");
-  const [date, setDate] = useState(todayInBrazil());
+  const [date, setDate] = useState(() => searchParams.get("date") || todayInBrazil());
   const [roster, setRoster] = useState([]);
-  const [records, setRecords] = useState([]);
   const [present, setPresent] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,14 +45,17 @@ function TeacherAttendance() {
 
   useEffect(() => {
     if (!selectedGroup || !date) return;
+    let active = true;
     setLoading(true);
+    setRoster([]);
+    setMessage("");
     Promise.all([
       api.get(`/academic/class-enrollments/?class_group=${selectedGroup}&status=active`),
       api.get(`/academic/attendance/?class_group=${selectedGroup}&date=${date}`),
     ])
       .then(([studentsResponse, recordsResponse]) => {
+        if (!active) return;
         setRoster(studentsResponse.data);
-        setRecords(recordsResponse.data);
         const checked = Object.fromEntries(
           studentsResponse.data.map((enrollment) => {
             const record = recordsResponse.data.find((item) => item.student === enrollment.student);
@@ -62,31 +64,22 @@ function TeacherAttendance() {
         );
         setPresent(checked);
       })
-      .catch(() => setMessage("Não foi possível carregar a lista de presença."))
-      .finally(() => setLoading(false));
+      .catch(() => { if (active) setMessage("Não foi possível carregar a lista de presença."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [selectedGroup, date]);
 
   async function saveAttendance(event) {
     event.preventDefault();
     setSaving(true);
     setMessage("");
-    const heldAt = new Date(`${date}T12:00:00`).toISOString();
     try {
-      await Promise.all(roster.map((enrollment) => {
-        const existing = records.find((record) => record.student === enrollment.student);
-        const payload = {
-          class_group: Number(selectedGroup),
-          student: enrollment.student,
-          held_at: existing?.held_at || heldAt,
-          present: Boolean(present[enrollment.student]),
-        };
-        return existing
-          ? api.patch(`/academic/attendance/${existing.id}/`, { present: payload.present })
-          : api.post("/academic/attendance/", payload);
-      }));
+      await api.post("/academic/attendance/batch/", {
+        class_group: Number(selectedGroup), date,
+        records: roster.map((enrollment) => ({ student: enrollment.student, present: Boolean(present[enrollment.student]) })),
+      });
       setMessage("Frequência salva.");
-      const response = await api.get(`/academic/attendance/?class_group=${selectedGroup}&date=${date}`);
-      setRecords(response.data);
+
     } catch {
       setMessage("Não foi possível salvar toda a frequência. Revise a lista e tente novamente.");
     } finally {
@@ -104,30 +97,31 @@ function TeacherAttendance() {
       <PageHeader eyebrow="Professor" title="Frequência" description="Registre presença por turma e acompanhe os registros do dia." />
       <section className="base-card form-card">
         <div className="toolbar">
-          <SelectInput label="Turma" value={selectedGroup} onChange={(event) => setSelectedGroup(event.target.value)} options={groupOptions} required />
+          <SelectInput label="Turma" value={selectedGroup} onChange={(event) => { setLoading(true); setSelectedGroup(event.target.value); setSearchParams({ class_group: event.target.value, date }); }} options={groupOptions} required />
           <label className="field">
             <span>Data da aula</span>
-            <input type="date" value={date} onChange={(event) => setDate(event.target.value)} required />
+            <input type="date" value={date} onChange={(event) => { setLoading(true); setDate(event.target.value); setSearchParams({ class_group: selectedGroup, date: event.target.value }); }} required />
           </label>
         </div>
-        {message && <Alert type={message.includes("não foi") ? "error" : "success"} message={message} />}
+        {message && <Alert type={message !== "Frequência salva." ? "error" : "success"} message={message} />}
         {loading ? (
           <Loading text="Carregando lista..." />
         ) : roster.length === 0 ? (
           <EmptyState title="Turma sem alunos ativos" message="Não há matrículas ativas para registrar." />
         ) : (
           <form onSubmit={saveAttendance}>
-            <div className="table-wrapper">
+            <div className="table-wrapper" tabIndex={0} role="region" aria-label="Lista de frequência">
               <table>
                 <thead><tr><th>Estudante</th><th>Matrícula</th><th>Presença</th></tr></thead>
                 <tbody>
                   {roster.map((enrollment) => (
                     <tr key={enrollment.id}>
                       <td>{enrollment.student_name}</td>
-                      <td>{enrollment.student}</td>
+                      <td>{enrollment.student_registration}</td>
                       <td>
                         <label className="checkbox-filter">
                           <input
+                            aria-label={`Presença de ${enrollment.student_name}`}
                             type="checkbox"
                             checked={Boolean(present[enrollment.student])}
                             onChange={(event) => setPresent((current) => ({ ...current, [enrollment.student]: event.target.checked }))}
@@ -140,7 +134,7 @@ function TeacherAttendance() {
                 </tbody>
               </table>
             </div>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving || loading}>
               <Save size={16} /> {saving ? "Salvando..." : "Salvar frequência"}
             </Button>
           </form>

@@ -1,8 +1,10 @@
+from decimal import ROUND_HALF_UP, Decimal
+
 from django.conf import settings
 from django.contrib.auth.models import User
-from decimal import Decimal, ROUND_HALF_UP
-
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.db.models import F, Q
 
 
 class Course(models.Model):
@@ -21,6 +23,7 @@ class AcademicTerm(models.Model):
 
     class Meta:
         ordering = ("-code",)
+        constraints = [models.CheckConstraint(condition=Q(starts_on__isnull=True) | Q(ends_on__isnull=True) | Q(ends_on__gte=F("starts_on")), name="term_date_order")]
 
     def __str__(self):
         return self.code
@@ -37,19 +40,12 @@ class GradePolicy(models.Model):
             super().save(*args, **kwargs)
             refresh_grade_statuses(using=using)
 
-    def delete(self, *args, **kwargs):
-        using = kwargs.get("using") or self._state.db
-        with transaction.atomic(using=using):
-            result = super().delete(*args, **kwargs)
-            refresh_grade_statuses(using=using)
-            return result
-
     def __str__(self):
         return f"Aprovação a partir de {self.passing_score}"
 
 
 class StudentProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.PROTECT)
     registration = models.CharField(max_length=20, unique=True)
     course = models.ForeignKey(
         Course,
@@ -70,7 +66,7 @@ class StudentProfile(models.Model):
 
 
 class TeacherProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.PROTECT)
     employee_code = models.CharField(max_length=20, unique=True)
     department = models.CharField(max_length=100)
     title = models.CharField(max_length=100, default="Professor")
@@ -115,8 +111,8 @@ class Subject(models.Model):
 
 class ClassGroup(models.Model):
     name = models.CharField(max_length=100)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.PROTECT)
     term = models.ForeignKey(
         AcademicTerm,
         on_delete=models.PROTECT,
@@ -152,8 +148,8 @@ class ClassEnrollment(models.Model):
         ("withdrawn", "Cancelada"),
     ]
 
-    class_group = models.ForeignKey(ClassGroup, on_delete=models.CASCADE)
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    class_group = models.ForeignKey(ClassGroup, on_delete=models.PROTECT)
+    student = models.ForeignKey(StudentProfile, on_delete=models.PROTECT)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
@@ -181,23 +177,26 @@ class Grade(models.Model):
         ("pending", "Sem nota"),
     ]
 
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    student = models.ForeignKey(StudentProfile, on_delete=models.PROTECT)
+    subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
     class_group = models.ForeignKey(
         ClassGroup,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="grades",
     )
     attempt = models.PositiveSmallIntegerField(default=1)
-    grade = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+    grade = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0), MaxValueValidator(10)])
     absence = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
+            models.CheckConstraint(condition=Q(grade__isnull=True) | Q(grade__gte=0, grade__lte=10), name="grade_score_range"),
+            models.CheckConstraint(condition=Q(attempt__gte=1, attempt__lte=2), name="grade_attempt_range"),
+            models.UniqueConstraint(fields=("student", "subject", "attempt"), condition=Q(class_group__isnull=True), name="uniq_legacy_grade_attempt"),
             models.UniqueConstraint(
                 fields=("student", "subject", "class_group", "attempt"),
                 name="uniq_student_subject_offering_attempt",
@@ -280,7 +279,7 @@ class Assessment(models.Model):
 
     class_group = models.ForeignKey(
         ClassGroup,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="assessments",
     )
     title = models.CharField(max_length=200)
@@ -291,6 +290,10 @@ class Assessment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(weight__gt=0), name="assessment_weight_positive"),
+            models.CheckConstraint(condition=Q(maximum_score__gt=0), name="assessment_max_positive"),
+        ]
         ordering = ("due_date", "title")
         indexes = [models.Index(fields=("class_group", "due_date"), name="academic_as_class_g_26e3e4_idx")]
 
@@ -339,12 +342,12 @@ class Assessment(models.Model):
 class AssessmentResult(models.Model):
     assessment = models.ForeignKey(
         Assessment,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="results",
     )
     student = models.ForeignKey(
         StudentProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="assessment_results",
     )
     score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
@@ -353,6 +356,7 @@ class AssessmentResult(models.Model):
 
     class Meta:
         constraints = [
+            models.CheckConstraint(condition=Q(score__isnull=True) | Q(score__gte=0), name="assessment_score_nonnegative"),
             models.UniqueConstraint(
                 fields=("assessment", "student"),
                 name="uniq_assessment_result_student",
@@ -383,22 +387,6 @@ class AssessmentResult(models.Model):
             for student_id, class_group_id in affected:
                 sync_assessment_grades(student_id, class_group_id, using=using)
 
-    def delete(self, *args, **kwargs):
-        using = kwargs.get("using") or self._state.db
-        result_manager = AssessmentResult.objects.using(using) if using else AssessmentResult.objects
-        result = result_manager.filter(pk=self.pk).values(
-            "student_id", "assessment__class_group_id"
-        ).first()
-        with transaction.atomic(using=using):
-            deleted = super().delete(*args, **kwargs)
-            if result:
-                sync_assessment_grades(
-                    result["student_id"],
-                    result["assessment__class_group_id"],
-                    using=using,
-                )
-            return deleted
-
     def __str__(self):
         return f"{self.student} - {self.assessment}"
 
@@ -409,7 +397,6 @@ def sync_assessment_grades(student_id, class_group_id, using=None):
 
     grade_manager = Grade.objects.using(using) if using else Grade.objects
     result_manager = AssessmentResult.objects.using(using) if using else AssessmentResult.objects
-    assessment_manager = Assessment.objects.using(using) if using else Assessment.objects
     subject_id = ClassGroup.objects.using(using).filter(pk=class_group_id).values_list(
         "subject_id", flat=True
     ).first() if using else ClassGroup.objects.filter(pk=class_group_id).values_list(
@@ -472,12 +459,12 @@ def sync_assessment_grades(student_id, class_group_id, using=None):
 class AttendanceRecord(models.Model):
     class_group = models.ForeignKey(
         ClassGroup,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="attendance_records",
     )
     student = models.ForeignKey(
         StudentProfile,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="attendance_records",
     )
     held_at = models.DateTimeField()
@@ -519,14 +506,6 @@ class AttendanceRecord(models.Model):
                 affected.add((previous["student_id"], previous["class_group_id"]))
             for student_id, class_group_id in affected:
                 sync_grade_absences(student_id, class_group_id, using=using)
-
-    def delete(self, *args, **kwargs):
-        using = kwargs.get("using") or self._state.db
-        student_id, class_group_id = self.student_id, self.class_group_id
-        with transaction.atomic(using=using):
-            result = super().delete(*args, **kwargs)
-            sync_grade_absences(student_id, class_group_id, using=using)
-            return result
 
     def __str__(self):
         return f"{self.student} - {self.held_at:%Y-%m-%d}"
@@ -570,6 +549,9 @@ class AcademicCalendar(models.Model):
     end_date = models.DateField(null=True, blank=True)
     visible_until = models.DateField(null=True, blank=True)
 
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(end_date__isnull=True) | Q(end_date__gte=F("start_date")), name="calendar_date_order")]
+
     def __str__(self):
         return f"{self.title} - {self.start_date}"
 
@@ -586,17 +568,20 @@ class WeeklySchedule(models.Model):
 
     class_group = models.ForeignKey(
         ClassGroup,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="weekly_schedules",
     )
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, null=True, blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.PROTECT)
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.PROTECT, null=True, blank=True)
     weekday = models.CharField(max_length=20, choices=WEEKDAY_CHOICES)
     start_time = models.TimeField()
     end_time = models.TimeField()
     location = models.CharField(max_length=150, blank=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(end_time__gt=F("start_time")), name="schedule_time_order")]
 
     def __str__(self):
         return f"{self.subject.name} - {self.get_weekday_display()} {self.start_time}"

@@ -1,11 +1,13 @@
 import os
+from pathlib import PurePosixPath
+from zipfile import BadZipFile, ZipFile
 
 from django.conf import settings
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
 from .models import AcademicFile, ContactMessage, FinancialInvoice
-
 
 ALLOWED_UPLOADS = {
     ".pdf": ("application/pdf", b"%PDF-"),
@@ -139,13 +141,15 @@ class AcademicFileSerializer(serializers.ModelSerializer):
             fields["feedback"].read_only = False
         return fields
 
-    def get_download_url(self, obj):
-        request = self.context.get("request")
-        return reverse("files-download", args=[obj.pk], request=request)
+    def get_download_url(self, obj) -> str:
+        # Resolve against the configured API origin, including same-origin proxies.
+        return reverse("files-download", args=[obj.pk])
 
+    @extend_schema_field(serializers.DateTimeField(allow_null=True))
     def get_assignment_due_at(self, obj):
         return obj.assignment.due_at if obj.assignment_id else None
 
+    @extend_schema_field(serializers.CharField(allow_null=True))
     def get_submission_status(self, obj):
         if obj.file_type != "submission":
             return None
@@ -174,6 +178,8 @@ class AcademicFileSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_file(self, uploaded):
+        if not settings.ACADEMIC_UPLOADS_ENABLED:
+            raise serializers.ValidationError("Envios indisponíveis neste ambiente até a ativação de armazenamento persistente.")
         if uploaded.size > settings.ACADEMIC_FILE_MAX_SIZE:
             limit_mb = settings.ACADEMIC_FILE_MAX_SIZE // (1024 * 1024)
             raise serializers.ValidationError(
@@ -199,8 +205,29 @@ class AcademicFileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "O conteúdo do arquivo não corresponde ao formato declarado."
             )
-        if extension == ".txt" and b"\x00" in sample:
-            raise serializers.ValidationError("O arquivo TXT contém dados binários.")
+        if extension == ".txt":
+            for chunk in uploaded.chunks():
+                if b"\x00" in chunk:
+                    raise serializers.ValidationError("O arquivo TXT contém dados binários.")
+            uploaded.seek(0)
+        if extension in {".docx", ".xlsx", ".pptx"}:
+            required_part = {".docx": "word/document.xml", ".xlsx": "xl/workbook.xml", ".pptx": "ppt/presentation.xml"}[extension]
+            try:
+                with ZipFile(uploaded) as archive:
+                    entries = archive.infolist()
+                    names = set(archive.namelist())
+                    if not {"[Content_Types].xml", required_part}.issubset(names):
+                        raise serializers.ValidationError("O arquivo não contém um documento Office válido.")
+                    if len(entries) > 2000 or sum(entry.file_size for entry in entries) > settings.ACADEMIC_FILE_MAX_SIZE * 4:
+                        raise serializers.ValidationError("O conteúdo expandido do arquivo excede o limite permitido.")
+                    for entry in entries:
+                        path = PurePosixPath(entry.filename)
+                        if path.is_absolute() or ".." in path.parts or "\\" in entry.filename or entry.flag_bits & 1 or path.name.lower() == "vbaproject.bin":
+                            raise serializers.ValidationError("O documento contém caminhos, macros ou criptografia não permitidos.")
+            except BadZipFile as error:
+                raise serializers.ValidationError("O arquivo Office está corrompido.") from error
+            finally:
+                uploaded.seek(0)
         return uploaded
 
 
@@ -223,4 +250,9 @@ class FinancialInvoiceSerializer(serializers.ModelSerializer):
             "payment_method",
             "payment_method_display",
         ]
-        read_only_fields = ["user"]
+        read_only_fields = []
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("O valor deve ser maior que zero.")
+        return value

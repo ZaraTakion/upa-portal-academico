@@ -29,13 +29,14 @@ function Files() {
   const isStaff = Boolean(user?.is_staff || user?.is_superuser);
   const isProfessor = user?.groups?.includes("Professor") && !isStaff;
   const isStudent = !isStaff && !isProfessor;
+  const uploadsEnabled = user?.uploads_enabled !== false;
 
   const [files, setFiles] = useState([]);
   const [classGroups, setClassGroups] = useState([]);
   const [title, setTitle] = useState("");
   const [classGroup, setClassGroup] = useState("");
   const [assignment, setAssignment] = useState("");
-  const [fileType, setFileType] = useState(isProfessor ? "material" : "submission");
+  const [fileType, setFileType] = useState((isProfessor || isStaff) ? "material" : "submission");
   const [dueAt, setDueAt] = useState("");
   const [file, setFile] = useState(null);
   const [reviewId, setReviewId] = useState(null);
@@ -98,7 +99,7 @@ function Files() {
       setClassGroup("");
       setAssignment("");
       setDueAt("");
-      setFileType(isProfessor ? "material" : "submission");
+      setFileType((isProfessor || isStaff) ? "material" : "submission");
       setFile(null);
       if (fileInput.current) fileInput.current.value = "";
       await loadData();
@@ -167,7 +168,7 @@ function Files() {
   const assignmentOptions = [
     { value: "", label: "Entrega sem atividade vinculada" },
     ...files
-      .filter((item) => item.file_type === "assignment")
+      .filter((item) => item.file_type === "assignment" && (!classGroup || String(item.class_group) === String(classGroup)))
       .map((item) => ({ value: item.id, label: item.title })),
   ];
 
@@ -186,7 +187,8 @@ function Files() {
       <section className="split-grid">
         <article className="base-card">
           <h2>{isProfessor ? "Publicar arquivo" : "Enviar arquivo"}</h2>
-          <form className="form-stack" onSubmit={handleSubmit}>
+          {!uploadsEnabled && <Alert type="info" message="O envio de arquivos está indisponível neste ambiente. Você ainda pode consultar materiais existentes." />}
+          {uploadsEnabled && <form className="form-stack" onSubmit={handleSubmit}>
             <TextInput label="Título" value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={200} />
 
             <SelectInput
@@ -194,14 +196,18 @@ function Files() {
               value={classGroup}
               onChange={(event) => setClassGroup(event.target.value)}
               options={groupOptions}
-              required={isStaff || isProfessor}
+              required={!isStudent || !assignment}
             />
 
             {isStudent && (
               <SelectInput
                 label="Atividade (opcional)"
                 value={assignment}
-                onChange={(event) => setAssignment(event.target.value)}
+                onChange={(event) => {
+                setAssignment(event.target.value);
+                const chosen = files.find((item) => String(item.id) === event.target.value);
+                if (chosen) setClassGroup(String(chosen.class_group));
+              }}
                 options={assignmentOptions}
               />
             )}
@@ -244,7 +250,7 @@ function Files() {
               {uploading ? "Enviando..." : "Enviar"}
               {!uploading && <Upload size={16} />}
             </Button>
-          </form>
+          </form>}
         </article>
 
         <article className="base-card">

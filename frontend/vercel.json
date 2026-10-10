@@ -1,9 +1,31 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "improve/verified-release-20261010": false,
+      "design/takion-campus-20261010": false,
+      "integration/takion-campus-final-20261010": false
+    }
+  },
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://takion-campus-api.onrender.com/api/:path*"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
     }
   ]
 }

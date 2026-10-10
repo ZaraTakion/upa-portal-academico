@@ -19,6 +19,7 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("Set SECRET_KEY in the environment.")
 
 DEBUG = env_bool("DEBUG")
+DEMO_MODE = env_bool("DEMO_MODE")
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_spectacular",
+    "drf_spectacular_sidecar",
     "accounts",
     "academic",
     "dashboard",
@@ -52,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    "core.middleware.PrivateApiCacheMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -94,6 +97,7 @@ if DATABASE_URL.startswith(("postgres://", "postgresql://")):
             "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
             "OPTIONS": {
                 "sslmode": database_options.get("sslmode", ["require"])[0],
+                **{key: database_options[key][0] for key in ("sslrootcert", "channel_binding", "connect_timeout") if key in database_options},
             },
         }
     }
@@ -107,8 +111,7 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            # Optional local-only isolated database for the demo launcher.
-            "NAME": Path(os.environ["SQLITE_DB_PATH"]) if DEBUG and os.environ.get("SQLITE_DB_PATH") else BASE_DIR / "db.sqlite3",
+            "NAME": os.environ.get("SQLITE_DATABASE_PATH") or (os.environ.get("SQLITE_DB_PATH") if DEBUG else None) or str(BASE_DIR / "db.sqlite3"),
         }
     }
 
@@ -165,6 +168,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": False,
+    "CHECK_REVOKE_TOKEN": True,
 }
 
 REST_FRAMEWORK = {
@@ -201,6 +205,7 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@upa.local")
 EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
 )
+EMAIL_FILE_PATH = os.environ.get("EMAIL_FILE_PATH", str(BASE_DIR / "demo-emails"))
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "25"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
@@ -214,6 +219,7 @@ ACADEMIC_FILE_MAX_SIZE = int(
 )
 MEDIA_URL = "/media/"
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", str(BASE_DIR / "media")))
+ACADEMIC_UPLOADS_ENABLED = env_bool("ACADEMIC_UPLOADS_ENABLED", True)
 
 # Only trust X-Forwarded-Proto behind a reverse proxy that strips client input.
 # Leaving this unset prevents clients from spoofing HTTPS on direct connections.
@@ -230,8 +236,11 @@ X_FRAME_OPTIONS = "DENY"
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Takion Campus API",
-    "DESCRIPTION": "API do Campus Folio (evolução do UPA Portal Acadêmico).",
-    "VERSION": "2.0.0",
+    "DESCRIPTION": "API do Campus Folio da Takion Software.",
+    "VERSION": "2.1.0-rc.1",
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
 }
 
 LOGGING = {

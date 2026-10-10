@@ -1,7 +1,6 @@
 import os
-import json
-import requests
 
+import requests
 
 BASE_URL = os.environ.get("UPA_API_URL", "http://127.0.0.1:8000")
 USERS = [
@@ -15,16 +14,15 @@ def print_response(name, response):
     ok = 200 <= response.status_code < 300
     icon = "✅" if ok else "❌"
     print(f"{icon} {name} — {response.status_code}")
-    try:
-        print(json.dumps(response.json(), indent=2, ensure_ascii=False)[:1200])
-    except Exception:
-        print(response.text[:800])
     print("-" * 70)
 
 
 def login(username, password):
-    response = requests.post(
+    session = requests.Session()
+    csrf = session.get(f"{BASE_URL}/api/accounts/csrf/", timeout=10).json()["csrfToken"]
+    response = session.post(
         f"{BASE_URL}/api/token/",
+        headers={"X-CSRFToken": csrf},
         json={"username": username, "password": password},
         timeout=10,
     )

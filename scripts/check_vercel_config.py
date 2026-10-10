@@ -8,7 +8,10 @@ root = Path(__file__).resolve().parents[1]
 assert not (root / "vercel.json").exists(), "Root Vercel Services config must be removed"
 assert not (root / "frontend/.env.production").exists(), "Never commit a fixed production API URL"
 config = json.loads((root / "frontend/vercel.json").read_text(encoding="utf-8"))
-assert config["rewrites"] == [{"source": "/(.*)", "destination": "/index.html"}]
+assert config["rewrites"] == [
+    {"source": "/api/:path*", "destination": "https://takion-campus-api.onrender.com/api/:path*"},
+    {"source": "/(.*)", "destination": "/index.html"},
+]
 assert (root / "frontend/package.json").is_file()
 assert (root / "backend/manage.py").is_file()
 blueprint = (root / "render.yaml").read_text(encoding="utf-8")

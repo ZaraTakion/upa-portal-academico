@@ -1,4 +1,3 @@
-import os
 import shutil
 import tempfile
 
@@ -8,7 +7,15 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from academic.models import ClassEnrollment, ClassGroup, Course, StudentProfile, Subject, TeacherProfile
+from academic.models import (
+    ClassEnrollment,
+    ClassGroup,
+    Course,
+    StudentProfile,
+    Subject,
+    TeacherProfile,
+)
+
 from .models import AcademicFile, ContactMessage, FinancialInvoice
 
 

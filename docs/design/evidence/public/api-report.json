@@ -1,0 +1,21 @@
+{
+  "verifiedOn": "2026-10-10",
+  "base": "https://takion-campus.vercel.app",
+  "command": "python /workspace/.tools/takion_proxy_smoke.py --verify",
+  "exitCode": 0,
+  "passed": {
+    "csrfBootstrap": 200,
+    "threeRoleLoginProfileDashboard": 200,
+    "threeRoleRefresh": 200,
+    "threeRoleLogout": 205,
+    "threeRoleRefreshAfterLogout": 401,
+    "anonymousProfile": 401,
+    "loginWithoutCsrf": 403,
+    "loginUntrustedOrigin": 403,
+    "studentAccountManagement": 403,
+    "studentGradeWrite": 403,
+    "professorAccountManagement": 403,
+    "existingAssessmentCourseAndGrade850Persisted": true
+  },
+  "credentialsIncluded": false
+}

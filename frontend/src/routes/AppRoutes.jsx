@@ -1,34 +1,37 @@
+import { lazy, Suspense } from "react";
+import Loading from "../components/feedback/Loading";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import ProtectedRoute from "../components/navigation/ProtectedRoute";
 
-import Login from "../pages/Login";
-import ForgotPassword from "../pages/ForgotPassword";
-import ResetPassword from "../pages/ResetPassword";
+const Login = lazy(() => import("../pages/Login"));
+const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("../pages/ResetPassword"));
 
-import StudentDashboard from "../pages/student/StudentDashboard";
-import Profile from "../pages/student/Profile";
-import Subjects from "../pages/student/Subjects";
-import Grades from "../pages/student/Grades";
-import Calendar from "../pages/student/Calendar";
-import Notifications from "../pages/student/Notifications";
-import Files from "../pages/student/Files";
-import Financial from "../pages/student/Financial";
-import Contact from "../pages/student/Contact";
+const StudentDashboard = lazy(() => import("../pages/student/StudentDashboard"));
+const Profile = lazy(() => import("../pages/student/Profile"));
+const Subjects = lazy(() => import("../pages/student/Subjects"));
+const Grades = lazy(() => import("../pages/student/Grades"));
+const Calendar = lazy(() => import("../pages/student/Calendar"));
+const Notifications = lazy(() => import("../pages/student/Notifications"));
+const Files = lazy(() => import("../pages/student/Files"));
+const Financial = lazy(() => import("../pages/student/Financial"));
+const Contact = lazy(() => import("../pages/student/Contact"));
 
-import TeacherClasses from "../pages/teacher/TeacherClasses";
-import TeacherStudents from "../pages/teacher/TeacherStudents";
-import TeacherGrades from "../pages/teacher/TeacherGrades";
-import TeacherAttendance from "../pages/teacher/TeacherAttendance";
-import TeacherAssessments from "../pages/teacher/TeacherAssessments";
+const TeacherClasses = lazy(() => import("../pages/teacher/TeacherClasses"));
+const TeacherStudents = lazy(() => import("../pages/teacher/TeacherStudents"));
+const TeacherGrades = lazy(() => import("../pages/teacher/TeacherGrades"));
+const TeacherAttendance = lazy(() => import("../pages/teacher/TeacherAttendance"));
+const TeacherAssessments = lazy(() => import("../pages/teacher/TeacherAssessments"));
 
-import AdminPanel from "../pages/admin/AdminPanel";
-import AdminManagement from "../pages/admin/AdminManagement";
-import NotFound from "../pages/NotFound";
+const AdminPanel = lazy(() => import("../pages/admin/AdminPanel"));
+const AdminManagement = lazy(() => import("../pages/admin/AdminManagement"));
+const NotFound = lazy(() => import("../pages/NotFound"));
 
 function AppRoutes() {
   return (
     <BrowserRouter>
+      <Suspense fallback={<Loading text="Carregando página..." />}>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -52,6 +55,7 @@ function AppRoutes() {
         <Route path="/admin/management" element={<ProtectedRoute roles={["admin"]}><AdminManagement /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

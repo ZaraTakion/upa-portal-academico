@@ -1,4 +1,5 @@
-import { ArrowLeft, KeyRound } from "lucide-react";
+import AuthLayout from "../components/layout/AuthLayout";
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -30,7 +31,7 @@ function ResetPassword() {
     try {
       const response = await api.post(
         `/accounts/reset-password/${uidb64}/${token}/`,
-        { new_password: newPassword }
+        { new_password: newPassword },
       );
       setAlertType("success");
       setFeedback(response.data.detail);
@@ -40,56 +41,52 @@ function ResetPassword() {
     } catch (error) {
       setAlertType("error");
       const detail = error.response?.data?.detail;
-      setFeedback(Array.isArray(detail) ? detail.join(" ") : detail || "Link inválido ou expirado.");
+      setFeedback(
+        Array.isArray(detail)
+          ? detail.join(" ")
+          : detail || "Link inválido ou expirado.",
+      );
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="auth-page auth-page-simple">
-      <section className="auth-panel">
-        <div className="auth-brand">
-          <div className="auth-logo"><KeyRound size={28} /></div>
-          <div><strong>Nova senha</strong><span>Takion Campus · Campus Folio</span></div>
-        </div>
+    <AuthLayout
+      eyebrow="Segurança da conta"
+      title="Crie uma nova senha"
+      description="Este link é temporário e só pode ser usado uma vez."
+    >
+      {!complete && (
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <TextInput
+            label="Nova senha"
+            type="password"
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+            autoComplete="new-password"
+            required
+          />
+          <TextInput
+            label="Confirme a nova senha"
+            type="password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            autoComplete="new-password"
+            required
+          />
+          <Alert type={alertType} message={feedback} />
+          <Button type="submit" disabled={loading}>
+            {loading ? "Atualizando..." : "Salvar nova senha"}
+          </Button>
+        </form>
+      )}
 
-        <div className="auth-copy">
-          <h1>Crie uma nova senha</h1>
-          <p>Este link é temporário e só pode ser usado uma vez.</p>
-        </div>
-
-        {!complete && (
-          <form className="auth-form" onSubmit={handleSubmit}>
-            <TextInput
-              label="Nova senha"
-              type="password"
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-              autoComplete="new-password"
-              required
-            />
-            <TextInput
-              label="Confirme a nova senha"
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              autoComplete="new-password"
-              required
-            />
-            <Alert type={alertType} message={feedback} />
-            <Button type="submit" disabled={loading}>
-              {loading ? "Atualizando..." : "Salvar nova senha"}
-            </Button>
-          </form>
-        )}
-
-        {complete && <Alert type={alertType} message={feedback} />}
-        <Link to="/" className="auth-link">
-          <ArrowLeft size={16} /> Voltar para login
-        </Link>
-      </section>
-    </main>
+      {complete && <Alert type={alertType} message={feedback} />}
+      <Link to="/" className="auth-link">
+        <ArrowLeft size={16} /> Voltar para login
+      </Link>
+    </AuthLayout>
   );
 }
 

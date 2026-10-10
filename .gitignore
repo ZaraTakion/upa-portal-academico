@@ -31,5 +31,11 @@ Thumbs.db
 # Generated Django static assets
 backend/staticfiles/
 
-# Local-only generated key for the standalone demo launcher
+.venv/
+frontend/test-results/
+frontend/playwright-report/
+
+backend/demo-emails/
+.ruff_cache/
+
 backend/.demo-secret

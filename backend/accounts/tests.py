@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
@@ -5,7 +7,6 @@ from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
-from unittest.mock import patch
 
 
 @patch("accounts.views.PasswordResetRequestView.throttle_classes", [])
@@ -173,6 +174,7 @@ class TrustedProxySettingsTests(TestCase):
         import os
         import subprocess
         import sys
+        from pathlib import Path
 
         for enabled, expected in (
             ("False", "None"),
@@ -189,6 +191,7 @@ class TrustedProxySettingsTests(TestCase):
                         "from django.conf import settings; print(settings.SECURE_PROXY_SSL_HEADER)",
                     ],
                     env=environment,
+                    cwd=Path(__file__).resolve().parent.parent,
                     capture_output=True,
                     text=True,
                     check=False,

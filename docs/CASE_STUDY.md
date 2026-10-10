@@ -1,41 +1,34 @@
-# Estudo de caso — UPA Portal Acadêmico
+# Estudo de caso — Takion Campus, by Takion Software
 
 ## Problema
-Centralizar funcionalidades acadêmicas de alunos, professores e administradores em uma aplicação web com fronteiras de autorização e integração efetiva entre interface e API.
 
-## Arquitetura
-```text
-React + Vite (frontend/src)
-       |
-  axios / JWT access
-       |
-Django REST Framework (backend)
-       |
-  apps: accounts, academic, dashboard, management_app, notifications_app
-       |
-SQLite (desenvolvimento) / PostgreSQL (configurável para produção)
-```
+Um portal acadêmico precisa integrar consulta, registro e autorização. Uma tela pronta não comprova que a matrícula, a nota ou o arquivo correto foi persistido, nem que outra conta será bloqueada.
 
-O [roteamento React](../frontend/src/routes/AppRoutes.jsx) organiza páginas por perfil. O [cliente HTTP](../frontend/src/api/axios.js) envia access token e tenta renová-lo mediante cookie de refresh. O Back-End usa Django REST Framework, migrations, modelos acadêmicos e verificação de permissões em cada fluxo. Os principais módulos estão em `backend/academic`, `backend/accounts`, `backend/management_app` e `backend/notifications_app`.
+Takion Campus, originado no UPA Portal Acadêmico, usa Django REST Framework e React para oferecer fluxos de estudante, professor e administração. A revisão partiu da `main` existente, preservou módulos e contratos e corrigiu problemas reproduzidos por testes.
 
-## Fluxos representativos
-- **Aluno:** autenticação, visualização de informações acadêmicas, notas, calendário, materiais e entregas.
-- **Professor:** turmas, avaliações, frequência, envio de materiais e devolutivas.
-- **Administração:** consultas e gestão de registros existentes, sem alegar gateway financeiro ou cobrança real.
-- **Documentos:** uploads sujeitos a verificação no servidor, downloads através de rota autenticada e armazenamento local/S3 configurável.
+## Decisões de engenharia
 
-## Qualidade e segurança
-- [Testes Back-End](../backend/academic/tests.py), [autenticação](../backend/accounts/tests.py), [administração e arquivos](../backend/management_app/tests.py).
-- [Testes Front-End](../frontend/tests) e [testes de navegador](../frontend/e2e/portal.spec.js).
-- [CI](../.github/workflows/backend-checks.yml) valida Django, migrações, lint, testes React, build, auditoria npm e smoke do navegador.
-- Configuração de proxy HTTPS segura por padrão: `TRUST_PROXY_SSL_HEADER` somente deve ser habilitada quando um proxy confiável remove valores recebidos do cliente.
-- O cliente Axios autenticado valida o destino de **todas as solicitações** antes de anexar Bearer/CSRF: somente a origem e o prefixo da API configurada são autorizados (veja [`apiRequestUrl.js`](../frontend/src/utils/apiRequestUrl.js)). A checagem específica dos links de download continua como uma segunda camada.
-- O cache local de perfil agora descarta JSON inválido sem bloquear a navegação; o servidor permanece a autoridade para identidade e papel.
-- O endpoint público de confirmação de redefinição de senha rejeita `new_password` que não seja string com HTTP 400, evitando exceções de validadores frente a JSON malformado.
-- Regressões específicas: [`api-request-url.test.js`](../frontend/tests/api-request-url.test.js), [`cached-user.test.js`](../frontend/tests/cached-user.test.js) e [`test_reset_validation.py`](../backend/accounts/test_reset_validation.py).
+- **Preservar a aplicação:** manter React/JavaScript, Django e a estrutura por apps. Migração integral para TypeScript não resolveria as falhas encontradas e ampliaria o risco de regressão. A divisão por rotas melhora carregamento sem reescrever páginas.
+- **Concluir a administração:** ampliar o componente de gestão existente com contas, perfis, horários, cobranças e comunicados; integrar respostas a atendimentos. A API controla concessão de administração, vínculo dos perfis e desativação.
+- **Proteger históricos:** substituir referências com exclusão em cascata por proteção e retornar 409. Constraints de notas e datas entram por migrações sem limpeza automática de dados. Inconsistências antigas devem ser corrigidas explicitamente antes de aplicar constraints.
+- **Consolidar registros:** notas derivam das avaliações; faltas derivam da frequência. Sinais mantêm o cálculo após exclusões em lote no Admin. A chamada em lote usa transação para impedir persistência parcial.
+- **Fortalecer sessão:** access em memória, refresh HttpOnly, CSRF em login/renovação/logout, restauração após reload e invalidação após mudança de senha. Falhas de rede são tratadas sem simular login ou apagar a sessão desnecessariamente.
+- **Medir qualidade:** comparar a base com novos testes de integridade, autorização, PostgreSQL e navegador. Atualizar apenas dependências com vulnerabilidades identificadas, mantendo a família de versões do projeto.
 
-## Limites da evidência
-Os arquivos e testes demonstram caminhos implementados; não certificam conformidade integral WCAG 2.2 AA, proteção completa contra XSS (o access token ainda reside no localStorage), produção pública, back-up restaurado ou fluxos E2E de cada perfil sem execuções específicas. A seção financeira mantém registros, **não processa pagamentos**.
+## Experiência e acessibilidade
 
-## Reprodução
-Consulte o [README principal](../README.md) para ambiente, migrations, dados sintéticos e comandos de teste. Mudanças de segurança são propostas em branch separada, sem merge automático.
+Após a estabilização funcional, a interface passou por um redesign dedicado, mantendo APIs, autenticação, banco e regras acadêmicas. A identidade Takion Campus combina superfícies creme/mint, títulos Fraunces, interface Manrope e acentos vinho. O arco e o monograma TC são vetores originais; as fontes OFL são hospedadas localmente.
+
+A composição muda por tarefa: o estudante encontra percurso e agenda; o professor encontra turmas e ações operacionais; a administração encontra indicadores e diretório de gestão. Perfil usa um registro semântico, calendário usa uma agenda editorial e notificações usam lista contínua. As tabelas preservam todas as colunas em regiões focáveis com rolagem contida. A nova identidade está em autenticação, navegação, metadados, ícones, estados e estilos compartilhados de todas as páginas.
+
+Os cinco arquivos CSS foram reorganizados, eliminando regras contraditórias de mobile/tema. A navegação identifica uma seção administrativa por vez e mantém nomes acessíveis quando recolhida. O teste visual percorre as páginas e as 13 seções administrativas em 11 larguras e ambos os temas, com verificações axe em 320/1440 px, ampliação de texto, foco e redução de movimento. Resultados executados e capturas reais estão em [QA do redesign](design/QA.md); não se declara conformidade integral WCAG.
+
+## Evidência e limites
+
+A base reproduzida tinha 61 testes Django, 24 testes Node e dois testes de navegador. Os resultados finais, comandos, capturas do CI e links de revisão estão em [RELEASE.md](RELEASE.md). Não há métricas inventadas de usuários, ganho de produtividade, impacto financeiro ou experiência institucional.
+
+O trabalho prepara uma release candidata. Não comprova implantação pública, carga de produção, pentest, análise de malware ou conformidade integral WCAG/LGPD. PostgreSQL e backup/restauração são verificados somente com dados sintéticos. SMTP institucional, HTTPS/domínio, armazenamento e política de dados dependem da configuração do ambiente de destino.
+
+## Reconciliação da entrega
+
+A integração preserva as melhorias acadêmicas do PR #20, a identidade visual do PR #21 e o provisionamento privado/launcher local da main. A sessão usa access token em memória e refresh HttpOnly; a hospedagem separada ganhou proxy de API de mesma origem e caminhos de download compatíveis. Envios são bloqueados no Blueprint Free até existir armazenamento persistente. Essas decisões atendem a problemas de integração e privacidade; a publicação e resultados externos continuam condicionados às evidências descritas em [INTEGRATION_STATUS.md](INTEGRATION_STATUS.md).

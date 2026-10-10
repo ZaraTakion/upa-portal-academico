@@ -6,9 +6,9 @@ services:
     runtime: python
     plan: free
     rootDir: backend
-    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
-    startCommand: "python manage.py migrate --noinput && python manage.py bootstrap_preview && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
-    healthCheckPath: /health/
+    buildCommand: "pip install -r requirements.txt && bash build.sh"
+    startCommand: "python manage.py check_academic_integrity && python manage.py migrate --noinput && python manage.py bootstrap_preview && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
+    healthCheckPath: /health/ready/
     envVars:
       - key: SECRET_KEY
         generateValue: true
@@ -25,9 +25,15 @@ services:
       - key: TRUST_PROXY_SSL_HEADER
         value: "True"
       - key: CSRF_COOKIE_SAMESITE
-        value: "None"
-      # Demo limitation: files are NOT persistent on the free Render disk.
-      # Replace with USE_S3_STORAGE=True and private object storage for real use.
+        value: "Lax"
+      - key: CAMPUS_ENVIRONMENT
+        value: "preview"
+      - key: PYTHON_VERSION
+        value: "3.13.5"
+      - key: ACADEMIC_UPLOADS_ENABLED
+        value: "False"
+      # Free Render disk is ephemeral. Uploads stay disabled until private
+      # persistent storage is configured and its free plan is verified.
       - key: ALLOW_LOCAL_MEDIA_STORAGE
         value: "True"
       # Off by default. Enable only after setting three strong private passwords
