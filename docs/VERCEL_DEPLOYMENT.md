@@ -49,6 +49,29 @@ O rewrite conserva a origem do navegador para refresh, CSRF e logout. Access tok
 
 Branches dos PRs #20/#21 e da integração têm deploy Git automático bloqueado para evitar consumir franquia durante revisão. Configurar produção somente após validação dos checks obrigatórios.
 
+### Publicação manual por API validada
+
+O deploy público de 10/10/2026 usou o **Build Output API v3** no projeto existente. As tentativas de enviar fonte e `vercel.json` por REST ficaram READY, mas devolveram o HTML do React em `/api/accounts/csrf/` e 405 no POST de login. Portanto, confirmar READY é insuficiente.
+
+Procedimento comprovado: executar o build Node 22 com as variáveis públicas acima; publicar seus arquivos em `.vercel/output/static`; gerar `.vercel/output/config.json` com `version: 3` e as rotas abaixo; enviar somente esse artefato ao projeto existente via `POST /v13/deployments?teamId=<equipe-existente>&prebuilt=1`, target production. Para esse upload já relativo ao frontend, a requisição usou `projectSettings.rootDirectory=null`; a raiz permanente do projeto continua `frontend`. Não enviar arquivos de backend, credenciais ou alterar o plano. A configuração e os hashes publicados estão no [manifesto real](design/evidence/public/build-manifest.json).
+
+```json
+{
+  "version": 3,
+  "routes": [
+    {
+      "src": "^/api/(.*)$",
+      "dest": "https://takion-campus-api.onrender.com/api/$1",
+      "headers": { "Cache-Control": "private, no-store" }
+    },
+    { "handle": "filesystem" },
+    { "src": "^/(.*)$", "dest": "/index.html" }
+  ]
+}
+```
+
+[Documentação oficial](https://vercel.com/docs/build-output-api/v3/configuration). Após promover o alias, exigir bootstrap CSRF com HTTP 200/JSON/no-store, login e operações reais de cada perfil. O helper retido `/workspace/.tools/takion_vercel_prebuilt.py` executa essa publicação pelo mecanismo autorizado sem registrar o token; não cria projeto. Os testes públicos estão em [REMOTE_VALIDATION.md](REMOTE_VALIDATION.md).
+
 ## Homologação privada
 
 No banco exclusivo de homologação, definir com opt-in explícito:

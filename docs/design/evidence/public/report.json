@@ -1,0 +1,16 @@
+{
+  "base": "https://takion-campus.vercel.app",
+  "verifiedAt": "2026-10-10T17:14:53.305Z",
+  "passed": [
+    "public login, assets, fonts, accessibility and mobile layout",
+    "student: login, reload session, persisted profile edit and protected route",
+    "professor: new assessment, grade 8.75 and persisted reload",
+    "student: reads grade created by teacher through Vercel /api proxy",
+    "administrator: new course and persisted reload",
+    "all three roles: Secure/HttpOnly cookies, memory access token, refresh after reload and logout route rejection"
+  ],
+  "unexpectedErrors": [],
+  "syntheticAssessment": "Avaliação pública Vercel 1791652447439",
+  "syntheticCourse": "Curso público Vercel 1791652478426",
+  "screenshots": 8
+}

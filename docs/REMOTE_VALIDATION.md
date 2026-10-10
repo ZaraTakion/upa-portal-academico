@@ -1,6 +1,6 @@
 # Validação remota do Takion Campus
 
-Verificação em 10/10/2026. Backend implantado a partir de `d3ddf8fe66844876665ede18d59700557b2a0dd0`. O frontend tem deploy READY na Vercel, mas o domínio público está bloqueado pela allowlist desta sessão. Estes resultados ainda não comprovam o portal completo no navegador.
+Verificação em 10/10/2026. Backend implantado a partir de `d3ddf8fe66844876665ede18d59700557b2a0dd0`. A allowlist publicada na revisão 6 permite acessar o portal. O frontend e o proxy `/api` passaram em testes públicos de navegador dos três perfis em 10/10/2026, às 14:14:53 em Fortaleza. O E2E do CI do commit `7312a0f` falhou; a causa ainda depende dos logs bloqueados.
 
 ## Acesso autenticado e planos
 
@@ -10,7 +10,7 @@ Verificação em 10/10/2026. Backend implantado a partir de `d3ddf8fe66844876665
 | Neon | Leitura autenticada do projeto e organização: HTTP 200 | Organização `org-long-morning-93939826`: `free`; projeto existente `winter-river-76082998`, branch `br-steep-mountain-b7rfe5zs`, banco `neondb`, PostgreSQL 17 |
 | Vercel | Usuário, equipes e listagem de projetos autenticados: HTTP 200 | Equipe `team_LcbimpnIghwY6niA2lWwJPux`, Hobby ativo, acesso OWNER; projeto único `prj_7MAXOxPiNcOveii1nwX48808vLmE`, criado após confirmar ausência de projetos e uso pessoal não comercial |
 
-Os bindings publicados estão disponíveis pelo mecanismo autorizado do ambiente, revisão 4. Render 401, Neon 401 e Vercel 403 anteriores não se repetiram nessas operações. Não é possível atribuir uma causa única às falhas históricas nem concluir que os tokens anteriores eram inválidos. Valores não foram registrados em código, documentação ou logs compartilhados.
+Os bindings publicados estão disponíveis pelo mecanismo autorizado do ambiente, revisões 4 e 6, com novas leituras autenticadas HTTP 200 dos três recursos. Render 401, Neon 401 e Vercel 403 anteriores não se repetiram nessas operações. Não é possível atribuir uma causa única às falhas históricas nem concluir que os tokens anteriores eram inválidos. Valores não foram registrados em código, documentação ou logs compartilhados.
 
 ## Render e PostgreSQL existentes
 
@@ -41,16 +41,38 @@ Os bindings publicados estão disponíveis pelo mecanismo autorizado do ambiente
 
 Registros criados em `20261010T162656Z`, exclusivamente sintéticos. A primeira tentativa de criar avaliação usou uma categoria inválida no script de teste e recebeu HTTP 400; o script foi corrigido para a categoria suportada `other`, e o fluxo completo foi aprovado. Não houve correção ou relaxamento da validação da aplicação.
 
-Esses testes exercitam o backend HTTPS real. Os 86 cenários de navegador do CI são evidências separadas da integração; ainda faltam testes do React publicado e do proxy `/api` da Vercel, bloqueados pelo domínio ausente na allowlist.
+Esses testes exercitam o backend HTTPS real. A seção abaixo acrescenta os testes do React publicado e do proxy Vercel; o CI continua sendo uma evidência separada.
 
-## Bloqueios comprovados e próximos passos
+## Frontend público e proxy `/api`: teste real
 
-- **Logs Render:** `GET /v1/logs` responde HTTP 403 com HTML `Attention Required! | Cloudflare`, inclusive sem filtros. A API do serviço e as mutações funcionam; essa resposta não comprova token inválido ou falta de escopo. O motivo específico da regra Cloudflare não está disponível. Consultar os logs pelo painel do provedor ou liberar o acesso da origem usada pelo ambiente, sem contratar plano.
-- **Domínios de rede:** HTTPS para `api-docs.render.com` e `ep-bold-base-b7tarv20.c-13.us-east-1.aws.neon.tech` recebeu `Tunnel connection failed: 403 Forbidden` antes de alcançar o serviço. Ambos faltam na allowlist publicada. Adições salvas no rascunho; ainda não aplicadas à revisão 4. Não é necessário cadastrar novamente os três tokens. Isso não impediu a conexão Render → Neon, já validada.
-- **Vercel publicada, ainda sem validação pública:** o usuário confirmou uso pessoal não comercial permitido no Hobby. Foi criado somente um projeto após listar zero projetos na conta pessoal e equipe. O [deploy Node 22 `dpl_471jaM5aCDbbyCFihVR224xRqGqp`](https://vercel.com/zaras-projects-f0700f27/takion-campus/471jaM5aCDbbyCFihVR224xRqGqp) está READY, sem erro de build. Configuração do projeto: raiz `frontend`, Vite, `npm ci`, `npm run build`, `dist`, `VITE_API_URL=/api` e Admin Render HTTPS. A primeira publicação adotou o padrão Node 24; a versão do projeto foi corrigida para 22 e o deploy foi repetido no mesmo projeto.
-- A API de arquivos confirma **88 arquivos de entrada**, todos de `frontend`, incluindo `vercel.json`; zero arquivos Python/backend. Publicação manual com metadados do commit `1149b632563d26b6980cad5e96036d89e488e383`; as mudanças desde o código implantado no Render são exclusivamente documentação. Não foi conectado um gatilho Git que publique main automaticamente.
-- Domínio atribuído: [takion-campus.vercel.app](https://takion-campus.vercel.app), com alias `takion-campus-zaras-projects-f0700f27.vercel.app`. O GET público da sessão recebeu **403 no túnel do proxy**, antes de chegar à Vercel: `takion-campus.vercel.app` falta na allowlist da revisão 4. Domínios atribuídos adicionados ao rascunho do ambiente; aplicar a atualização de rede para executar os testes públicos de navegador e verificar efetivamente o rewrite `/api`.
-- O build READY e os testes da API Render com Origin Vercel não substituem o teste do frontend público. Não se declara o portal completamente funcional enquanto esse teste estiver bloqueado. A [restrição Hobby](https://vercel.com/docs/limits/fair-use-guidelines#commercial-usage) foi respeitada; nenhuma contratação ou cobrança habilitada.
-- Uploads continuam desabilitados por ausência de armazenamento privado persistente gratuito verificado. SMTP externo e backup/restauração do Neon ativo não foram comprovados; o teste local de backup continua sendo evidência local.
+[Portal público](https://takion-campus.vercel.app) e [deploy validado `dpl_7cv5Vgc3qHsSXqtsMshcecBytBtM`](https://vercel.com/zaras-projects-f0700f27/takion-campus/7cv5Vgc3qHsSXqtsMshcecBytBtM). Ambos os aliases de produção apontam para esse deploy READY. O projeto existente permanece Hobby, raiz `frontend`, Node 22; backend e Python não foram enviados.
 
-Nenhum serviço pago, cobrança, projeto Neon adicional, serviço Render adicional ou merge na main foi solicitado. O [PR #25](https://github.com/ZaraTakion/takion-campus/pull/25) permanece em rascunho.
+A publicação anterior estava READY, mas `GET /api/accounts/csrf/` retornava HTML do React com HTTP 200, e `POST /api/token/` retornava HTTP 405. Portanto, o login não funcionava. Leituras das APIs autenticadas e da readiness Render passaram: isso diferencia a falha de configuração da publicação de erro de token ou bloqueio da allowlist. As tentativas de republicar fonte/configuração por API continuaram produzindo esse comportamento e não foram tratadas como sucesso.
+
+A correção comprovada foi publicar o build React pelo **Build Output API v3**, com `config.json` de rotas explícitas: `/api/(.*)` encaminhado ao Render, sem cache, antes de filesystem e fallback SPA. O build foi executado com Node 22, `VITE_API_URL=/api` e Admin Render HTTPS. Foram enviados **54 arquivos**: configuração do artefato mais 53 arquivos estáticos do frontend. A raiz do upload prebuilt é o próprio frontend (`.vercel/output`, com `projectSettings.rootDirectory=null` nessa requisição); a configuração permanente do projeto continua `frontend`. A tentativa com o prefixo `frontend/.vercel/output` recebeu `missing_lock_file` e não foi promovida como válida. O parâmetro `prebuilt=1` segue o cliente oficial `@vercel/client` 18.8.2. Não houve alteração na lógica da aplicação.
+
+Após a correção, o bootstrap retorna **HTTP 200, `application/json`, `Cache-Control: private, no-store`**. Chromium/Playwright acessou o domínio HTTPS público pelo proxy autorizado, com validação de certificado. O relatório de operações terminou às **14:14:53 em Fortaleza** com exit code 0:
+
+| Perfil/verificação | Comportamento público comprovado |
+| --- | --- |
+| Aluno | Login, sessão após reload, edição persistente do telefone sintético, redirecionamento ao tentar `/admin-panel` |
+| Professor | Login, criação de avaliação sintética, lançamento e releitura da nota **8,75** |
+| Aluno e Professor | O Aluno consultou na interface a nota criada pelo Professor, via `/api` |
+| Administrador | Login, criação e releitura de curso sintético após reload |
+| Três perfis | Cookies refresh Secure/HttpOnly/SameSite=Lax, access fora do localStorage, renovação após reload, logout e rejeição de rotas privadas |
+| API pelo domínio Vercel | Login/perfil/dashboard/refresh HTTP 200; logout 205; refresh após logout 401 |
+| Autorizações | Anônimo consultando perfil: 401; Aluno escrevendo notas/administrando contas e Professor administrando contas: 403 |
+| CSRF | Login sem CSRF ou com Origin não confiável: 403 esperado |
+| Registros anteriores | Avaliação ID 2, resultado ID 2 (8,50) e curso ID 2 continuam persistidos e legíveis pelo proxy |
+
+Não foram observados erros JavaScript nem respostas HTTP 5xx durante o fluxo de interface. Axe verificou login e as três páginas iniciais sem violações nas regras WCAG selecionadas; isso não é certificação WCAG. As capturas públicas em 1440/390 px e relatórios sanitizados estão em [PUBLIC_VALIDATION.md](design/PUBLIC_VALIDATION.md). Somente registros sintéticos foram utilizados.
+
+## CI e bloqueios restantes
+
+- No commit solicitado `7312a0f34e15f3861fc30f9bc0a6c1654e026890`, o [run `38069064953`](https://github.com/ZaraTakion/takion-campus/actions/runs/38069064953) terminou com **frontend, Django/SQLite, Django/PostgreSQL e autonomous-demo aprovados; E2E falhou**. A anotação disponível diz apenas `Process completed with exit code 1.`; não comprova a causa. Os cinco checks do commit de código `d3ddf8f` passaram anteriormente, mas não substituem esse resultado atual.
+- **Logs/artefato do CI:** a API GitHub funciona; os downloads redirecionam para `results-receiver.actions.githubusercontent.com` e `productionresultssa16.blob.core.windows.net`, ainda ausentes da allowlist do runtime 6. Esses domínios foram adicionados ao rascunho, preservando os existentes; salvar/publicar e retomar a leitura é necessário para diagnosticar o E2E. Não foi contornada a política de rede nem desabilitado teste.
+- **Logs Render:** `GET /v1/logs` continua recebendo HTTP 403, HTML `Attention Required! | Cloudflare`, `cf-ray` observado (`a4873a554e34eb93-SEA`). `api-docs.render.com` também respondeu 403 com evidência Cloudflare após entrar na allowlist. São respostas HTTP do serviço externo, distintas do antigo CONNECT 403 do proxy. A leitura autenticada do serviço Render recebe 200; não há prova de token inválido ou falta de escopo. A regra específica do Cloudflare é desconhecida. Consultar o painel/suporte Render para liberar o acesso de logs da origem do ambiente, sem upgrade.
+- Os 403 de permissão e CSRF listados acima são proteções esperadas da aplicação e foram validados separadamente.
+- Uploads continuam desabilitados por ausência de storage privado persistente gratuito verificado. SMTP externo e backup/restauração do Neon ativo não foram comprovados; o teste local de backup continua sendo evidência local.
+
+Nenhum serviço pago, cobrança, projeto Neon adicional, serviço Render adicional ou projeto Vercel duplicado foi criado. O [PR #25](https://github.com/ZaraTakion/takion-campus/pull/25) permanece em rascunho, sem merge na main. Os fluxos públicos descritos passaram; a validação final de CI continua pendente do diagnóstico do E2E.
