@@ -13,6 +13,7 @@ import PageHeader from "../../components/ui/PageHeader";
 function TeacherGrades() {
   const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [feedback, setFeedback] = useState("");
   const [alertType, setAlertType] = useState("info");
 
@@ -20,8 +21,8 @@ function TeacherGrades() {
     try {
       const response = await api.get("/academic/grades/");
       setGrades(response.data);
-    } catch (error) {
-      console.error("Erro ao carregar notas:", error);
+    } catch {
+      setLoadError("Não foi possível carregar as notas.");
     } finally {
       setLoading(false);
     }
@@ -52,8 +53,7 @@ function TeacherGrades() {
       setFeedback("Nota atualizada com sucesso.");
 
       loadGrades();
-    } catch (error) {
-      console.error("Erro ao salvar nota:", error);
+    } catch {
       setAlertType("error");
       setFeedback("Erro ao atualizar nota.");
     }
@@ -65,6 +65,7 @@ function TeacherGrades() {
 
   return (
     <MainLayout>
+      {loadError && <Alert type="error" message={loadError} onRetry={() => window.location.reload()} />}
       <PageHeader
         eyebrow="Professor"
         title="Lançamento de Notas"
@@ -78,7 +79,7 @@ function TeacherGrades() {
       ) : grades.length === 0 ? (
         <EmptyState title="Nenhuma nota" message="Nenhuma nota encontrada." />
       ) : (
-        <div className="table-wrapper">
+        <div className="table-wrapper" tabIndex={0} role="region" aria-label="Notas dos estudantes">
           <table>
             <thead>
               <tr>

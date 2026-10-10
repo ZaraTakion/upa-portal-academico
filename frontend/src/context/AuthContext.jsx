@@ -1,36 +1,32 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import api, { refreshAccessToken } from "../api/axios";
-import { clearSession, saveUser } from "../utils/auth";
+import api, { refreshSession } from "../api/axios";
+import { getAccessToken, setAccessToken } from "../api/session";
+import { saveUser } from "../utils/auth";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(() =>
-    Boolean(localStorage.getItem("accessToken") || localStorage.getItem("sessionStarted"))
-  );
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [sessionError, setSessionError] = useState("");
 
   async function loadUser() {
-    const token = localStorage.getItem("accessToken");
-
-    if (!token && !localStorage.getItem("sessionStarted")) {
-      setUser(null);
-      setLoadingUser(false);
-      return null;
-    }
-
     setLoadingUser(true);
-
+    setSessionError("");
     try {
-      if (!token) await refreshAccessToken();
-      const response = await api.get("/accounts/me/");
-      saveUser(response.data);
-      setUser(response.data);
-      return response.data;
+      if (!getAccessToken()) await refreshSession();
+      const { data } = await api.get("/accounts/me/");
+      saveUser(data);
+      setUser(data);
+      return data;
     } catch (error) {
-      console.error("Erro ao carregar usuário:", error);
-      setUser(null);
-      clearSession();
+      if ([401, 403].includes(error.response?.status)) {
+        setAccessToken(null);
+        setUser(null);
+        localStorage.removeItem("currentUser");
+      } else {
+        setSessionError("Não foi possível verificar sua sessão. Tente novamente.");
+      }
       return null;
     } finally {
       setLoadingUser(false);
@@ -39,20 +35,22 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     loadUser();
+    function expired() {
+      setUser(null);
+      setSessionError("Sua sessão expirou. Entre novamente.");
+    }
+    function logoutFailed() {
+      setSessionError("Não foi possível encerrar a sessão no servidor. Verifique a conexão e tente sair novamente.");
+    }
+    window.addEventListener("upa:session-expired", expired);
+    window.addEventListener("upa:logout-failed", logoutFailed);
+    return () => {
+      window.removeEventListener("upa:session-expired", expired);
+      window.removeEventListener("upa:logout-failed", logoutFailed);
+    };
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        setUser,
-        loadingUser,
-        loadUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, setUser, loadingUser, loadUser, sessionError }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

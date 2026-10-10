@@ -6,15 +6,21 @@ replaces a password or elevates an existing account.
 import os
 
 from django.conf import settings
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from academic.models import ClassEnrollment, ClassGroup, Course, StudentProfile, Subject, TeacherProfile
-
+from academic.models import (
+    ClassEnrollment,
+    ClassGroup,
+    Course,
+    StudentProfile,
+    Subject,
+    TeacherProfile,
+)
 
 ACCOUNT_CONFIG = (
     ("campus-student", "Aluno", "CAMPUS_PREVIEW_STUDENT_PASSWORD", False),

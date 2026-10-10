@@ -1,9 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "git": {"deploymentEnabled": {"improve/verified-release-20261010": false, "design/takion-campus-20261010": false, "integration/takion-campus-final-20261010": false}},
+  "rewrites": [{"source": "/(.*)", "destination": "/index.html"}]
 }

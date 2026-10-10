@@ -9,7 +9,6 @@ from django.test import TestCase, override_settings
 
 from academic.models import ClassEnrollment, StudentProfile, TeacherProfile
 
-
 ENV = {
     "CAMPUS_PREVIEW_BOOTSTRAP": "True",
     "CAMPUS_PREVIEW_STUDENT_PASSWORD": "Student!Private#2026-X54",

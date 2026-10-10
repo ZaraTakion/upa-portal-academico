@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class IsStaffOrReadOnly(BasePermission):
@@ -102,7 +102,7 @@ class CanManageAcademicFile(BasePermission):
 
 
 class IsStaffOrTeacherAcademicEditor(BasePermission):
-    edit_actions = {"create", "update", "partial_update", "destroy"}
+    edit_actions = {"create", "update", "partial_update", "destroy", "batch"}
 
     def has_permission(self, request, view):
         user = request.user

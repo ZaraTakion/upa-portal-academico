@@ -1,5 +1,6 @@
 from django.db.models import Case, Count, F, IntegerField, Q, Value, When
 from django.utils import timezone
+from drf_spectacular.utils import PolymorphicProxySerializer, extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,6 +19,12 @@ from academic.models import (
 from management_app.models import FinancialInvoice
 from notifications_app.models import Notification
 
+from .serializers import (
+    AdminDashboardSerializer,
+    StudentDashboardSerializer,
+    TeacherDashboardSerializer,
+)
+
 
 def ordered_weekday(queryset):
     weekday_order = Case(
@@ -33,6 +40,11 @@ def ordered_weekday(queryset):
 class DashboardSummaryView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses=PolymorphicProxySerializer(
+        component_name="DashboardSummary",
+        serializers={"Aluno": StudentDashboardSerializer, "Professor": TeacherDashboardSerializer, "Administrador": AdminDashboardSerializer},
+        resource_type_field_name="role",
+    ))
     def get(self, request):
         user = request.user
         groups = list(user.groups.values_list("name", flat=True))
@@ -46,7 +58,7 @@ class DashboardSummaryView(APIView):
         return self.student_summary(user, groups)
 
     def student_summary(self, user, groups):
-        student = StudentProfile.objects.filter(user=user).first()
+        student = StudentProfile.objects.filter(user=user).select_related("course").first()
 
         if not student:
             return Response(

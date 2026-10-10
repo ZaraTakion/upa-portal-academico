@@ -1,5 +1,6 @@
 from rest_framework.pagination import PageNumberPagination
 
+
 class OptionalPageNumberPagination(PageNumberPagination):
     """Paginate only when clients request a page; legacy array responses stay intact."""
 

@@ -1,79 +1,170 @@
 import {
-  Bell, BookOpen, CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight,
-  ClipboardCheck, FileText, FolderOpen, Home, Mail, Receipt, User, Users,
+  Bell,
+  CalendarCheck2,
+  ClipboardCheck,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  FolderOpen,
+  GraduationCap,
+  Home,
+  X,
+  Mail,
+  Receipt,
+  User,
+  Users,
 } from "lucide-react";
+
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { buildAdminUrl } from "../../utils/adminUrl";
 import { getUserRole } from "../../utils/roles";
 
-function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
+function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse, hidden = false }) {
   const { user } = useAuth();
+
   const role = getUserRole(user);
-  const invoiceAdminUrl = buildAdminUrl(
-    import.meta.env.VITE_DJANGO_ADMIN_URL,
-    "management_app/financialinvoice/",
-    { allowLocalhost: import.meta.env.DEV },
-  );
-  const link = (to, label, Icon) => (
-    <NavLink key={to} to={to} onClick={onClose} title={label}>
-      <Icon size={19} aria-hidden="true" /><span>{label}</span>
-    </NavLink>
-  );
+  const isProfessor = role === "professor";
+  const isAdmin = role === "admin";
+  const isStudent = role === "student";
+
   return (
-    <aside id="primary-navigation" aria-label="Navegação principal"
-      className={`sidebar ${isOpen ? "sidebar-open" : ""} ${isCollapsed ? "is-collapsed" : ""}`}>
+    <aside
+      inert={hidden}
+      id="primary-navigation"
+      aria-label="Navegação principal"
+      className={`sidebar ${isOpen ? "sidebar-open" : ""} ${isCollapsed ? "is-collapsed" : ""}`}
+    >
       <div className="sidebar-brand">
-        <div className="sidebar-logo" aria-hidden="true">T</div>
-        <div className="sidebar-brand-text"><strong>takion campus</strong><span>Campus Folio</span></div>
+        <div className="sidebar-logo">U</div>
+
+        <div className="sidebar-brand-text">
+          <strong>UPA</strong>
+          <span>Portal Acadêmico</span>
+        </div>
       </div>
-      <button type="button" className="sidebar-collapse-button" onClick={onToggleCollapse}
-        aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"} aria-expanded={!isCollapsed} aria-controls="sidebar-nav">
+
+      <button
+        type="button"
+        className="sidebar-collapse-button"
+        onClick={onToggleCollapse}
+        aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+        aria-expanded={!isCollapsed}
+        aria-controls="sidebar-nav"
+      >
         {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
       </button>
-      <nav id="sidebar-nav" className="sidebar-nav" aria-label="Navegação principal">
-        <div className="sidebar-nav-group">Workspace</div>
-        {role === "student" && (
+
+      <button type="button" className="icon-button sidebar-close" onClick={onClose} aria-label="Fechar menu de navegação"><X size={20} /></button>
+      <nav id="sidebar-nav" className="sidebar-nav">
+        {isStudent && (
+          <NavLink to="/dashboard" onClick={onClose} title="Dashboard">
+            <Home size={20} />
+            <span>Dashboard</span>
+          </NavLink>
+        )}
+
+        {!isProfessor && !isAdmin && (
           <>
-            {link("/dashboard", "Visão geral", Home)}
-            {link("/subjects", "Disciplinas", BookOpen)}
-            {link("/calendar", "Calendário", CalendarDays)}
-            {link("/grades", "Notas", FileText)}
-            {link("/files", "Materiais", FolderOpen)}
+            <NavLink to="/profile" onClick={onClose} title="Perfil">
+              <User size={20} />
+              <span>Perfil</span>
+            </NavLink>
+
+            <NavLink to="/subjects" onClick={onClose} title="Disciplinas">
+              <GraduationCap size={20} />
+              <span>Disciplinas</span>
+            </NavLink>
+
+            <NavLink to="/grades" onClick={onClose} title="Notas">
+              <FileText size={20} />
+              <span>Notas</span>
+            </NavLink>
+
+            <NavLink to="/calendar" onClick={onClose} title="Calendário">
+              <CalendarDays size={20} />
+              <span>Calendário</span>
+            </NavLink>
+
+            <NavLink to="/files" onClick={onClose} title="Arquivos">
+              <FolderOpen size={20} />
+              <span>Arquivos</span>
+            </NavLink>
+
+            <NavLink to="/financial" onClick={onClose} title="Financeiro">
+              <Receipt size={20} />
+              <span>Financeiro</span>
+            </NavLink>
           </>
         )}
-        {role === "professor" && (
+
+        {isProfessor && (
           <>
-            {link("/teacher/classes", "Minhas turmas", Users)}
-            {link("/teacher/students", "Estudantes", User)}
-            {link("/teacher/assessments", "Avaliações", ClipboardCheck)}
-            {link("/teacher/attendance", "Frequência", CalendarCheck2)}
-            {link("/teacher/grades", "Lançar notas", FileText)}
-            {link("/files", "Materiais", FolderOpen)}
+            <NavLink to="/teacher/classes" onClick={onClose} title="Minhas Turmas">
+              <Users size={20} />
+              <span>Minhas Turmas</span>
+            </NavLink>
+
+            <NavLink to="/teacher/students" onClick={onClose} title="Alunos">
+              <User size={20} />
+              <span>Alunos</span>
+            </NavLink>
+
+            <NavLink to="/teacher/assessments" onClick={onClose} title="Avaliações">
+              <ClipboardCheck size={20} />
+              <span>Avaliações</span>
+            </NavLink>
+
+            <NavLink to="/teacher/attendance" onClick={onClose} title="Frequência">
+              <CalendarCheck2 size={20} />
+              <span>Frequência</span>
+            </NavLink>
+
+            <NavLink to="/teacher/grades" onClick={onClose} title="Lançar Notas">
+              <FileText size={20} />
+              <span>Lançar Notas</span>
+            </NavLink>
+
+            <NavLink to="/files" onClick={onClose} title="Materiais">
+              <FolderOpen size={20} />
+              <span>Materiais</span>
+            </NavLink>
           </>
         )}
-        {role === "admin" && (
+
+        {isAdmin && (
           <>
-            {link("/admin-panel", "Visão operacional", Home)}
-            {link("/admin/management?section=calendar", "Calendário", CalendarDays)}
-            {invoiceAdminUrl && (
-              <a href={invoiceAdminUrl} target="_blank" rel="noreferrer" title="Financeiro">
-                <Receipt size={19} aria-hidden="true" /><span>Financeiro</span>
-              </a>
-            )}
+            <NavLink to="/admin-panel" onClick={onClose} title="Painel de Gestão">
+              <Users size={20} />
+              <span>Painel de Gestão</span>
+            </NavLink>
+
+            <NavLink to="/admin/management?section=calendar" onClick={onClose} title="Calendário">
+              <CalendarDays size={20} />
+              <span>Calendário</span>
+            </NavLink>
+
+            <NavLink to="/admin/management?section=users" onClick={onClose} title="Gestão acadêmica">
+              <GraduationCap size={20} /><span>Gestão acadêmica</span>
+            </NavLink>
+            <NavLink to="/admin/management?section=invoices" onClick={onClose} title="Financeiro">
+              <Receipt size={20} /><span>Financeiro</span>
+            </NavLink>
           </>
         )}
-        <div className="sidebar-nav-group">Minha conta</div>
-        {role === "student" && (
-          <>
-            {link("/profile", "Meu perfil", User)}
-            {link("/financial", "Financeiro", Receipt)}
-          </>
-        )}
-        {link("/notifications", "Notificações", Bell)}
-        {link("/contact", "Atendimento", Mail)}
+
+        <NavLink to="/notifications" onClick={onClose} title="Notificações">
+          <Bell size={20} />
+          <span>Notificações</span>
+        </NavLink>
+
+        <NavLink to="/contact" onClick={onClose} title="Atendimento">
+          <Mail size={20} />
+          <span>Atendimento</span>
+        </NavLink>
       </nav>
     </aside>
   );
 }
+
 export default Sidebar;

@@ -7,8 +7,8 @@ from django.apps import apps
 from django.contrib.auth.models import Group, User
 from django.db import connection
 from django.test import TestCase
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .models import (

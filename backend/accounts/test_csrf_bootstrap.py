@@ -10,10 +10,12 @@ class CsrfBootstrapTests(TestCase):
         User.objects.create_user(username="csrf-student", password="Example-pass-42!")
 
     def test_refresh_requires_csrf_but_bootstrap_allows_safe_refresh(self):
+        csrf = self.client.get(reverse("token_csrf"))
         login = self.client.post(
             reverse("token_obtain_pair"),
             {"username": "csrf-student", "password": "Example-pass-42!"},
             content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrf.json()["csrf"],
         )
         self.assertEqual(login.status_code, 200)
         missing = self.client.post(reverse("token_refresh"), {}, content_type="application/json")

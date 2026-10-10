@@ -1,9 +1,16 @@
-import { Bell, BookOpen, CalendarDays, Clock3, Target, Wallet } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  Clock,
+  CreditCard,
+  Target,
+  UserCheck,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
 import api from "../../api/axios";
 import { formatDate } from "../../utils/dateFormat";
-import { findNextClass } from "../../utils/nextClass";
 import Loading from "../../components/feedback/Loading";
 import MainLayout from "../../components/layout/MainLayout";
 import BaseCard from "../../components/ui/BaseCard";
@@ -13,97 +20,197 @@ function StudentDashboard() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
   async function loadDashboard() {
     setLoading(true);
     setErrorMessage("");
+
     try {
-      const { data } = await api.get("/dashboard/summary/");
-      setSummary(data);
-    } catch (error) {
-      console.error("Erro ao carregar o campus:", error);
+      const response = await api.get("/dashboard/summary/");
+      setSummary(response.data);
+    } catch {
       setSummary(null);
-      setErrorMessage("Não foi possível carregar os dados acadêmicos. Confirme sua conexão e tente novamente.");
+      setErrorMessage("Não foi possível carregar o dashboard.");
     } finally {
       setLoading(false);
     }
   }
-  useEffect(() => { loadDashboard(); }, []);
-  if (loading) return <MainLayout><Loading text="Carregando seu campus..." /></MainLayout>;
-  if (!summary) {
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  if (loading) {
     return (
-      <MainLayout><section className="dashboard-feedback" role="alert" aria-labelledby="dashboard-error-title">
-        <span className="eyebrow">Campus Folio</span>
-        <h1 id="dashboard-error-title">Não foi possível carregar o dashboard</h1>
-        <p>{errorMessage}</p>
-        <button className="btn btn-primary" type="button" onClick={loadDashboard}>Tentar novamente</button>
-      </section></MainLayout>
+      <MainLayout>
+        <Loading text="Carregando mural acadêmico..." />
+      </MainLayout>
     );
   }
-  const events = summary.next_events ?? [];
-  const schedule = summary.weekly_schedule ?? [];
-  const next = findNextClass(schedule);
+
+  if (!summary) {
+    return (
+      <MainLayout>
+        <section
+          className="dashboard-feedback"
+          role="alert"
+          aria-labelledby="dashboard-error-title"
+        >
+          <span className="eyebrow">Mural acadêmico</span>
+          <h1 id="dashboard-error-title">
+            Não foi possível carregar o dashboard
+          </h1>
+          <p>
+            {errorMessage ||
+              "Os dados do seu mural não estão disponíveis agora."}
+          </p>
+          <button
+            className="btn btn-primary"
+            type="button"
+            onClick={loadDashboard}
+          >
+            Tentar novamente
+          </button>
+        </section>
+      </MainLayout>
+    );
+  }
+
+  const nextEvents = summary.next_events ?? [];
+  const weeklySchedule = summary.weekly_schedule ?? [];
+
   return (
     <MainLayout>
-      <div className="folio-view">
-        <section className="dashboard-hero" aria-labelledby="campus-greeting">
-          <div>
-            <span className="eyebrow">Seu espaço de aprendizagem</span>
-            <h1 id="campus-greeting">Olá, {summary.user?.full_name || "estudante"}</h1>
-            <p>Suas disciplinas, sua agenda e o que precisa de atenção, organizados em um só lugar.</p>
+      <section className="dashboard-hero">
+        <div>
+          <span className="eyebrow">{summary.role || "Aluno"}</span>
+          <h1>Olá, {summary.user?.full_name || "aluno"}</h1>
+          <p>
+            Seu mural acadêmico está pronto. Veja notas, eventos, agenda e
+            pendências em um só lugar.
+          </p>
+        </div>
+
+        <div className="hero-pill">
+          {summary.student?.course || "Curso"} •{" "}
+          {summary.student?.semester || "-"}º período
+        </div>
+      </section>
+
+      <section className="stats-grid premium-stats">
+        <StatCard
+          icon={<Target size={22} />}
+          label="Média geral"
+          value={summary.average_grade ?? "-"}
+          helper="Desempenho atual"
+        />
+
+        <StatCard
+          icon={<UserCheck size={22} />}
+          label="Faltas"
+          value={summary.total_absences ?? 0}
+          helper="Total registrado"
+        />
+
+        <StatCard
+          icon={<Bell size={22} />}
+          label="Avisos"
+          value={summary.unread_notifications ?? 0}
+          helper="Não lidos"
+        />
+
+        <StatCard
+          icon={<CreditCard size={22} />}
+          label="Pendências"
+          value={summary.pending_invoices ?? 0}
+          helper="Financeiro"
+        />
+      </section>
+
+      <section
+        className="dashboard-grid premium-dashboard-grid"
+        aria-label="Agenda acadêmica"
+      >
+        <BaseCard
+          className="premium-panel"
+          aria-labelledby="dashboard-events-title"
+        >
+          <div className="panel-header">
+            <div>
+              <span className="mini-eyebrow">Agenda</span>
+              <h2 id="dashboard-events-title">Próximos eventos</h2>
+            </div>
+            <CalendarDays size={20} aria-hidden="true" />
           </div>
-          <span className="hero-pill">{summary.student?.course || "Curso"} · {summary.student?.semester || "-"}º período</span>
-        </section>
 
-        <section className="stats-grid folio-stats" aria-label="Resumo acadêmico">
-          <StatCard icon={<BookOpen size={22} />} label="Disciplinas" value={summary.total_subjects ?? 0} helper="Matrículas vigentes" />
-          <StatCard icon={<Target size={22} />} label="Média geral" value={summary.average_grade ?? "—"} helper="Desempenho registrado" />
-          <StatCard icon={<Bell size={22} />} label="Avisos" value={summary.unread_notifications ?? 0} helper="Não lidos" />
-          <StatCard icon={<Wallet size={22} />} label="Financeiro" value={summary.pending_invoices ?? 0} helper="Pendências" />
-        </section>
+          {nextEvents.length === 0 ? (
+            <div className="dashboard-empty-state">
+              <p className="empty-text" role="status">
+                Nenhum evento próximo.
+              </p>
+              <Link className="dashboard-empty-link" to="/calendar">
+                Abrir calendário
+              </Link>
+            </div>
+          ) : (
+            <ul className="simple-list">
+              {nextEvents.map((event) => (
+                <li key={event.id}>
+                  <div>
+                    <strong>{event.title}</strong>
+                    {event.description && <p>{event.description}</p>}
+                  </div>
+                  <time dateTime={event.start_date}>
+                    {formatDate(event.start_date)}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          )}
+        </BaseCard>
 
-        <section className="folio-priority" aria-label="Suas prioridades">
-          <BaseCard className="folio-feature">
-            <div className="panel-header"><div><span className="mini-eyebrow">Agenda</span><h2>Sua próxima aula</h2></div><Clock3 size={20} aria-hidden="true" /></div>
-            {next ? (
-              <div className="folio-feature-main">
-                <div><strong>{next.subject}</strong><p>{next.weekday} · {next.start_time.slice(0, 5)}–{next.end_time.slice(0, 5)}{next.location ? ` · ${next.location}` : ""}</p></div>
-                <div className="folio-day-chip">{next.dayOffset === 0 ? "Hoje" : next.dayOffset === 1 ? "Amanhã" : "Em " + next.dayOffset + " dias"}</div>
-              </div>
-            ) : <p className="folio-empty">Não há aulas cadastradas para sua agenda.</p>}
-            <div className="folio-quick-links"><Link to="/calendar">Ver calendário</Link><Link to="/subjects">Ver disciplinas</Link></div>
-          </BaseCard>
-          <BaseCard className="folio-attention">
-            <div className="panel-header"><div><span className="mini-eyebrow">Para acompanhar</span><h2>O que pede sua atenção</h2></div><Bell size={20} aria-hidden="true" /></div>
-            <p>{summary.unread_notifications ? `${summary.unread_notifications} aviso(s) não lido(s).` : "Você não tem avisos novos."}</p>
-            <p>{summary.pending_invoices ? `${summary.pending_invoices} pendência(s) financeira(s).` : "Nenhuma pendência financeira registrada."}</p>
-            <div className="folio-quick-links"><Link to="/notifications">Notificações</Link><Link to="/financial">Financeiro</Link></div>
-          </BaseCard>
-        </section>
+        <BaseCard
+          className="premium-panel accent-panel"
+          aria-labelledby="dashboard-week-title"
+        >
+          <div className="panel-header">
+            <div>
+              <span className="mini-eyebrow">Semana</span>
+              <h2 id="dashboard-week-title">Agenda da semana</h2>
+            </div>
+            <Clock size={20} aria-hidden="true" />
+          </div>
 
-        <section className="folio-dashboard-grid" aria-label="Agenda e eventos">
-          <BaseCard className="premium-panel">
-            <div className="panel-header"><div><span className="mini-eyebrow">Minha semana</span><h2>Agenda de aulas</h2></div><CalendarDays size={20} aria-hidden="true" /></div>
-            {!schedule.length ? <p className="folio-empty">Nenhuma aula cadastrada.</p> : (
-              <ul className="simple-list">
-                {schedule.map((item) => <li key={item.id}><div><strong>{item.subject}</strong><p>{item.weekday}{item.location ? ` · ${item.location}` : ""}</p></div>
-                  <span>{item.start_time.slice(0,5)}–{item.end_time.slice(0,5)}</span></li>)}
-              </ul>
-            )}
-            <Link className="folio-section-link" to="/calendar">Abrir calendário</Link>
-          </BaseCard>
-          <BaseCard className="premium-panel">
-            <div className="panel-header"><div><span className="mini-eyebrow">Próximos compromissos</span><h2>Eventos acadêmicos</h2></div><CalendarDays size={20} aria-hidden="true" /></div>
-            {!events.length ? <p className="folio-empty">Nenhum evento futuro cadastrado.</p> : (
-              <ul className="simple-list">
-                {events.map((event) => <li key={event.id}><div><strong>{event.title}</strong>{event.description && <p>{event.description}</p>}</div>
-                  <time dateTime={event.start_date}>{formatDate(event.start_date)}</time></li>)}
-              </ul>
-            )}
-            <Link className="folio-section-link" to="/calendar">Ver todos os eventos</Link>
-          </BaseCard>
-        </section>
-      </div>
+          {weeklySchedule.length === 0 ? (
+            <div className="dashboard-empty-state">
+              <p className="empty-text" role="status">
+                Nenhuma aula cadastrada.
+              </p>
+              <Link className="dashboard-empty-link" to="/subjects">
+                Ver disciplinas
+              </Link>
+            </div>
+          ) : (
+            <ul className="simple-list">
+              {weeklySchedule.map((item) => (
+                <li key={item.id}>
+                  <div>
+                    <strong>{item.subject}</strong>
+                    <p>{item.weekday}</p>
+                  </div>
+                  <span>
+                    <time dateTime={item.start_time}>{item.start_time}</time>
+                    {" - "}
+                    <time dateTime={item.end_time}>{item.end_time}</time>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </BaseCard>
+      </section>
     </MainLayout>
   );
 }
+
 export default StudentDashboard;

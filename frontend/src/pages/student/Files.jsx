@@ -35,7 +35,7 @@ function Files() {
   const [title, setTitle] = useState("");
   const [classGroup, setClassGroup] = useState("");
   const [assignment, setAssignment] = useState("");
-  const [fileType, setFileType] = useState(isProfessor ? "material" : "submission");
+  const [fileType, setFileType] = useState((isProfessor || isStaff) ? "material" : "submission");
   const [dueAt, setDueAt] = useState("");
   const [file, setFile] = useState(null);
   const [reviewId, setReviewId] = useState(null);
@@ -98,7 +98,7 @@ function Files() {
       setClassGroup("");
       setAssignment("");
       setDueAt("");
-      setFileType(isProfessor ? "material" : "submission");
+      setFileType((isProfessor || isStaff) ? "material" : "submission");
       setFile(null);
       if (fileInput.current) fileInput.current.value = "";
       await loadData();
@@ -167,7 +167,7 @@ function Files() {
   const assignmentOptions = [
     { value: "", label: "Entrega sem atividade vinculada" },
     ...files
-      .filter((item) => item.file_type === "assignment")
+      .filter((item) => item.file_type === "assignment" && (!classGroup || String(item.class_group) === String(classGroup)))
       .map((item) => ({ value: item.id, label: item.title })),
   ];
 
@@ -194,14 +194,18 @@ function Files() {
               value={classGroup}
               onChange={(event) => setClassGroup(event.target.value)}
               options={groupOptions}
-              required={isStaff || isProfessor}
+              required={!isStudent || !assignment}
             />
 
             {isStudent && (
               <SelectInput
                 label="Atividade (opcional)"
                 value={assignment}
-                onChange={(event) => setAssignment(event.target.value)}
+                onChange={(event) => {
+                setAssignment(event.target.value);
+                const chosen = files.find((item) => String(item.id) === event.target.value);
+                if (chosen) setClassGroup(String(chosen.class_group));
+              }}
                 options={assignmentOptions}
               />
             )}

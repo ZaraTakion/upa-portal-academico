@@ -1,19 +1,24 @@
 from django.db.models import Q
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from core.permissions import IsNotificationOwnerOrStaff
+from core.viewsets import PortalModelViewSet
+
 from .models import Notification
 from .serializers import NotificationSerializer
 
 
-class NotificationViewSet(viewsets.ModelViewSet):
+class NotificationViewSet(PortalModelViewSet):
+    queryset = Notification.objects.none()
     serializer_class = NotificationSerializer
     permission_classes = [IsNotificationOwnerOrStaff]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
             queryset = Notification.objects.all()
@@ -32,7 +37,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
             )
         if notification_type:
             queryset = queryset.filter(notification_type=notification_type)
-        return queryset.order_by("-created_at")
+        return queryset.select_related("user").order_by("-created_at", "-pk")
 
     @action(detail=True, methods=["patch"])
     def mark_as_read(self, request, pk=None):

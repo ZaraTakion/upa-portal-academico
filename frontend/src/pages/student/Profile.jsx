@@ -14,6 +14,7 @@ function Profile() {
   const [address, setAddress] = useState("");
   const [guardianName, setGuardianName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [feedback, setFeedback] = useState("");
   const [alertType, setAlertType] = useState("info");
 
@@ -26,8 +27,8 @@ function Profile() {
       setPhone(data?.phone || "");
       setAddress(data?.address || "");
       setGuardianName(data?.guardian_name || "");
-    } catch (error) {
-      console.error("Erro ao carregar perfil:", error);
+    } catch {
+      setLoadError("Não foi possível carregar seu perfil.");
     } finally {
       setLoading(false);
     }
@@ -46,8 +47,7 @@ function Profile() {
       setAlertType("success");
       setFeedback("Perfil atualizado com sucesso.");
       loadProfile();
-    } catch (error) {
-      console.error("Erro ao atualizar perfil:", error);
+    } catch {
       setAlertType("error");
       setFeedback("Erro ao atualizar perfil.");
     }
@@ -59,6 +59,7 @@ function Profile() {
 
   return (
     <MainLayout>
+      {loadError && <Alert type="error" message={loadError} onRetry={() => window.location.reload()} />}
       <PageHeader
         eyebrow="Dados acadêmicos"
         title="Perfil do Aluno"

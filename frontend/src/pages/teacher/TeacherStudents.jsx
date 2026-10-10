@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
+import Alert from "../../components/feedback/Alert";
 import api from "../../api/axios";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
@@ -17,6 +18,7 @@ function TeacherStudents() {
   const [groupsLoaded, setGroupsLoaded] = useState(false);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     api.get("/academic/class-groups/")
@@ -26,8 +28,8 @@ function TeacherStudents() {
           getRequestedClassGroupId(response.data, initialClassGroupId.current),
         );
       })
-      .catch((error) => {
-        console.error("Erro ao carregar turmas:", error);
+      .catch(() => {
+        setLoadError("Não foi possível carregar os alunos e turmas.");
       })
       .finally(() => setGroupsLoaded(true));
   }, []);
@@ -45,9 +47,9 @@ function TeacherStudents() {
       .then((response) => {
         if (active) setStudents(response.data);
       })
-      .catch((error) => {
+      .catch(() => {
         if (active) {
-          console.error("Erro ao carregar alunos:", error);
+          setLoadError("Não foi possível carregar os alunos e turmas.");
           setStudents([]);
         }
       })
@@ -76,6 +78,7 @@ function TeacherStudents() {
 
   return (
     <MainLayout>
+      {loadError && <Alert type="error" message={loadError} onRetry={() => window.location.reload()} />}
       <PageHeader
         eyebrow="Professor"
         title="Alunos por Turma"
@@ -101,11 +104,12 @@ function TeacherStudents() {
             : "Nenhum aluno encontrado nas suas turmas."}
         />
       ) : (
-        <div className="table-wrapper">
+        <div className="table-wrapper" tabIndex={0} role="region" aria-label="Alunos matriculados">
           <table>
             <thead>
               <tr>
                 <th>Aluno</th>
+                <th>Matrícula</th>
                 <th>Turma</th>
                 <th>Disciplina</th>
               </tr>
@@ -115,6 +119,7 @@ function TeacherStudents() {
               {students.map((item) => (
                 <tr key={item.id}>
                   <td>{item.student_name}</td>
+                  <td>{item.student_registration}</td>
                   <td>{item.class_group_name}</td>
                   <td>{item.subject_name}</td>
                 </tr>

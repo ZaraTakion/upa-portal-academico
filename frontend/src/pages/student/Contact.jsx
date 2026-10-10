@@ -1,6 +1,7 @@
 import { Send } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 import Alert from "../../components/feedback/Alert";
 import EmptyState from "../../components/feedback/EmptyState";
@@ -14,6 +15,9 @@ import TextInput from "../../components/ui/TextInput";
 import TextareaInput from "../../components/ui/TextareaInput";
 
 function Contact() {
+  const { user } = useAuth();
+  const [responses, setResponses] = useState({});
+  const [responding, setResponding] = useState(null);
   const [destination, setDestination] = useState("Secretaria Acadêmica");
   const [contactType, setContactType] = useState("academic");
   const [returnChannel, setReturnChannel] = useState("email");
@@ -63,12 +67,27 @@ function Contact() {
     }
   }
 
+  async function respond(event, ticket) {
+    event.preventDefault();
+    setResponding(ticket.id);
+    try {
+      await api.patch(`/contact/${ticket.id}/`, { response: responses[ticket.id] ?? ticket.response ?? "", status: "answered" });
+      setAlertType("success");
+      setFeedback("Resposta enviada ao solicitante.");
+      await loadTickets();
+    } catch {
+      setAlertType("error");
+      setFeedback("Não foi possível responder à solicitação.");
+    } finally { setResponding(null); }
+  }
+
   useEffect(() => {
     loadTickets();
   }, []);
 
   return (
     <MainLayout>
+      <Alert type={alertType} message={feedback} />
       <PageHeader
         eyebrow="Atendimento"
         title="Atendimento"
@@ -105,7 +124,6 @@ function Contact() {
             />
             <TextInput label="Assunto" value={subject} onChange={(event) => setSubject(event.target.value)} required maxLength={200} />
             <TextareaInput label="Mensagem" value={message} onChange={(event) => setMessage(event.target.value)} rows={6} required />
-            <Alert type={alertType} message={feedback} />
             <Button type="submit" disabled={sending}>
               {sending ? "Enviando..." : "Enviar solicitação"}
               {!sending && <Send size={16} />}
@@ -114,7 +132,7 @@ function Contact() {
         </article>
 
         <article className="base-card">
-          <h2>Minhas solicitações</h2>
+          <h2>{user?.is_staff ? "Solicitações recebidas" : "Minhas solicitações"}</h2>
           {loading ? (
             <Loading text="Carregando solicitações..." />
           ) : tickets.length === 0 ? (
@@ -129,6 +147,11 @@ function Contact() {
                     <small>{new Date(ticket.created_at).toLocaleString("pt-BR")}</small>
                     <p>{ticket.message}</p>
                     {ticket.response && <p><strong>Resposta:</strong> {ticket.response}</p>}
+                    {user?.is_staff && <form className="form-stack" onSubmit={(event) => respond(event, ticket)}>
+                      <p>Solicitante: {ticket.username}</p>
+                      <TextareaInput label={`Resposta para ${ticket.subject}`} value={responses[ticket.id] ?? ticket.response ?? ""} onChange={(event) => setResponses((current) => ({ ...current, [ticket.id]: event.target.value }))} required rows={3} />
+                      <Button type="submit" disabled={responding !== null}>Responder solicitação</Button>
+                    </form>}
                   </div>
                   <Badge type={ticket.status}>{ticket.status_display}</Badge>
                 </li>
