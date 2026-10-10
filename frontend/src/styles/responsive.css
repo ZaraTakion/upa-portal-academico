@@ -70,6 +70,9 @@
   .sidebar.is-collapsed .sidebar-footer p {
     display: block;
   }
+  .sidebar.is-collapsed .sidebar-user {
+    display: grid;
+  }
   .sidebar.is-collapsed .sidebar-nav a {
     justify-content: start;
   }

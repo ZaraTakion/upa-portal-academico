@@ -109,6 +109,23 @@
   font-size: 0.625rem;
   line-height: 1.6;
 }
+.sidebar-user {
+  display: grid;
+  gap: 4px;
+  padding-block: 12px;
+  border-top: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.sidebar-user strong {
+  font-size: 0.75rem;
+}
+.sidebar-user span {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+}
+.sidebar.is-collapsed .sidebar-user {
+  display: none;
+}
 .sidebar-collapse-button {
   display: flex;
   align-items: center;

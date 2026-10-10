@@ -117,6 +117,18 @@ export default function Sidebar({
         ].map(item)}
       </nav>
       <div className="sidebar-footer">
+        {user && (
+          <div className="sidebar-user">
+            <strong>{user.full_name || user.username}</strong>
+            <span>
+              {role === "professor"
+                ? "Professor"
+                : role === "admin"
+                  ? "Administrador"
+                  : "Estudante"}
+            </span>
+          </div>
+        )}
         <button
           type="button"
           className="sidebar-collapse-button"
