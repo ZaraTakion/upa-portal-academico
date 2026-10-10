@@ -187,3 +187,11 @@ h2, h3 { letter-spacing: -0.025em; }
   .main-content { padding-inline: 64px; }
   .folio-view { gap: 28px; }
 }
+
+/* Preserve readable contrast throughout instant theme-token changes.
+   Only geometry is animated; foreground and surface color update atomically. */
+.sidebar-nav a,
+.profile-button,
+.logout-button {
+  transition: transform var(--transition-fast);
+}

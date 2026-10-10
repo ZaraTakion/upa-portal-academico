@@ -44,6 +44,8 @@ test("student signs in and cannot access teacher pages", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Olá, Rodrigo Maciel/ })).toBeVisible();
   await expectNoAccessibilityViolations(page);
   await page.getByRole("button", { name: "Ativar tema escuro" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
   await expectNoAccessibilityViolations(page);
   await page.goto(`${baseUrl}/subjects`);
   await expect(page.getByRole("heading", { name: "Disciplinas" })).toBeVisible();

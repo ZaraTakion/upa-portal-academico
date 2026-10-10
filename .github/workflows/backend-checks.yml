@@ -202,3 +202,25 @@ jobs:
         run: |
           cat /tmp/upa-django.log || true
           cat /tmp/upa-vite.log || true
+
+  autonomous-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Bootstrap isolated demo with one command
+        run: python scripts/dev_demo.py --setup-only
+      - name: Verify repeated setup is safe without reinstalling
+        run: python scripts/dev_demo.py --setup-only --no-install
+      - name: Authenticate each demo role in isolated SQLite
+        run: |
+          export DEBUG=True ALLOW_SQLITE_DATABASE=True ALLOW_LOCAL_MEDIA_STORAGE=True
+          export SQLITE_DB_PATH="$GITHUB_WORKSPACE/backend/.demo.sqlite3"
+          export SECRET_KEY="$(cat backend/.demo-secret)"
+          cd backend
+          .venv/bin/python manage.py shell -c "from django.contrib.auth import authenticate; assert authenticate(username='rodrigo',password='aluno123'); assert authenticate(username='leandro',password='prof123'); assert authenticate(username='admin',password='admin123'); print('Three demo roles authenticated in isolated database')"
