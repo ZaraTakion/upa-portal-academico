@@ -1,7 +1,6 @@
 # Operação e implantação — Takion Campus
 
-Este guia prepara a implantação. Não foram provisionados serviços nem executados deployments manuais. Na revisão Full-Stack anterior (PR #20), uma integração Vercel preexistente criou automaticamente um preview do frontend; esse evento está registrado em RELEASE.md. O bloqueio em ambos os arquivos vercel.json também inclui a branch design/takion-campus-20261010. Use banco e arquivos de teste ao validar procedimentos. Publicação, recursos pagos e merge dependem de aprovação específica.
-
+Este guia descreve operação segura. O estado atual, verificações locais e bloqueios externos estão em [INTEGRATION_STATUS.md](INTEGRATION_STATUS.md). A topologia gratuita usa frontend Vercel, API Render e o projeto Neon já existente; não foram criados recursos pagos. A autorização para implantar é específica desta missão, mas o acesso remoto ainda precisa ser confirmado.
 ## Configuração
 
 Django lê variáveis do processo. O arquivo `.env.example` documenta nomes e exemplos, mas não é carregado automaticamente. Segredos devem ser injetados pelo ambiente de destino.
@@ -23,6 +22,8 @@ Django lê variáveis do processo. O arquivo `.env.example` documenta nomes e ex
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | Credenciais restritas ao bucket, somente no ambiente. |
 | `ALLOW_LOCAL_MEDIA_STORAGE`, `MEDIA_ROOT` | Alternativa: habilitar e usar volume persistente privado. Nunca um diretório público do servidor web. |
 | `ALLOW_SQLITE_DATABASE` | Exceção explícita para execução local; produção deve usar PostgreSQL. |
+| `ACADEMIC_UPLOADS_ENABLED` | `False` em disco efêmero; bloqueia novos envios na API e no Admin. |
+| `CAMPUS_ENVIRONMENT` | `preview` somente para banco privado de homologação. |
 | `ACADEMIC_FILE_MAX_SIZE` | 25 MB por padrão. Configure também limites no proxy. |
 | `LOGIN_THROTTLE_RATE`, `ANON_THROTTLE_RATE` | Limites de autenticação/recuperação. Defaults: `5/min` e `5/hour`. |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `DEFAULT_FROM_EMAIL` | SMTP de recuperação; confirmar entrega no ambiente real. |
@@ -119,6 +120,6 @@ Nenhum rollback ou restore deve sobrescrever o banco ativo sem autorização ope
 
 ## Integração Vercel existente
 
-`vercel.json` e `frontend/vercel.json` bloqueiam deployments Git automáticos da branch `improve/verified-release-20261010`, cobrindo configurações que usam a raiz do repositório ou o frontend como raiz do projeto. Outras branches conservam a configuração anterior; não houve alteração da integração ou da produção na conta Vercel. Os arquivos foram validados contra o schema oficial.
+A raiz correta do projeto Vercel é `frontend`; o antigo `vercel.json` da raiz foi removido. `frontend/vercel.json` bloqueia deploys automáticos das branches dos PRs #20/#21 e desta integração. A `main` mantém a possibilidade de deploy. A configuração inclui rewrite de `/api/:path*` para o domínio previsto do Render, antes do fallback SPA. Confirme o domínio e a elegibilidade Hobby antes da publicação.
 
 O bloqueio de novos deployments não remove previews anteriores. A integração existente publicou um preview ao receber o PR inicial; remover esse preview exige acesso à conta Vercel. Não use um preview estático como prova de funcionamento Full-Stack: as evidências desta release vêm de API, PostgreSQL e frontend de produção executados juntos nos testes.

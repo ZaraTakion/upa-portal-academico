@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 
 import api from "../../api/axios";
 import { formatDate } from "../../utils/dateFormat";
+import { findNextClass } from "../../utils/nextClass";
 import Loading from "../../components/feedback/Loading";
 import MainLayout from "../../components/layout/MainLayout";
 import BaseCard from "../../components/ui/BaseCard";
@@ -79,6 +80,7 @@ function StudentDashboard() {
 
   const nextEvents = summary.next_events ?? [];
   const weeklySchedule = summary.weekly_schedule ?? [];
+  const nextClass = findNextClass(weeklySchedule);
 
   return (
     <MainLayout>
@@ -193,6 +195,7 @@ function StudentDashboard() {
             <Clock size={20} aria-hidden="true" />
           </div>
 
+          {nextClass && <p className="helper-text">Próxima aula: {nextClass.subject} · {nextClass.dayOffset === 0 ? "Hoje" : nextClass.dayOffset === 1 ? "Amanhã" : `Em ${nextClass.dayOffset} dias`} · {nextClass.start_time.slice(0, 5)}</p>}
           {weeklySchedule.length === 0 ? (
             <div className="dashboard-empty-state">
               <p className="empty-text" role="status">

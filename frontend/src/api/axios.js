@@ -3,9 +3,9 @@ import { resolveAllowedApiRequestUrl } from "../utils/apiRequestUrl";
 import { getAccessToken, setAccessToken } from "./session";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "/api" : "http://localhost:8000/api"),
   withCredentials: true,
-  timeout: 30000,
+  timeout: 90000,
 });
 
 let refreshRequest;

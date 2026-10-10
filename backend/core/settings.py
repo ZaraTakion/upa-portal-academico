@@ -97,6 +97,7 @@ if DATABASE_URL.startswith(("postgres://", "postgresql://")):
             "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
             "OPTIONS": {
                 "sslmode": database_options.get("sslmode", ["require"])[0],
+                **{key: database_options[key][0] for key in ("sslrootcert", "channel_binding", "connect_timeout") if key in database_options},
             },
         }
     }
@@ -218,6 +219,7 @@ ACADEMIC_FILE_MAX_SIZE = int(
 )
 MEDIA_URL = "/media/"
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", str(BASE_DIR / "media")))
+ACADEMIC_UPLOADS_ENABLED = env_bool("ACADEMIC_UPLOADS_ENABLED", True)
 
 # Only trust X-Forwarded-Proto behind a reverse proxy that strips client input.
 # Leaving this unset prevents clients from spoofing HTTPS on direct connections.

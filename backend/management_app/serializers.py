@@ -142,8 +142,8 @@ class AcademicFileSerializer(serializers.ModelSerializer):
         return fields
 
     def get_download_url(self, obj) -> str:
-        request = self.context.get("request")
-        return reverse("files-download", args=[obj.pk], request=request)
+        # Resolve against the configured API origin, including same-origin proxies.
+        return reverse("files-download", args=[obj.pk])
 
     @extend_schema_field(serializers.DateTimeField(allow_null=True))
     def get_assignment_due_at(self, obj):
@@ -178,6 +178,8 @@ class AcademicFileSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_file(self, uploaded):
+        if not settings.ACADEMIC_UPLOADS_ENABLED:
+            raise serializers.ValidationError("Envios indisponíveis neste ambiente até a ativação de armazenamento persistente.")
         if uploaded.size > settings.ACADEMIC_FILE_MAX_SIZE:
             limit_mb = settings.ACADEMIC_FILE_MAX_SIZE // (1024 * 1024)
             raise serializers.ValidationError(

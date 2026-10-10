@@ -7,9 +7,16 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 
-from academic.models import ClassEnrollment, StudentProfile, TeacherProfile
+from academic.models import (
+    AssessmentResult,
+    ClassEnrollment,
+    StudentProfile,
+    TeacherProfile,
+)
+from management_app.models import ContactMessage
 
 ENV = {
+    "CAMPUS_ENVIRONMENT": "preview",
     "CAMPUS_PREVIEW_BOOTSTRAP": "True",
     "CAMPUS_PREVIEW_STUDENT_PASSWORD": "Student!Private#2026-X54",
     "CAMPUS_PREVIEW_TEACHER_PASSWORD": "Teacher!Private#2026-X54",
@@ -18,6 +25,13 @@ ENV = {
 
 
 class PreviewBootstrapTests(TestCase):
+    @override_settings(DEBUG=False)
+    def test_refuses_non_preview_environment(self):
+        with patch.dict(os.environ, {**ENV, "CAMPUS_ENVIRONMENT": "production"}):
+            with self.assertRaises(CommandError):
+                call_command("bootstrap_preview")
+        self.assertEqual(get_user_model().objects.count(), 0)
+
     @override_settings(DEBUG=False)
     def test_disabled_by_default_does_nothing(self):
         with patch.dict(os.environ, {"CAMPUS_PREVIEW_BOOTSTRAP": "False"}):
@@ -47,6 +61,10 @@ class PreviewBootstrapTests(TestCase):
             self.assertEqual(StudentProfile.objects.count(), 1)
             self.assertEqual(TeacherProfile.objects.count(), 1)
             self.assertEqual(ClassEnrollment.objects.count(), 1)
+            result = AssessmentResult.objects.get()
+            result.score = "9.00"
+            result.save()
+            self.assertEqual(ContactMessage.objects.count(), 1)
             self.assertTrue(get_user_model().objects.get(username="campus-admin").is_superuser)
             get_user_model().objects.filter(username="campus-teacher").update(first_name="Keep")
             first_id = get_user_model().objects.get(username="campus-student").id
@@ -59,6 +77,10 @@ class PreviewBootstrapTests(TestCase):
             self.assertEqual(get_user_model().objects.get(username="campus-student").id, first_id)
             self.assertIsNone(authenticate(username="campus-student", password=ENV["CAMPUS_PREVIEW_STUDENT_PASSWORD"]))
             self.assertIsNotNone(authenticate(username="campus-student", password="Changed#Preview#Password-2026"))
+            result.refresh_from_db()
+            self.assertEqual(str(result.score), "9.00")
+            self.assertEqual(AssessmentResult.objects.count(), 1)
+            self.assertEqual(ContactMessage.objects.count(), 1)
 
     @override_settings(DEBUG=False)
     def test_existing_wrong_role_never_becomes_administrator(self):

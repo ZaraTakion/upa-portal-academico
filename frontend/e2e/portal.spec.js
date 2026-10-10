@@ -151,7 +151,7 @@ test("professor creates an assessment and does not gain administrator access", a
   expect(forbidden.status()).toBe(403);
   await page.goto(`${baseUrl}/teacher/assessments`);
   await expect(page.getByRole("heading", { name: "Avaliações e notas" })).toBeVisible();
-  await expect(page.getByLabel("Turma")).not.toHaveValue("");
+  await expect(page.getByLabel("Turma", { exact: true })).not.toHaveValue("");
   const title = `Avaliação E2E ${Date.now()}`;
   await page.getByLabel("Título").fill(title);
   await page.getByRole("button", { name: "Criar avaliação" }).click();

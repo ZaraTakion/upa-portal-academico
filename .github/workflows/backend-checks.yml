@@ -59,6 +59,10 @@ jobs:
         run: ruff check .
       - name: Audit backend dependencies
         run: pip-audit -r requirements.txt --progress-spinner off
+      - name: Validate split hosting and standalone launcher
+        run: |
+          python ../scripts/check_vercel_config.py
+          python ../scripts/dev_demo.py --help
       - name: Check Django configuration
         run: python manage.py check
       - name: Check production security settings

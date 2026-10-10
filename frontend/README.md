@@ -19,3 +19,7 @@ O cliente Axios valida destinos antes de anexar credenciais, tem timeout e compa
 As páginas são carregadas por rotas. Componentes compartilham paleta, estados, formulários e foco visível. O menu móvel mantém foco, permite Escape e bloqueia interação com o conteúdo ao abrir. Animações respeitam `prefers-reduced-motion`.
 
 As suítes Node verificam regras de payload, paginação, URLs, datas e papéis. Playwright exercita componentes, formulários, rotas e integração com Django/PostgreSQL, incluindo axe e capturas em 320, 390, 768, 1366, 1920 e 2560 px. Use banco de testes isolado; a suíte grava dados fictícios. Dependências do navegador estão no lockfile. `playwright-report/` e `test-results/` são artefatos, não código-fonte.
+
+## Hospedagem atual
+
+A raiz Vercel é `frontend`. O build de produção usa `VITE_API_URL=/api` e o rewrite fixo para o Render antes do fallback SPA. `VITE_DJANGO_ADMIN_URL` aponta ao Admin HTTPS real, sem inventar um destino quando ausente. Veja [deploy e limites gratuitos](../docs/VERCEL_DEPLOYMENT.md). A hospedagem externa e os três logins privados precisam ser verificados após aplicação das credenciais nos provedores.

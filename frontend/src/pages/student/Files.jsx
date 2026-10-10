@@ -29,6 +29,7 @@ function Files() {
   const isStaff = Boolean(user?.is_staff || user?.is_superuser);
   const isProfessor = user?.groups?.includes("Professor") && !isStaff;
   const isStudent = !isStaff && !isProfessor;
+  const uploadsEnabled = user?.uploads_enabled !== false;
 
   const [files, setFiles] = useState([]);
   const [classGroups, setClassGroups] = useState([]);
@@ -186,7 +187,8 @@ function Files() {
       <section className="split-grid">
         <article className="base-card">
           <h2>{isProfessor ? "Publicar arquivo" : "Enviar arquivo"}</h2>
-          <form className="form-stack" onSubmit={handleSubmit}>
+          {!uploadsEnabled && <Alert type="info" message="O envio de arquivos está indisponível neste ambiente. Você ainda pode consultar materiais existentes." />}
+          {uploadsEnabled && <form className="form-stack" onSubmit={handleSubmit}>
             <TextInput label="Título" value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={200} />
 
             <SelectInput
@@ -248,7 +250,7 @@ function Files() {
               {uploading ? "Enviando..." : "Enviar"}
               {!uploading && <Upload size={16} />}
             </Button>
-          </form>
+          </form>}
         </article>
 
         <article className="base-card">

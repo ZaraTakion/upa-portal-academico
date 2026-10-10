@@ -101,7 +101,7 @@ export default function Sidebar({
       <div className="sidebar-brand">
         <Brand />
       </div>
-      <nav id="sidebar-nav" className="sidebar-nav">
+      <nav id="sidebar-nav" className="sidebar-nav" aria-label="Navegação principal">
         <div className="sidebar-section-label">
           {role === "professor"
             ? "Espaço docente"

@@ -28,3 +28,7 @@ Os cinco arquivos CSS foram reorganizados, eliminando regras contraditórias de 
 A base reproduzida tinha 61 testes Django, 24 testes Node e dois testes de navegador. Os resultados finais, comandos, capturas do CI e links de revisão estão em [RELEASE.md](RELEASE.md). Não há métricas inventadas de usuários, ganho de produtividade, impacto financeiro ou experiência institucional.
 
 O trabalho prepara uma release candidata. Não comprova implantação pública, carga de produção, pentest, análise de malware ou conformidade integral WCAG/LGPD. PostgreSQL e backup/restauração são verificados somente com dados sintéticos. SMTP institucional, HTTPS/domínio, armazenamento e política de dados dependem da configuração do ambiente de destino.
+
+## Reconciliação da entrega
+
+A integração preserva as melhorias acadêmicas do PR #20, a identidade visual do PR #21 e o provisionamento privado/launcher local da main. A sessão usa access token em memória e refresh HttpOnly; a hospedagem separada ganhou proxy de API de mesma origem e caminhos de download compatíveis. Envios são bloqueados no Blueprint Free até existir armazenamento persistente. Essas decisões atendem a problemas de integração e privacidade; a publicação e resultados externos continuam condicionados às evidências descritas em [INTEGRATION_STATUS.md](INTEGRATION_STATUS.md).

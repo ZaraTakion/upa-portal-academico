@@ -231,7 +231,7 @@ test("teacher publishes activity, student uploads, teacher reviews and download 
   const files = await (await request.get(`${apiUrl}/files/`, { headers: { Authorization: `Bearer ${studentAccess}` } })).json();
   const file = files.find((item) => item.title === `Entrega ${title}`);
   const anaAccess = await token(request, "ana", "aluno123");
-  expect((await request.get(file.download_url, { headers: { Authorization: `Bearer ${anaAccess}` } })).status()).toBe(404);
+  expect((await request.get(new URL(file.download_url, apiUrl).href, { headers: { Authorization: `Bearer ${anaAccess}` } })).status()).toBe(404);
   await page.getByRole("button", { name: "Sair", exact: true }).click();
   await expect(page).toHaveURL("http://127.0.0.1:5173/");
   await login(page, "leandro", "prof123");

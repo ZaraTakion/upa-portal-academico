@@ -139,6 +139,7 @@ class CurrentUserView(APIView):
                 "groups": list(user.groups.values_list("name", flat=True)),
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
+                "uploads_enabled": settings.ACADEMIC_UPLOADS_ENABLED,
             }
         )
 

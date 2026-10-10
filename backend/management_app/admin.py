@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 
 from .models import AcademicFile, ContactMessage, FinancialInvoice
@@ -13,6 +14,13 @@ class ContactMessageAdmin(admin.ModelAdmin):
 
 @admin.register(AcademicFile)
 class AcademicFileAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return settings.ACADEMIC_UPLOADS_ENABLED and super().has_add_permission(request)
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        return fields if settings.ACADEMIC_UPLOADS_ENABLED else (*fields, "file")
+
     list_display = ("user", "subject", "title", "file_type", "uploaded_at")
     search_fields = ("user__username", "title", "subject__name")
     list_filter = ("file_type",)

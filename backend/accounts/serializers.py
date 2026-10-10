@@ -15,6 +15,7 @@ class CurrentUserSerializer(serializers.Serializer):
     groups = serializers.ListField(child=serializers.CharField())
     is_staff = serializers.BooleanField()
     is_superuser = serializers.BooleanField()
+    uploads_enabled = serializers.BooleanField()
 
 class CsrfSerializer(serializers.Serializer):
     csrfToken = serializers.CharField()

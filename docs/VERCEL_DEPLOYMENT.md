@@ -1,96 +1,73 @@
-# Deploy gratuito: Vercel (React) + Render (Django)
+# Deploy gratuito: Render + Neon + Vercel
 
-**Este guia substitui o antigo Vercel Services.** A configuração já está no GitHub;
-o deploy e a conexão com o banco ainda não foram realizados por esta alteração.
+O código está preparado para essa topologia. O estado remoto deve ser confirmado em [INTEGRATION_STATUS.md](INTEGRATION_STATUS.md); build local e GitHub Actions não comprovam implantação. Não contrate planos, trials com cobrança posterior, add-ons ou faturamento por consumo.
 
-## Vercel — frontend (Hobby Free)
+## Reutilizar os recursos existentes
 
-Importe `ZaraTakion/takion-campus` como **projeto único** e configure:
+- Render: `takion-campus-api`, serviço `srv-db4rlfvlot8c73cp2ks0`, plano Free.
+- Neon: projeto `winter-river-76082998`, branch `br-steep-mountain-b7rfe5zs`, PostgreSQL 17. Confirmar Free e cotas pela conta antes de configurar.
+- Vercel: reutilizar o projeto existente com raiz `frontend`. Hobby exige elegibilidade de uso pessoal não comercial; a apresentação de uma empresa/serviço pode exigir outra modalidade. Não publicar nesse plano sem confirmar que o uso pretendido é permitido, e nunca autorizar upgrade pago.
 
-- **Root Directory:** `frontend`
-- **Framework Preset:** `Vite`
-- **Build Command:** `npm run build` (padrão)
-- **Output Directory:** `dist` (padrão)
-- **Variáveis de ambiente:** `VITE_API_URL=https://SEU-BACKEND.onrender.com/api`
-  e `VITE_DJANGO_ADMIN_URL=https://SEU-BACKEND.onrender.com/admin/`.
+## Backend no Render
 
-Substitua `SEU-BACKEND` pelo URL real do serviço Render, não inclua localhost.
-O build bloqueia VITE_API_URL ausente/inválida quando executado na Vercel.
-`frontend/vercel.json` suporta acesso direto às rotas SPA.
+A configuração declarativa é `render.yaml`:
 
-## Render — backend (Free Web Service)
+- Root Directory: `backend`.
+- Python: 3.13.5.
+- Build: `pip install -r requirements.txt && bash build.sh`.
+- Start: `python manage.py check_academic_integrity && python manage.py migrate --noinput && python manage.py bootstrap_preview && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT`.
+- Health: `/health/ready/`, que consulta o banco.
 
-Conecte o mesmo repositório e escolha **Web Service**, plano **Free**, root
-directory **backend**, runtime Python. A configuração `render.yaml` da raiz
-serve de referência ou pode ser usada no fluxo de Blueprint.
+Se o serviço mantiver Root Directory vazio, prefixar ambos os comandos com `cd backend &&`; não aplicar as duas opções ao mesmo tempo. `build.sh` executa checks de produção e coleta estáticos, sem migrar o banco durante o build.
 
-- Build: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
-- Start: `python manage.py migrate --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT`
-- Health: `/health/`
-- Variáveis: `DEBUG=False`, `SECRET_KEY` aleatória privada,
-  `DATABASE_URL` PostgreSQL, `CORS_ALLOWED_ORIGINS=https://SEU-SITE.vercel.app`,
-  `CSRF_TRUSTED_ORIGINS=https://SEU-SITE.vercel.app`,
-  `FRONTEND_URL=https://SEU-SITE.vercel.app`,
-  `CSRF_COOKIE_SAMESITE=None`, `TRUST_PROXY_SSL_HEADER=True`.
-- Render fornece `RENDER_EXTERNAL_HOSTNAME`; Django confia apenas nesse hostname
-  validado e nos domínios adicionais de ALLOWED_HOSTS.
+Configure `SECRET_KEY` privada; `DEBUG=False`; `DATABASE_URL` do Neon; `ALLOWED_HOSTS` explícitos; `CORS_ALLOWED_ORIGINS` e `CSRF_TRUSTED_ORIGINS` com a origem HTTPS exata do frontend; `FRONTEND_URL` com essa origem. Render injeta `RENDER_EXTERNAL_HOSTNAME`, validado antes de entrar nos hosts autorizados.
 
-## Banco (sem cobrança)
+Mantenha cookies Secure/HttpOnly, `CSRF_COOKIE_SAMESITE=Lax` para o proxy de mesma origem e `TRUST_PROXY_SSL_HEADER=True` apenas atrás do proxy Render que sobrescreve o cabeçalho. Um frontend que acesse diretamente outro site requer `SameSite=None` e ainda fica sujeito a bloqueio de cookies de terceiros.
 
-**Não use Render Postgres Free como banco de longa duração:** expira em 30 dias.
-Prefira **Neon Free** (ou outro PostgreSQL persistente com franquia grátis).
-Configure `DATABASE_URL` somente no Render. Não coloque credenciais no chat,
-GitHub, frontend ou variáveis `VITE_*`.
+## Conectar o Neon com segurança
 
-## Atenção aos limites de gratuidade
+Reutilize o projeto existente; não crie outro. Transfira a conexão diretamente para o campo secreto `DATABASE_URL` do Render usando ferramentas autorizadas ou o painel seguro. Nunca coloque a URL em chat, logs, código, frontend ou variáveis `VITE_*`.
 
-Render Web Service Free entra em repouso após 15 minutos sem tráfego, portanto
-o primeiro login pode demorar. O Render Free não tem disco persistente; o
-`render.yaml` permite armazenamento temporário de demonstração
-(`ALLOW_LOCAL_MEDIA_STORAGE=True`) apenas para testar autenticação:
-**arquivos enviados serão perdidos em reinícios/redeploys**. Para materiais
-acadêmicos reais, use bucket privado persistente e `USE_S3_STORAGE=True`.
-A Vercel Hobby é para uso pessoal não comercial e possui limites de uso.
-Não autorize upgrade pago, add-ons ou cobranças.
+A aplicação usa TLS `require` por padrão. Suporta `sslmode=verify-full`, `sslrootcert`, `channel_binding` e `connect_timeout` na query da conexão. Use o endpoint e as recomendações atuais do Neon, conexões limitadas e um usuário adequado à aplicação. `sslmode=disable` é reservado a testes locais isolados.
 
-## Três logins automáticos para a homologação remota
+Antes de alterar um banco existente: obter backup, verificar contagens, inspecionar `migrate --plan` e executar `check_academic_integrity`. O comando não altera registros; duplicatas históricas, notas inválidas e datas invertidas interrompem a inicialização antes das constraints da migração `0007`. Um banco vazio pode ser migrado inicialmente; schemas parcialmente aplicados exigem diagnóstico. Não apagar dados para fazer a migração passar.
 
-O Render Free não oferece shell interativo. Para preparar as contas uma vez,
-o start command do Blueprint executa `python manage.py bootstrap_preview`
-**depois** das migrações e antes de iniciar o Gunicorn. O comando é
-**desativado por padrão** e não altera contas existentes nem imprime senhas.
+Após migração, verificar readiness, integridade e persistência de registros sintéticos após reiniciar o serviço. Exercitar backup/restauração em outro banco, sem sobrescrever o Neon ativo.
 
-Ative somente em banco de testes isolado, adicionando no Render:
-- `CAMPUS_PREVIEW_BOOTSTRAP=True`
-- `CAMPUS_PREVIEW_STUDENT_PASSWORD`: senha forte exclusiva (mínimo 16 caracteres).
-- `CAMPUS_PREVIEW_TEACHER_PASSWORD`: outra senha forte exclusiva.
-- `CAMPUS_PREVIEW_ADMIN_PASSWORD`: terceira senha forte exclusiva.
+## Frontend na Vercel
 
-Esses segredos nunca devem entrar no GitHub, no Vite ou no chat.
-Os usuários criados são `campus-student`, `campus-teacher` e `campus-admin`.
-Também são criados grupos, um curso, turma, docente e matrícula demonstrativos.
-Pode-se reiniciar o servidor sem repetir contas nem redefinir senhas.
-O comando exige `DEBUG=False` e só age quando o opt-in está ativo.
-Após a criação, é possível desativar o opt-in para não revalidar as variáveis
-em novos deploys. Nunca use este mecanismo para produzir contas públicas reais.
+- Repositório: `ZaraTakion/takion-campus`.
+- Root Directory: `frontend`.
+- Framework: Vite; Node.js 22.
+- Build: `npm run build`; saída: `dist`.
+- `VITE_API_URL=/api`.
+- `VITE_DJANGO_ADMIN_URL`: endereço HTTPS real do Admin Render, com `/admin/`.
 
-## Usuários de demonstração
+`frontend/vercel.json` encaminha apenas `/api/:path*` para `https://takion-campus-api.onrender.com/api/:path*`, antes do fallback SPA, e exige ausência de cache nas respostas da API. Esse domínio é o destino previsto no pedido: confirmar a URL operacional antes de publicar e ajustar o destino se necessário. O frontend não controla um proxy aberto por parâmetro; tokens seguem somente para a API configurada.
 
-A base remota começa sem contas. O comando `seed_demo` é **local apenas**
-e está bloqueado para `DEBUG=False`; não use as senhas públicas em sites
-hospedados. Crie usuários e grupos específicos para homologação com senhas
-privadas em um fluxo administrativo autenticado. Até provisioná-los, o login
-na Vercel não funcionará, mesmo com frontend e backend publicados.
+O rewrite conserva a origem do navegador para refresh, CSRF e logout. Access tokens ficam em memória; refresh tokens ficam em cookies HttpOnly. Downloads retornam caminhos relativos de API, resolvidos na mesma origem configurada, sem enfraquecer a validação de URL autenticada. Admin continua no domínio Render; não se presume proxy para `/admin/`.
 
-## Verificações pós-deploy
+Branches dos PRs #20/#21 e da integração têm deploy Git automático bloqueado para evitar consumir franquia durante revisão. Configurar produção somente após validação dos checks obrigatórios.
 
-- Render `https://SEU-BACKEND.onrender.com/health/` → 200.
-- Vercel abre tela de login e não apresenta erro de build.
-- Login envia POST para `https://SEU-BACKEND.onrender.com/api/token/`.
-- Verifique CORS exato, CSRF, políticas do navegador para cookies de
-  terceiros, refresh token, logout e permissões dos três perfis.
-- Acesso direto às rotas do React funciona após recarregar.
-- Sem vazamento de credenciais e sem imagens ou dados privados em armazenamento efêmero.
+## Homologação privada
 
-**Resultado de GitHub Actions não comprova deploy real.** Após os URLs existirem,
-verifique os logs dos dois provedores e autenticação com contas de homologação.
+No banco exclusivo de homologação, definir com opt-in explícito:
+
+- `CAMPUS_ENVIRONMENT=preview` e `CAMPUS_PREVIEW_BOOTSTRAP=True`.
+- `CAMPUS_PREVIEW_STUDENT_PASSWORD`, `CAMPUS_PREVIEW_TEACHER_PASSWORD`, `CAMPUS_PREVIEW_ADMIN_PASSWORD`: três senhas privadas fortes, mínimo 16 caracteres, fornecidas somente no ambiente do serviço.
+
+O comando cria `campus-student`, `campus-teacher`, `campus-admin`, grupos e dados sintéticos de curso, turma, matrícula, avaliação, nota, presença, agenda, evento, atendimento, avisos e registro financeiro sem cobrança. Não publica senhas, não troca senhas existentes, não eleva contas incompatíveis e não redefine resultados editados. Depois de provisionar, é possível desativar o opt-in. Não habilite `DEMO_MODE` nem execute `seed_demo` em hospedagem pública.
+
+## Limites operacionais
+
+Render Free pode apresentar cold start; a interface permite até 90 segundos por requisição e mostra erros quando o serviço não responde. Isso não garante disponibilidade contínua. Verificar as cotas atuais e limitar deploys a releases validadas.
+
+O disco Free é efêmero. `ACADEMIC_UPLOADS_ENABLED=False` mantém envios bloqueados na API e no Django Admin, com aviso na interface. `ALLOW_LOCAL_MEDIA_STORAGE=True` no Blueprint permite inicializar a homologação sem bucket; não comprova persistência de arquivos. Somente ativar envios após configurar storage privado persistente com plano realmente gratuito e sem cobrança automática, testar autorização e persistência após redeploy. Nenhum bucket foi criado nesta integração.
+
+Uma alternativa investigada é Supabase Storage Free: a [documentação oficial de cotas](https://supabase.com/docs/guides/platform/billing-on-supabase) informa 1 GB de armazenamento e 5 GB de egress, e a [autenticação S3](https://supabase.com/docs/guides/storage/s3/authentication) é compatível com o backend existente. Chaves S3 de servidor têm acesso a todos os buckets do projeto e ignoram RLS: requerem projeto dedicado, bucket privado e permissões aplicadas pela API Django. Confirmar plano Free sem cartão, ausência de overage automático, disponibilidade de projeto e comportamento de suspensão antes de provisionar. As fontes oficiais foram consultadas pelo repositório público de documentação; não se presume que a conta esteja elegível nem que o serviço esteja configurado.
+
+Recuperação de senha exige SMTP gratuito verificado. Os testes locais capturam mensagens em arquivos privados; isso não comprova entrega de e-mail externo. Monitoramento, backup, rollback, retenção e limites de rate limiting estão em [OPERATIONS.md](OPERATIONS.md).
+
+## Verificação após deploy
+
+Confirmar os planos pelas APIs/painéis; inspecionar logs sanitizados; verificar `/health/` e `/health/ready/`; acessar a SPA e recarregar rotas internas; executar login, refresh, logout e autorizações com cada perfil privado; criar/editar registros sintéticos pela interface e confirmar no PostgreSQL; reiniciar e validar persistência. Não disponibilizar dados reais nem considerar a release concluída sem essas evidências.

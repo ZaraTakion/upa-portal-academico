@@ -1,3 +1,5 @@
+> Relatório histórico do PR #20. Evidências, contagens e limitações abaixo pertencem àquela revisão; consulte [INTEGRATION_STATUS.md](INTEGRATION_STATUS.md) para a reconciliação atual.
+
 # Release 2.1.0-rc.1 — auditoria e entrega
 
 Repositório exclusivo: `ZaraTakion/upa-portal-academico`. Base: `main` em `7c2a125`. Branch: `improve/verified-release-20261010`. Não houve merge, contratação de serviços ou deployment manual. Uma integração Vercel preexistente publicou automaticamente um preview ao abrir o PR; consulte o registro operacional abaixo.

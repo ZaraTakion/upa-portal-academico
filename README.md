@@ -10,7 +10,7 @@ Portal Full-Stack para centralizar a vida acadêmica de estudantes, professores 
 
 ![Entrada do Takion Campus](docs/design/evidence/after/login-1440.jpg)
 
-As mudanças são entregues para revisão, sem merge na `main` ou implantação pública. O PR de design parte da revisão funcional anterior; o bloqueio da integração Vercel foi estendido à branch de redesign.
+A branch `integration/takion-campus-final-20261010` reconcilia a `main` com as branches dos PRs #20 e #21. A publicação externa permanece pendente de acesso aos provedores. Consulte o [estado verificado da integração](docs/INTEGRATION_STATUS.md); imagens e relatórios anteriores são evidências locais, não prova de deploy público.
 
 ## Funcionalidades e perfis
 
@@ -39,6 +39,7 @@ flowchart LR
 - `backend/`: apps `accounts`, `academic`, `dashboard`, `management_app`, `notifications_app`; migrações, permissões e testes.
 - `frontend/`: páginas por perfil, componentes de interface, cliente HTTP único, rotas protegidas com carregamento sob demanda.
 - `.github/workflows/backend-checks.yml`: testes em SQLite/PostgreSQL, lint, segurança, OpenAPI, build e navegador com frontend de produção e API real.
+- `scripts/`: launcher local e validação da configuração Vercel/Render.
 - `docs/`: [referência técnica](docs/documentacao.md), [operação](docs/OPERATIONS.md), [estudo de caso](docs/CASE_STUDY.md), [release e evidências](docs/RELEASE.md).
 
 Python 3.13, Django 6.0.8, DRF 3.17.2, SimpleJWT, drf-spectacular, PostgreSQL 17, React 19 e Vite 8. Use Node.js 22. Dependências Python estão em `backend/requirements.txt`; dependências de qualidade, em `requirements-dev.txt`; npm usa o lockfile.
@@ -47,9 +48,13 @@ Python 3.13, Django 6.0.8, DRF 3.17.2, SimpleJWT, drf-spectacular, PostgreSQL 17
 
 Pré-requisitos: Git, Python 3.13, Node.js 22 e npm. SQLite dispensa um serviço adicional.
 
+Da raiz, `python3.13 scripts/dev_demo.py` prepara ambiente isolado, migrações e dados sintéticos e inicia Django e Vite somente em loopback. Use `--setup-only` para preparar e `--no-install` para reiniciar sem reinstalar. O banco é `backend/.demo.sqlite3`; a chave local é gerada em arquivo ignorado. Não execute esse launcher contra `DATABASE_URL` de produção.
+
+O fluxo manual abaixo permite uma configuração personalizada:
+
 ```bash
-git clone https://github.com/ZaraTakion/upa-portal-academico.git
-cd upa-portal-academico
+git clone https://github.com/ZaraTakion/takion-campus.git
+cd takion-campus
 python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r backend/requirements-dev.txt
@@ -71,7 +76,7 @@ python manage.py runserver localhost:8000
 Em outro terminal:
 
 ```bash
-cd upa-portal-academico/frontend
+cd takion-campus/frontend
 npm ci
 cp .env.example .env.local
 npm run dev -- --host localhost
@@ -88,6 +93,8 @@ Contas **exclusivamente fictícias** criadas em banco de demonstração:
 | Administrador | `admin` | `admin123` |
 
 `seed_demo` exige `DEBUG=True` ou `DEMO_MODE=True`, executa em transação e recusa sobrescrever contas existentes que não pertencem à demonstração. Nunca o execute em banco institucional. Para uma instalação real, use `python manage.py createsuperuser` e os cadastros administrativos.
+
+Em hospedagem efêmera, mantenha `ACADEMIC_UPLOADS_ENABLED=False`: a API e o Django Admin recusam novos arquivos, e a interface informa a indisponibilidade. Ative apenas com armazenamento privado persistente validado.
 
 Para PostgreSQL, configure `DATABASE_URL=postgresql://usuario:senha@host:5432/banco?sslmode=require`. Não grave credenciais no Git. Use `sslmode=disable` apenas em testes locais isolados.
 

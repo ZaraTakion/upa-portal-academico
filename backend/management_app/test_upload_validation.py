@@ -9,6 +9,12 @@ from .serializers import AcademicFileSerializer
 
 
 class UploadContentTests(SimpleTestCase):
+    @override_settings(ACADEMIC_UPLOADS_ENABLED=False)
+    def test_uploads_are_rejected_when_persistent_storage_is_unavailable(self):
+        uploaded = SimpleUploadedFile('test.txt', b'synthetic file', content_type='text/plain')
+        with self.assertRaisesMessage(ValidationError, 'armazenamento persistente'):
+            AcademicFileSerializer().validate_file(uploaded)
+
     def office(self, files):
         stream = BytesIO()
         with ZipFile(stream, 'w') as archive:
