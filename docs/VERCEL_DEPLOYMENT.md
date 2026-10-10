@@ -53,6 +53,27 @@ acadêmicos reais, use bucket privado persistente e `USE_S3_STORAGE=True`.
 A Vercel Hobby é para uso pessoal não comercial e possui limites de uso.
 Não autorize upgrade pago, add-ons ou cobranças.
 
+## Três logins automáticos para a homologação remota
+
+O Render Free não oferece shell interativo. Para preparar as contas uma vez,
+o start command do Blueprint executa `python manage.py bootstrap_preview`
+**depois** das migrações e antes de iniciar o Gunicorn. O comando é
+**desativado por padrão** e não altera contas existentes nem imprime senhas.
+
+Ative somente em banco de testes isolado, adicionando no Render:
+- `CAMPUS_PREVIEW_BOOTSTRAP=True`
+- `CAMPUS_PREVIEW_STUDENT_PASSWORD`: senha forte exclusiva (mínimo 16 caracteres).
+- `CAMPUS_PREVIEW_TEACHER_PASSWORD`: outra senha forte exclusiva.
+- `CAMPUS_PREVIEW_ADMIN_PASSWORD`: terceira senha forte exclusiva.
+
+Esses segredos nunca devem entrar no GitHub, no Vite ou no chat.
+Os usuários criados são `campus-student`, `campus-teacher` e `campus-admin`.
+Também são criados grupos, um curso, turma, docente e matrícula demonstrativos.
+Pode-se reiniciar o servidor sem repetir contas nem redefinir senhas.
+O comando exige `DEBUG=False` e só age quando o opt-in está ativo.
+Após a criação, é possível desativar o opt-in para não revalidar as variáveis
+em novos deploys. Nunca use este mecanismo para produzir contas públicas reais.
+
 ## Usuários de demonstração
 
 A base remota começa sem contas. O comando `seed_demo` é **local apenas**
