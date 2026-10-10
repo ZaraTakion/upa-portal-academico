@@ -1,6 +1,6 @@
-# Interface UPA
+# Takion Campus — Campus Folio
 
-Aplicação React 19 com Vite 8.
+Aplicação React 19 com Vite 8, design editorial baseado no documento Campus Folio. Consulte `../docs/TEST_PLAN_CAMPUS_FOLIO.md` para a matriz de validação.
 
 ## Requisitos
 

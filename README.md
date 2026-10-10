@@ -1,6 +1,6 @@
-# UPA — Portal Acadêmico
+# Takion Campus — Campus Folio (evolução do UPA Portal Acadêmico)
 
-Portal web para estudantes, professores e equipes administrativas. O projeto combina uma API em Django REST Framework com uma interface React.
+Portal web acadêmico para estudantes, professores e equipes administrativas, desenvolvido pela Takion Software. O projeto combina uma API em Django REST Framework com uma interface React.
 
 ## Funcionalidades
 

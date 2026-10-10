@@ -220,8 +220,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Portal Acadêmico UPA API",
-    "DESCRIPTION": "API do portal acadêmico.",
+    "TITLE": "Takion Campus API",
+    "DESCRIPTION": "API do Campus Folio (evolução do UPA Portal Acadêmico).",
     "VERSION": "2.0.0",
 }
 

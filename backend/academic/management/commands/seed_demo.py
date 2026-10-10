@@ -181,8 +181,8 @@ class Command(BaseCommand):
         for student in students:
             Notification.objects.get_or_create(
                 user=student.user,
-                title="Bem-vindo ao UPA",
-                message="Seu mural acadêmico está pronto para uso.",
+                title="Bem-vindo ao Takion Campus",
+                message="Seu espaço acadêmico está pronto para uso.",
                 notification_type="academic",
                 expires_at="2026-06-30",
             )
