@@ -34,6 +34,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export function refreshAccessToken() {
+  // Share a single refresh attempt across route loading and expired requests.
+  refreshRequest ||= bootstrapCsrf()
+    .then((csrf) => api.post("/token/refresh/", {}, {
+      headers: { "X-CSRFToken": csrf },
+    }))
+    .then((response) => {
+      if (!response.data?.access) throw new Error("Token de acesso ausente.");
+      localStorage.setItem("accessToken", response.data.access);
+      localStorage.setItem("sessionStarted", "1");
+      return response.data.access;
+    })
+    .finally(() => { refreshRequest = undefined; });
+  return refreshRequest;
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -44,19 +60,13 @@ api.interceptors.response.use(
     }
     request._retried = true;
     try {
-      refreshRequest ||= bootstrapCsrf()
-        .then((csrf) => api.post("/token/refresh/", {}, {
-          headers: { "X-CSRFToken": csrf },
-        }))
-        .then((response) => response.data.access)
-        .finally(() => { refreshRequest = undefined; });
-      const access = await refreshRequest;
-      localStorage.setItem("accessToken", access);
+      const access = await refreshAccessToken();
       request.headers.Authorization = `Bearer ${access}`;
       return api(request);
     } catch (refreshError) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("currentUser");
+      localStorage.removeItem("sessionStarted");
       sessionStorage.removeItem("csrfToken");
       window.location.assign("/");
       return Promise.reject(refreshError);

@@ -4,6 +4,7 @@ export function isAuthenticated() {
 
 export function saveTokens(access) {
   localStorage.setItem("accessToken", access);
+  localStorage.setItem("sessionStarted", "1");
   localStorage.removeItem("refreshToken");
 }
 
@@ -28,6 +29,7 @@ export function clearSession() {
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("currentUser");
+  localStorage.removeItem("sessionStarted");
   sessionStorage.removeItem("csrfToken");
 }
 

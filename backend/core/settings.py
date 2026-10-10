@@ -99,7 +99,8 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            # Optional local-only isolated database for the demo launcher.
+            "NAME": Path(os.environ["SQLITE_DB_PATH"]) if DEBUG and os.environ.get("SQLITE_DB_PATH") else BASE_DIR / "db.sqlite3",
         }
     }
 

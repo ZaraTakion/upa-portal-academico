@@ -38,6 +38,8 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Check Django configuration
         run: python manage.py check
+      - name: Validate standalone demo launcher
+        run: python ../scripts/dev_demo.py --help
       - name: Check production security settings
         env:
           SECURE_SSL_REDIRECT: "True"
@@ -127,6 +129,7 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     env:
+      LOGIN_THROTTLE_RATE: "120/min"
       SECRET_KEY: ci-only-not-for-deployment-use-72-chars-randomized-value-not-real
       DEBUG: "False"
       SECURE_SSL_REDIRECT: "False"

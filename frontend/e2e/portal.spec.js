@@ -74,3 +74,101 @@ test("mobile layout keeps primary actions usable", async ({ page }) => {
   await expect(page.getByRole("navigation", { name: "Navegação principal" })).toBeVisible();
   await expectNoAccessibilityViolations(page);
 });
+
+
+const apiUrl = "http://127.0.0.1:8000/api";
+
+async function apiAs(page, method, path, data) {
+  const access = await page.evaluate(() => localStorage.getItem("accessToken"));
+  expect(access).toBeTruthy();
+  const options = { method, headers: { Authorization: `Bearer ${access}` } };
+  if (data !== undefined) options.data = data;
+  return page.request.fetch(`${apiUrl}${path}`, options);
+}
+
+test("student's API data are private and academic mutations require privileges", async ({ page }) => {
+  await login(page, "rodrigo", "aluno123");
+  await expect(page).toHaveURL(`${baseUrl}/dashboard`);
+  const self = await apiAs(page, "GET", "/accounts/me/");
+  expect(self.status()).toBe(200);
+  expect((await self.json()).groups).toContain("Aluno");
+  const profile = await apiAs(page, "GET", "/academic/students/");
+  expect(profile.status()).toBe(200);
+  const entries = await profile.json();
+  expect(entries.length).toBe(1);
+  const forbidden = await apiAs(page, "POST", "/academic/courses/", {
+    name: "Curso que aluno não pode criar", duration_semesters: 8,
+  });
+  expect(forbidden.status()).toBe(403);
+  await page.goto(`${baseUrl}/admin-panel`);
+  await expect(page).toHaveURL(`${baseUrl}/dashboard`);
+});
+
+test("refresh recovers an expired access token and a missing cached token", async ({ page }) => {
+  await login(page, "rodrigo", "aluno123");
+  await expect(page).toHaveURL(`${baseUrl}/dashboard`);
+
+  await page.evaluate(() => localStorage.setItem("accessToken", "expired-token-for-test"));
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /Olá, Rodrigo Maciel/ })).toBeVisible();
+  const restored = await page.evaluate(() => localStorage.getItem("accessToken"));
+  expect(restored).not.toBe("expired-token-for-test");
+
+  await page.evaluate(() => localStorage.removeItem("accessToken"));
+  await page.reload();
+  await expect(page).toHaveURL(`${baseUrl}/dashboard`);
+  await expect(page.getByRole("heading", { name: /Olá, Rodrigo Maciel/ })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem("accessToken"))).toBeTruthy();
+});
+
+test("logout clears session and denies navigation to authenticated pages", async ({ page }) => {
+  await login(page, "rodrigo", "aluno123");
+  await expect(page).toHaveURL(`${baseUrl}/dashboard`);
+  await page.getByRole("button", { name: "Sair do campus" }).click();
+  await expect(page).toHaveURL(`${baseUrl}/`);
+  expect(await page.evaluate(() => localStorage.getItem("accessToken"))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem("sessionStarted"))).toBeNull();
+  await page.goto(`${baseUrl}/dashboard`);
+  await expect(page).toHaveURL(`${baseUrl}/`);
+});
+
+test("professor creates an assessment and does not gain administrator access", async ({ page }) => {
+  await login(page, "leandro", "prof123");
+  await expect(page).toHaveURL(`${baseUrl}/teacher/classes`);
+  const self = await apiAs(page, "GET", "/accounts/me/");
+  expect((await self.json()).groups).toContain("Professor");
+  const forbidden = await apiAs(page, "POST", "/academic/courses/", {
+    name: "Curso proibido", duration_semesters: 6,
+  });
+  expect(forbidden.status()).toBe(403);
+  await page.goto(`${baseUrl}/teacher/assessments`);
+  await expect(page.getByRole("heading", { name: "Avaliações e notas" })).toBeVisible();
+  await expect(page.getByLabel("Turma")).not.toHaveValue("");
+  const title = `Avaliação E2E ${Date.now()}`;
+  await page.getByLabel("Título").fill(title);
+  await page.getByRole("button", { name: "Criar avaliação" }).click();
+  await expect(page.getByText("Avaliação criada.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  await page.goto(`${baseUrl}/admin-panel`);
+  await expect(page).toHaveURL(`${baseUrl}/teacher/classes`);
+});
+
+test("administrator creates a course and has visibility of all students", async ({ page }) => {
+  await login(page, "admin", "admin123");
+  await expect(page).toHaveURL(`${baseUrl}/admin-panel`);
+  const self = await apiAs(page, "GET", "/accounts/me/");
+  expect((await self.json()).is_superuser).toBe(true);
+  const studentList = await apiAs(page, "GET", "/academic/students/");
+  expect(studentList.status()).toBe(200);
+  expect((await studentList.json()).length).toBeGreaterThanOrEqual(4);
+  await page.goto(`${baseUrl}/admin/management?section=courses`);
+  await expect(page.getByRole("heading", { name: "Gestão acadêmica" })).toBeVisible();
+  const name = `Curso Validado ${Date.now()}`;
+  await page.getByLabel("Nome do curso").fill(name);
+  await page.getByLabel("Duração (semestres)").fill("6");
+  await page.getByRole("button", { name: "Criar registro" }).click();
+  await expect(page.getByText("Registro salvo com sucesso.")).toBeVisible();
+  await expect(page.getByRole("cell", { name })).toBeVisible();
+  await page.goto(`${baseUrl}/teacher/classes`);
+  await expect(page).toHaveURL(`${baseUrl}/admin-panel`);
+});

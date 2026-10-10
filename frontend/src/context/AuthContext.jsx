@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import api from "../api/axios";
+import api, { refreshAccessToken } from "../api/axios";
 import { clearSession, saveUser } from "../utils/auth";
 
 const AuthContext = createContext();
@@ -7,13 +7,13 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(() =>
-    Boolean(localStorage.getItem("accessToken"))
+    Boolean(localStorage.getItem("accessToken") || localStorage.getItem("sessionStarted"))
   );
 
   async function loadUser() {
     const token = localStorage.getItem("accessToken");
 
-    if (!token) {
+    if (!token && !localStorage.getItem("sessionStarted")) {
       setUser(null);
       setLoadingUser(false);
       return null;
@@ -22,6 +22,7 @@ export function AuthProvider({ children }) {
     setLoadingUser(true);
 
     try {
+      if (!token) await refreshAccessToken();
       const response = await api.get("/accounts/me/");
       saveUser(response.data);
       setUser(response.data);
