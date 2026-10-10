@@ -349,6 +349,9 @@
 .table-wrapper tr:focus-within td {
   background: var(--primary-soft);
 }
+.table-wrapper .btn {
+  white-space: nowrap;
+}
 .table-wrapper input[type="number"] {
   width: 90px;
 }

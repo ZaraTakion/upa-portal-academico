@@ -348,7 +348,7 @@
   color: var(--primary);
 }
 .admin-stats {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 .admin-stats .stat-card {
   border-bottom: 1px solid var(--border);
