@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -13,10 +16,26 @@ concurrency:
 jobs:
   django:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, postgresql]
+    services:
+      postgres:
+        image: ${{ matrix.database == 'postgresql' && 'postgres:17' || '' }}
+        env:
+          POSTGRES_USER: upa_ci
+          POSTGRES_PASSWORD: ci-isolated-db-only
+          POSTGRES_DB: upa_ci
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U upa_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     defaults:
       run:
         working-directory: backend
     env:
+      DATABASE_URL: ${{ matrix.database == 'postgresql' && 'postgresql://upa_ci:ci-isolated-db-only@localhost:5432/upa_ci?sslmode=disable' || '' }}
       SECRET_KEY: ci-only-not-for-deployment-use-72-chars-randomized-value-not-real
       DEBUG: "False"
       SECURE_SSL_REDIRECT: "False"
@@ -35,13 +54,17 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - name: Install backend dependencies
-        run: python -m pip install -r requirements.txt
+        run: python -m pip install -r requirements-dev.txt
+      - name: Lint backend
+        run: ruff check .
+      - name: Audit backend dependencies
+        run: pip-audit -r requirements.txt --progress-spinner off
       - name: Check Django configuration
         run: python manage.py check
       - name: Check production security settings
         env:
           SECURE_SSL_REDIRECT: "True"
-        run: python manage.py check --deploy
+        run: python manage.py check --deploy --fail-level WARNING
       - name: Verify production requires persistent services
         run: |
           python - <<'PY'
@@ -98,8 +121,14 @@ jobs:
           PY
       - name: Check model migrations
         run: python manage.py makemigrations --check --dry-run
+      - name: Validate OpenAPI without warnings
+        run: python manage.py spectacular --file /tmp/upa-openapi.yaml --validate --fail-on-warn
+      - name: Apply migrations
+        run: python manage.py migrate --noinput
+      - name: Collect production static assets
+        run: python manage.py collectstatic --noinput
       - name: Run Django tests
-        run: python manage.py test
+        run: python manage.py test --noinput
 
   frontend:
     runs-on: ubuntu-latest
@@ -126,7 +155,26 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: upa_ci
+          POSTGRES_PASSWORD: ci-isolated-db-only
+          POSTGRES_DB: upa_e2e
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U upa_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
+      DATABASE_URL: postgresql://upa_ci:ci-isolated-db-only@localhost:5432/upa_e2e?sslmode=disable
+      DEMO_MODE: "True"
+      JWT_REFRESH_COOKIE_SECURE: "False"
+      CSRF_COOKIE_SECURE: "False"
+      CSRF_COOKIE_SAMESITE: Lax
+      LOGIN_THROTTLE_RATE: 1000/min
+      ANON_THROTTLE_RATE: 1000/hour
+      EMAIL_FILE_PATH: /tmp/upa-verification-emails
       SECRET_KEY: ci-only-not-for-deployment-use-72-chars-randomized-value-not-real
       DEBUG: "False"
       SECURE_SSL_REDIRECT: "False"
@@ -136,7 +184,7 @@ jobs:
       CORS_ALLOWED_ORIGINS: http://127.0.0.1:5173
       CSRF_TRUSTED_ORIGINS: http://127.0.0.1:5173
       FRONTEND_URL: http://127.0.0.1:5173
-      EMAIL_BACKEND: django.core.mail.backends.locmem.EmailBackend
+      EMAIL_BACKEND: django.core.mail.backends.filebased.EmailBackend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -157,12 +205,13 @@ jobs:
         run: |
           python manage.py migrate --noinput
           python manage.py seed_demo
+          python manage.py collectstatic --noinput
       - name: Start Django API
         working-directory: backend
         run: |
           python manage.py runserver 127.0.0.1:8000 > /tmp/upa-django.log 2>&1 &
           for attempt in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:8000/health/; then
+            if curl --fail --silent http://127.0.0.1:8000/health/ready/; then
               exit 0
             fi
             sleep 1
@@ -173,14 +222,14 @@ jobs:
         working-directory: frontend
         run: |
           npm ci
-          npm install --no-save --package-lock=false @playwright/test@1.63.0 axe-core@4.14.0
           npx playwright install --with-deps chromium
-      - name: Start Vite
+      - name: Build and serve production frontend
         working-directory: frontend
         env:
           VITE_API_URL: http://127.0.0.1:8000/api
         run: |
-          npm run dev -- --host 127.0.0.1 --strictPort > /tmp/upa-vite.log 2>&1 &
+          npm run build
+          npm run preview -- --host 127.0.0.1 --port 5173 --strictPort > /tmp/upa-vite.log 2>&1 &
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then
               exit 0
@@ -189,11 +238,20 @@ jobs:
           done
           cat /tmp/upa-vite.log
           exit 1
-      - name: Run browser smoke tests
+      - name: Run full-stack browser and accessibility tests
         working-directory: frontend
-        run: npx playwright test e2e/portal.spec.js
+        run: npm run test:e2e
       - name: Show server logs on failure
         if: failure()
         run: |
           cat /tmp/upa-django.log || true
           cat /tmp/upa-vite.log || true
+      - name: Store browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 14
