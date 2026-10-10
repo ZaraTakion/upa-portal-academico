@@ -2,7 +2,7 @@
 
 Portal Full-Stack para centralizar a vida acadêmica de estudantes, professores e administradores. A interface React consulta uma API Django REST Framework; dados, permissões e regras acadêmicas são verificados no servidor.
 
-**Release candidata: 2.1.0-rc.1.** Consulte o [relatório de auditoria e entrega](docs/RELEASE.md) para resultados executados, CI, PR e limitações. A preparação desta release não publica o sistema nem autoriza merge.
+**Release candidata: 2.1.0-rc.1.** Consulte o [relatório de auditoria e entrega](docs/RELEASE.md) para resultados executados, CI, PR e limitações. A release requer revisão antes de merge ou implantação; o relatório registra também o preview disparado pela integração Vercel preexistente e seu bloqueio nesta branch.
 
 ## Funcionalidades e perfis
 
