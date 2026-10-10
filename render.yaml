@@ -7,7 +7,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
-    startCommand: "python manage.py migrate --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "python manage.py migrate --noinput && python manage.py bootstrap_preview && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
     healthCheckPath: /health/
     envVars:
       - key: SECRET_KEY
@@ -30,5 +30,9 @@ services:
       # Replace with USE_S3_STORAGE=True and private object storage for real use.
       - key: ALLOW_LOCAL_MEDIA_STORAGE
         value: "True"
+      # Off by default. Enable only after setting three strong private passwords
+      # in this service's environment. The command never logs those passwords.
+      - key: CAMPUS_PREVIEW_BOOTSTRAP
+        value: "False"
       - key: WEB_CONCURRENCY
         value: "1"
