@@ -1,6 +1,6 @@
 # Validação remota do Takion Campus
 
-Verificação em 10/10/2026. Backend implantado a partir de `d3ddf8fe66844876665ede18d59700557b2a0dd0`. O frontend Vercel ainda não foi publicado; estes resultados não comprovam o portal completo no navegador.
+Verificação em 10/10/2026. Backend implantado a partir de `d3ddf8fe66844876665ede18d59700557b2a0dd0`. O frontend tem deploy READY na Vercel, mas o domínio público está bloqueado pela allowlist desta sessão. Estes resultados ainda não comprovam o portal completo no navegador.
 
 ## Acesso autenticado e planos
 
@@ -8,13 +8,14 @@ Verificação em 10/10/2026. Backend implantado a partir de `d3ddf8fe66844876665
 | --- | --- | --- |
 | Render | Leitura autenticada do serviço: HTTP 200; atualização de configuração, variáveis e deploy aceita | Serviço existente `srv-db4rlfvlot8c73cp2ks0`, `takion-campus-api`, Free; AutoDeploy desativado |
 | Neon | Leitura autenticada do projeto e organização: HTTP 200 | Organização `org-long-morning-93939826`: `free`; projeto existente `winter-river-76082998`, branch `br-steep-mountain-b7rfe5zs`, banco `neondb`, PostgreSQL 17 |
-| Vercel | Usuário, equipes e listagem de projetos autenticados: HTTP 200 | Equipe `team_LcbimpnIghwY6niA2lWwJPux`, Hobby ativo, acesso OWNER; zero projetos na equipe e no escopo pessoal |
+| Vercel | Usuário, equipes e listagem de projetos autenticados: HTTP 200 | Equipe `team_LcbimpnIghwY6niA2lWwJPux`, Hobby ativo, acesso OWNER; projeto único `prj_7MAXOxPiNcOveii1nwX48808vLmE`, criado após confirmar ausência de projetos e uso pessoal não comercial |
 
 Os bindings publicados estão disponíveis pelo mecanismo autorizado do ambiente, revisão 4. Render 401, Neon 401 e Vercel 403 anteriores não se repetiram nessas operações. Não é possível atribuir uma causa única às falhas históricas nem concluir que os tokens anteriores eram inválidos. Valores não foram registrados em código, documentação ou logs compartilhados.
 
 ## Render e PostgreSQL existentes
 
-- [Deploy `dep-db56cdid0e5s73ec3a40`](https://dashboard.render.com/web/srv-db4rlfvlot8c73cp2ks0/deploys/dep-db56cdid0e5s73ec3a40): build `succeeded`, deploy `live`. Criado às 16:22:14 UTC e concluído às 16:24:58 UTC (13:24:58 em Fortaleza).
+- [Deploy `dep-db56cdid0e5s73ec3a40`](https://dashboard.render.com/web/srv-db4rlfvlot8c73cp2ks0/deploys/dep-db56cdid0e5s73ec3a40): build `succeeded`, deploy inicialmente `live`. Criado às 16:22:14 UTC e concluído às 16:24:58 UTC (13:24:58 em Fortaleza).
+- Deploy de aplicação das origens: [`dep-db56laflk1mc738u9o9g`](https://dashboard.render.com/web/srv-db4rlfvlot8c73cp2ks0/deploys/dep-db56laflk1mc738u9o9g), live às 16:42:17 UTC, mesmo commit, modo `deploy_only`, sem outro build. Um reinício simples manteve as origens anteriores e o teste de login vindo da Vercel recebeu 403; o deploy aplicou as variáveis. Após isso, bootstrap/login da origem Vercel receberam 200 com `Access-Control-Allow-Origin` exato e logout 205; origem não confiável recebeu 403.
 - Configuração corrigida: branch de integração, raiz `backend`, comandos de build/start do Blueprint e health check `/health/ready/`.
 - `DATABASE_URL` estava ausente. A conexão foi transferida diretamente da API Neon para as variáveis do serviço, sem imprimir a URL. TLS configurado com `sslmode=verify-full`, CA do sistema e `channel_binding=require`.
 - Antes da migração, a API de schema do banco existente retornou **zero tabelas**. Após startup, retornou **30 tabelas**, incluindo migrations Django, usuários, avaliações e resultados acadêmicos. Não havia tabelas acadêmicas anteriores a sobrescrever.
@@ -40,14 +41,16 @@ Os bindings publicados estão disponíveis pelo mecanismo autorizado do ambiente
 
 Registros criados em `20261010T162656Z`, exclusivamente sintéticos. A primeira tentativa de criar avaliação usou uma categoria inválida no script de teste e recebeu HTTP 400; o script foi corrigido para a categoria suportada `other`, e o fluxo completo foi aprovado. Não houve correção ou relaxamento da validação da aplicação.
 
-Esses testes exercitam o backend HTTPS real. Os 86 cenários de navegador do CI são evidências separadas da integração; ainda faltam testes do React publicado e do proxy `/api` da Vercel.
+Esses testes exercitam o backend HTTPS real. Os 86 cenários de navegador do CI são evidências separadas da integração; ainda faltam testes do React publicado e do proxy `/api` da Vercel, bloqueados pelo domínio ausente na allowlist.
 
 ## Bloqueios comprovados e próximos passos
 
 - **Logs Render:** `GET /v1/logs` responde HTTP 403 com HTML `Attention Required! | Cloudflare`, inclusive sem filtros. A API do serviço e as mutações funcionam; essa resposta não comprova token inválido ou falta de escopo. O motivo específico da regra Cloudflare não está disponível. Consultar os logs pelo painel do provedor ou liberar o acesso da origem usada pelo ambiente, sem contratar plano.
 - **Domínios de rede:** HTTPS para `api-docs.render.com` e `ep-bold-base-b7tarv20.c-13.us-east-1.aws.neon.tech` recebeu `Tunnel connection failed: 403 Forbidden` antes de alcançar o serviço. Ambos faltam na allowlist publicada. Adições salvas no rascunho; ainda não aplicadas à revisão 4. Não é necessário cadastrar novamente os três tokens. Isso não impediu a conexão Render → Neon, já validada.
-- **Vercel:** não existe projeto nos dois escopos acessíveis, portanto nenhum recurso duplicado foi criado. Confirmar que a demonstração é pessoal e não comercial antes de criar o único projeto necessário: a [regra oficial Hobby](https://vercel.com/docs/limits/fair-use-guidelines#commercial-usage) exclui publicidade/venda de serviços e desenvolvimento remunerado. Uso comercial exigiria outra solução gratuita permitida; não foi autorizado upgrade.
-- Depois dessa confirmação: publicar somente `frontend`, Vite/Node 22, `npm ci`, `npm run build`, `dist`, `/api` e URL real do Admin. Liberar apenas o domínio Vercel efetivamente atribuído, configurar as origens exatas no Render e executar testes públicos de navegador dos três perfis.
+- **Vercel publicada, ainda sem validação pública:** o usuário confirmou uso pessoal não comercial permitido no Hobby. Foi criado somente um projeto após listar zero projetos na conta pessoal e equipe. O [deploy Node 22 `dpl_471jaM5aCDbbyCFihVR224xRqGqp`](https://vercel.com/zaras-projects-f0700f27/takion-campus/471jaM5aCDbbyCFihVR224xRqGqp) está READY, sem erro de build. Configuração do projeto: raiz `frontend`, Vite, `npm ci`, `npm run build`, `dist`, `VITE_API_URL=/api` e Admin Render HTTPS. A primeira publicação adotou o padrão Node 24; a versão do projeto foi corrigida para 22 e o deploy foi repetido no mesmo projeto.
+- A API de arquivos confirma **88 arquivos de entrada**, todos de `frontend`, incluindo `vercel.json`; zero arquivos Python/backend. Publicação manual com metadados do commit `1149b632563d26b6980cad5e96036d89e488e383`; as mudanças desde o código implantado no Render são exclusivamente documentação. Não foi conectado um gatilho Git que publique main automaticamente.
+- Domínio atribuído: [takion-campus.vercel.app](https://takion-campus.vercel.app), com alias `takion-campus-zaras-projects-f0700f27.vercel.app`. O GET público da sessão recebeu **403 no túnel do proxy**, antes de chegar à Vercel: `takion-campus.vercel.app` falta na allowlist da revisão 4. Domínios atribuídos adicionados ao rascunho do ambiente; aplicar a atualização de rede para executar os testes públicos de navegador e verificar efetivamente o rewrite `/api`.
+- O build READY e os testes da API Render com Origin Vercel não substituem o teste do frontend público. Não se declara o portal completamente funcional enquanto esse teste estiver bloqueado. A [restrição Hobby](https://vercel.com/docs/limits/fair-use-guidelines#commercial-usage) foi respeitada; nenhuma contratação ou cobrança habilitada.
 - Uploads continuam desabilitados por ausência de armazenamento privado persistente gratuito verificado. SMTP externo e backup/restauração do Neon ativo não foram comprovados; o teste local de backup continua sendo evidência local.
 
 Nenhum serviço pago, cobrança, projeto Neon adicional, serviço Render adicional ou merge na main foi solicitado. O [PR #25](https://github.com/ZaraTakion/takion-campus/pull/25) permanece em rascunho.

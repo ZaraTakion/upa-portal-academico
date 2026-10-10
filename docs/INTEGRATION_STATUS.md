@@ -69,19 +69,19 @@ A [validação remota de 10/10/2026](REMOTE_VALIDATION.md) registra os testes p�
 
 | Provedor | Recurso existente | Evidência atual |
 | --- | --- | --- |
-| Render | `srv-db4rlfvlot8c73cp2ks0`, `takion-campus-api` | API autenticada HTTP 200; plano Free; deploy `dep-db56cdid0e5s73ec3a40` live em `d3ddf8f`; readiness pública HTTP 200; três perfis e Admin testados |
+| Render | `srv-db4rlfvlot8c73cp2ks0`, `takion-campus-api` | API autenticada HTTP 200; plano Free; deploy `dep-db56laflk1mc738u9o9g` live em `d3ddf8f`; readiness pública HTTP 200; três perfis e Admin testados |
 | Neon | `winter-river-76082998`, branch `br-steep-mountain-b7rfe5zs` | Organização Free; banco vazio inspecionado antes das migrations; 30 tabelas após startup; conexão TLS e persistência de registros após reinício comprovadas |
-| Vercel | Nenhum projeto na conta pessoal nem na única equipe acessível | APIs HTTP 200; equipe Hobby ativa e OWNER; publicação aguarda confirmação de uso pessoal não comercial; nenhum projeto criado |
+| Vercel | Projeto único `prj_7MAXOxPiNcOveii1nwX48808vLmE`, `takion-campus` | Hobby confirmado; uso pessoal não comercial confirmado pelo usuário; deploy Node 22 READY, somente frontend; domínio público ainda bloqueado pelo proxy da sessão |
 
 Os três bindings publicados funcionam no runtime revisão 4. As falhas históricas 401/401/403 não se repetiram; não se atribui causa única sem evidência. Logs Render têm um bloqueio Cloudflare HTTP 403 separado da autenticação do serviço. Os domínios de documentação da API Render e SQL HTTPS Neon faltam na allowlist: receberam 403 do proxy e foram adicionados ao rascunho, ainda sem aplicação ao runtime.
 
 ## Limitações e retomada
 
-1. Confirmar elegibilidade pessoal não comercial no Hobby antes da publicação. Se for elegível, criar somente o projeto frontend necessário: as listagens autenticadas confirmaram zero projetos nos escopos acessíveis.
-2. Publicar React/Vite somente a partir de `frontend`, configurar origens exatas no Render e executar os três perfis no domínio público, incluindo o proxy `/api`. Testes locais e da API direta não substituem essa validação.
-3. Aplicar as adições de rede já salvas no rascunho; liberar também o domínio Vercel real quando for atribuído. Não recadastrar tokens que já autenticam.
+1. Aplicar a allowlist salva para acessar `takion-campus.vercel.app`. O projeto Hobby já foi publicado, após confirmar uso pessoal não comercial e ausência de projeto existente; não criar outro.
+2. Executar os três perfis no domínio público, incluindo o proxy `/api`. As origens exatas já foram aplicadas por deploy sem rebuild no Render: login da origem Vercel aprovado e origem não confiável rejeitada. Testes da API direta e build READY não substituem a validação do React público.
+3. Aplicar as adições de rede já salvas no rascunho, incluindo os domínios Vercel atribuídos. Não recadastrar tokens que já autenticam.
 4. SMTP externo e backup/restauração do Neon ativo ainda não foram testados. O backup local não prova recuperação do banco hospedado.
 5. Storage privado persistente gratuito continua pendente; uploads permanecem desabilitados. Nenhum bucket ou serviço pago foi criado.
 6. Zoom real foi validado no runner do GitHub Actions. A execução local continua limitada pela política do Chromium, que não foi contornada.
 
-Links verificados: [readiness pública](https://takion-campus-api.onrender.com/health/ready/), [Admin](https://takion-campus-api.onrender.com/admin/), [deploy Render](https://dashboard.render.com/web/srv-db4rlfvlot8c73cp2ks0/deploys/dep-db56cdid0e5s73ec3a40), [PR #25](https://github.com/ZaraTakion/takion-campus/pull/25). Não há URL Vercel operacional verificada. Main e branches originais permanecem preservadas.
+Links verificados: [readiness pública](https://takion-campus-api.onrender.com/health/ready/), [Admin](https://takion-campus-api.onrender.com/admin/), [deploy Render](https://dashboard.render.com/web/srv-db4rlfvlot8c73cp2ks0/deploys/dep-db56cdid0e5s73ec3a40), [PR #25](https://github.com/ZaraTakion/takion-campus/pull/25). A URL Vercel atribuída é [takion-campus.vercel.app](https://takion-campus.vercel.app); seu funcionamento público ainda não foi verificado, pois o proxy bloqueia o domínio. Main e branches originais permanecem preservadas.
