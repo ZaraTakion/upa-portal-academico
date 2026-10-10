@@ -6,12 +6,13 @@ import api from "../api/axios";
 import Alert from "../components/feedback/Alert";
 import Button from "../components/ui/Button";
 import TextInput from "../components/ui/TextInput";
+import { getRoleHome } from "../utils/roles";
 import { saveTokens } from "../utils/auth";
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
   const navigate = useNavigate();
-  const { loadUser } = useAuth();
+  const { loadUser, sessionError } = useAuth();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -32,14 +33,11 @@ function Login() {
 
       saveTokens(tokenResponse.data.access);
 
-      if (loadUser) {
-        await loadUser();
-      }
-
-      navigate("/dashboard");
+      const user = await loadUser();
+      if (!user) throw new Error("Não foi possível carregar a sessão.");
+      navigate(getRoleHome(user));
     } catch (error) {
-      console.error("Erro no login:", error);
-      setErrorMessage("Usuário ou senha inválidos.");
+      setErrorMessage(error.response?.status === 429 ? "Muitas tentativas. Aguarde antes de tentar novamente." : error.response?.status === 401 ? "Usuário ou senha inválidos." : "Não foi possível entrar. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -73,6 +71,7 @@ function Login() {
             value={username}
             onChange={(event) => setUsername(event.target.value)}
             placeholder="Digite seu usuário"
+            autoComplete="username"
             required
           />
 
@@ -82,10 +81,11 @@ function Login() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Digite sua senha"
+            autoComplete="current-password"
             required
           />
 
-          <Alert type="error" message={errorMessage} />
+          <Alert type="error" message={errorMessage || sessionError} />
 
           <Button type="submit" disabled={loading}>
             {loading ? "Entrando..." : "Entrar no Portal"}

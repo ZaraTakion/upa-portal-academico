@@ -1,4 +1,6 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from .models import (
     AcademicCalendar,
@@ -30,18 +32,26 @@ class GradePolicySerializer(serializers.ModelSerializer):
         attention = attrs.get("attention_score", getattr(self.instance, "attention_score", 5))
         if attention > passing:
             raise serializers.ValidationError({"attention_score": "A nota de atenção não pode superar a nota de aprovação."})
-        if passing > 10 or attention > 10:
+        if not 0 <= passing <= 10 or not 0 <= attention <= 10:
             raise serializers.ValidationError("As notas limite devem estar entre 0 e 10.")
         return attrs
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    duration_semesters = serializers.IntegerField(min_value=1)
     class Meta:
         model = Course
         fields = ["id", "name", "duration_semesters"]
 
 
 class AcademicTermSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        start = attrs.get("starts_on", getattr(self.instance, "starts_on", None))
+        end = attrs.get("ends_on", getattr(self.instance, "ends_on", None))
+        if start and end and end < start:
+            raise serializers.ValidationError({"ends_on": "O fim deve ser posterior ao início."})
+        return attrs
+
     class Meta:
         model = AcademicTerm
         fields = ["id", "code", "starts_on", "ends_on", "is_current"]
@@ -69,6 +79,12 @@ class AssessmentSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"class_group": "Você só pode criar avaliações para uma turma sua."}
                 )
+        if self.instance and self.instance.results.exists():
+            if class_group != self.instance.class_group:
+                raise serializers.ValidationError({"class_group": "Uma avaliação com resultados não pode mudar de turma."})
+            maximum = attrs.get("maximum_score", self.instance.maximum_score)
+            if self.instance.results.filter(score__gt=maximum).exists():
+                raise serializers.ValidationError({"maximum_score": "Há notas já registradas acima deste valor."})
         if attrs.get("weight", getattr(self.instance, "weight", 1)) <= 0:
             raise serializers.ValidationError({"weight": "O peso deve ser maior que zero."})
         if attrs.get("maximum_score", getattr(self.instance, "maximum_score", 10)) <= 0:
@@ -77,7 +93,7 @@ class AssessmentSerializer(serializers.ModelSerializer):
             )
         return attrs
 
-    def get_teacher_name(self, obj):
+    def get_teacher_name(self, obj) -> str:
         user = obj.class_group.teacher.user
         return user.get_full_name() or user.username
 
@@ -126,7 +142,7 @@ class AssessmentResultSerializer(serializers.ModelSerializer):
                 )
         return attrs
 
-    def get_student_name(self, obj):
+    def get_student_name(self, obj) -> str:
         user = obj.student.user
         return user.get_full_name() or user.username
 
@@ -143,7 +159,7 @@ class AttendanceRecordSerializer(serializers.ModelSerializer):
             "held_at", "present", "notes", "recorded_by",
         ]
 
-    def get_student_name(self, obj):
+    def get_student_name(self, obj) -> str:
         user = obj.student.user
         return user.get_full_name() or user.username
 
@@ -173,6 +189,9 @@ class AttendanceRecordSerializer(serializers.ModelSerializer):
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
+    course_id = serializers.PrimaryKeyRelatedField(source="course", queryset=Course.objects.all(), required=False)
+    semester = serializers.IntegerField(min_value=1)
+
     course = serializers.CharField(source="course.name", read_only=True)
     username = serializers.CharField(source="user.username", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
@@ -192,6 +211,7 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             "full_name",
             "registration",
             "course",
+            "course_id",
             "semester",
             "cpf",
             "phone",
@@ -213,7 +233,16 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         fields = super().get_fields()
         request = self.context.get("request")
         user = getattr(request, "user", None)
-        if not user or not user.is_authenticated or user.is_staff:
+        if user and user.is_staff:
+            fields["user"] = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), validators=[UniqueValidator(queryset=StudentProfile.objects.all())])
+            fields["registration"] = serializers.CharField(max_length=20, validators=[UniqueValidator(queryset=StudentProfile.objects.all())])
+            for name in ("semester", "cpf"):
+                fields[name].read_only = False
+            if self.instance:
+                fields["user"].read_only = True
+            return fields
+        fields.pop("course_id", None)
+        if not user or not user.is_authenticated:
             return fields
 
         if user.groups.filter(name="Professor").exists():
@@ -235,11 +264,27 @@ class StudentProfileSerializer(serializers.ModelSerializer):
                     fields[name].read_only = True
         return fields
 
-    def get_full_name(self, obj):
+    def validate(self, attrs):
+        target = attrs.get("user", getattr(self.instance, "user", None))
+        if target and (target.is_staff or target.groups.filter(name="Professor").exists()):
+            raise serializers.ValidationError({"user": "Selecione uma conta de estudante."})
+        if self.instance is None and not attrs.get("course"):
+            raise serializers.ValidationError({"course_id": "Selecione o curso."})
+        return attrs
+
+    def get_full_name(self, obj) -> str:
         return obj.user.get_full_name() or obj.user.username
 
 
 class TeacherProfileSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        target = attrs.get("user", getattr(self.instance, "user", None))
+        if self.instance and target != self.instance.user:
+            raise serializers.ValidationError({"user": "O vínculo da conta não pode ser alterado."})
+        if target and (target.is_staff or not target.groups.filter(name="Professor").exists()):
+            raise serializers.ValidationError({"user": "Selecione uma conta com perfil Professor."})
+        return attrs
+
     username = serializers.CharField(source="user.username", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
     full_name = serializers.SerializerMethodField()
@@ -258,11 +303,13 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
             "phone",
         ]
 
-    def get_full_name(self, obj):
+    def get_full_name(self, obj) -> str:
         return obj.user.get_full_name() or obj.user.username
 
 
 class SubjectSerializer(serializers.ModelSerializer):
+    workload = serializers.IntegerField(min_value=1)
+    period = serializers.IntegerField(min_value=1)
     professor = serializers.SerializerMethodField()
     status = serializers.ChoiceField(
         source="availability_status",
@@ -286,7 +333,7 @@ class SubjectSerializer(serializers.ModelSerializer):
             "status_display",
         ]
 
-    def get_professor(self, obj):
+    def get_professor(self, obj) -> str:
         offerings = getattr(obj, "offerings_for_subject", ())
         current = [offering for offering in offerings if offering.term.is_current]
         if not current and offerings:
@@ -308,6 +355,12 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 
 class ClassGroupSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        if self.instance and attrs.get("subject", self.instance.subject) != self.instance.subject:
+            if self.instance.grades.exists() or self.instance.assessments.exists() or self.instance.attendance_records.exists():
+                raise serializers.ValidationError({"subject": "Crie uma nova turma para preservar os registros existentes."})
+        return attrs
+
     subject_name = serializers.CharField(source="subject.name", read_only=True)
     teacher_name = serializers.SerializerMethodField()
     students_count = serializers.SerializerMethodField()
@@ -329,14 +382,16 @@ class ClassGroupSerializer(serializers.ModelSerializer):
             "students_count",
         ]
 
-    def get_teacher_name(self, obj):
+    def get_teacher_name(self, obj) -> str:
         return obj.teacher.user.get_full_name() or obj.teacher.user.username
 
-    def get_students_count(self, obj):
-        return getattr(obj, "students_count", obj.classenrollment_set.count())
+    def get_students_count(self, obj) -> int:
+        count = getattr(obj, "students_count", None)
+        return count if count is not None else obj.classenrollment_set.count()
 
 
 class ClassEnrollmentSerializer(serializers.ModelSerializer):
+    student_registration = serializers.CharField(source="student.registration", read_only=True)
     class_group_name = serializers.CharField(source="class_group.name", read_only=True)
     student_name = serializers.SerializerMethodField()
     subject_name = serializers.CharField(source="class_group.subject.name", read_only=True)
@@ -349,16 +404,20 @@ class ClassEnrollmentSerializer(serializers.ModelSerializer):
             "class_group_name",
             "student",
             "student_name",
+            "student_registration",
             "subject_name",
             "status",
             "enrolled_at",
         ]
 
-    def get_student_name(self, obj):
+    def get_student_name(self, obj) -> str:
         return obj.student.user.get_full_name() or obj.student.user.username
 
 
 class GradeSerializer(serializers.ModelSerializer):
+    grade = serializers.DecimalField(max_digits=4, decimal_places=2, min_value=0, max_value=10, allow_null=True, required=False)
+    attempt = serializers.IntegerField(min_value=1, max_value=2, required=False)
+
     student_name = serializers.CharField(source="student.user.username", read_only=True)
     student_full_name = serializers.SerializerMethodField()
     subject_name = serializers.CharField(source="subject.name", read_only=True)
@@ -399,17 +458,17 @@ class GradeSerializer(serializers.ModelSerializer):
             and not user.is_staff
             and user.groups.filter(name="Professor").exists()
         ):
-            for name in ("student", "subject", "status", "created_at"):
+            for name in ("student", "subject", "attempt", "status", "created_at"):
                 fields[name].read_only = True
         return fields
 
-    def get_student_full_name(self, obj):
+    def get_student_full_name(self, obj) -> str:
         return obj.student.user.get_full_name() or obj.student.user.username
 
-    def get_absence_is_tracked(self, obj):
+    def get_absence_is_tracked(self, obj) -> bool:
         return bool(obj.class_group_id)
 
-    def get_grade_is_calculated(self, obj):
+    def get_grade_is_calculated(self, obj) -> bool:
         return bool(obj.class_group_id)
 
     def validate(self, attrs):
@@ -431,6 +490,13 @@ class GradeSerializer(serializers.ModelSerializer):
 
 
 class AcademicCalendarSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        start = attrs.get("start_date", getattr(self.instance, "start_date", None))
+        end = attrs.get("end_date", getattr(self.instance, "end_date", None))
+        if start and end and end < start:
+            raise serializers.ValidationError({"end_date": "O fim deve ser posterior ao início."})
+        return attrs
+
     event_type_display = serializers.CharField(source="get_event_type_display", read_only=True)
 
     class Meta:
@@ -448,6 +514,18 @@ class AcademicCalendarSerializer(serializers.ModelSerializer):
 
 
 class WeeklyScheduleSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        start = attrs.get("start_time", getattr(self.instance, "start_time", None))
+        end = attrs.get("end_time", getattr(self.instance, "end_time", None))
+        group = attrs.get("class_group", getattr(self.instance, "class_group", None))
+        subject = attrs.get("subject", getattr(self.instance, "subject", None))
+        teacher = attrs.get("teacher", getattr(self.instance, "teacher", None))
+        if start and end and end <= start:
+            raise serializers.ValidationError({"end_time": "O fim deve ser posterior ao início."})
+        if group and (subject != group.subject or teacher != group.teacher):
+            raise serializers.ValidationError({"class_group": "Disciplina e professor devem corresponder à turma."})
+        return attrs
+
     class_group_name = serializers.CharField(source="class_group.name", read_only=True, allow_null=True)
     subject_name = serializers.CharField(source="subject.name", read_only=True)
     teacher_name = serializers.SerializerMethodField()
@@ -470,8 +548,31 @@ class WeeklyScheduleSerializer(serializers.ModelSerializer):
             "location",
         ]
 
-    def get_teacher_name(self, obj):
+    def get_teacher_name(self, obj) -> str:
         if not obj.teacher:
             return ""
 
         return obj.teacher.user.get_full_name() or obj.teacher.user.username
+
+class AttendanceEntrySerializer(serializers.Serializer):
+    student = serializers.IntegerField(min_value=1)
+    present = serializers.BooleanField()
+
+
+class AttendanceBatchSerializer(serializers.Serializer):
+    class_group = serializers.PrimaryKeyRelatedField(queryset=ClassGroup.objects.all())
+    date = serializers.DateField()
+    records = AttendanceEntrySerializer(many=True, allow_empty=False)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        group = attrs["class_group"]
+        if not user.is_staff and group.teacher.user_id != user.pk:
+            raise serializers.ValidationError({"class_group": "Você só pode registrar frequência em suas turmas."})
+        ids = [item["student"] for item in attrs["records"]]
+        if len(ids) != len(set(ids)):
+            raise serializers.ValidationError({"records": "Há estudantes repetidos."})
+        enrolled = set(ClassEnrollment.objects.filter(class_group=group, status="active", student_id__in=ids).values_list("student_id", flat=True))
+        if enrolled != set(ids):
+            raise serializers.ValidationError({"records": "Todos os estudantes devem ter matrícula ativa na turma."})
+        return attrs

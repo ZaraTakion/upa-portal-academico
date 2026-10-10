@@ -1,6 +1,12 @@
+from datetime import datetime, time
+
+from django.db import transaction
 from django.db.models import Case, Count, F, IntegerField, Prefetch, Q, Value, When
 from django.utils import timezone
-from rest_framework import viewsets
+from drf_spectacular.utils import extend_schema
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from core.permissions import (
     IsStaffOrReadOnly,
@@ -8,6 +14,8 @@ from core.permissions import (
     IsStaffOrTeacherGradeEditor,
     IsStudentProfileOwnerOrStaff,
 )
+from core.viewsets import PortalModelViewSet
+
 from .models import (
     AcademicCalendar,
     AcademicTerm,
@@ -29,12 +37,13 @@ from .serializers import (
     AcademicTermSerializer,
     AssessmentResultSerializer,
     AssessmentSerializer,
+    AttendanceBatchSerializer,
     AttendanceRecordSerializer,
     ClassEnrollmentSerializer,
     ClassGroupSerializer,
     CourseSerializer,
-    GradeSerializer,
     GradePolicySerializer,
+    GradeSerializer,
     StudentProfileSerializer,
     SubjectSerializer,
     TeacherProfileSerializer,
@@ -42,23 +51,26 @@ from .serializers import (
 )
 
 
-class GradePolicyViewSet(viewsets.ModelViewSet):
+class GradePolicyViewSet(PortalModelViewSet):
     serializer_class = GradePolicySerializer
     permission_classes = [IsStaffOrReadOnly]
     queryset = GradePolicy.objects.all().order_by("pk")
 
 
-class CourseViewSet(viewsets.ModelViewSet):
+class CourseViewSet(PortalModelViewSet):
     serializer_class = CourseSerializer
     permission_classes = [IsStaffOrReadOnly]
     queryset = Course.objects.all().order_by("name")
 
 
-class AcademicTermViewSet(viewsets.ModelViewSet):
+class AcademicTermViewSet(PortalModelViewSet):
+    queryset = AcademicTerm.objects.none()
     serializer_class = AcademicTermSerializer
     permission_classes = [IsStaffOrReadOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
             return AcademicTerm.objects.all()
@@ -69,11 +81,15 @@ class AcademicTermViewSet(viewsets.ModelViewSet):
         ).distinct()
 
 
-class AssessmentViewSet(viewsets.ModelViewSet):
+class AssessmentViewSet(PortalModelViewSet):
+    integer_filters = ('class_group',)
+    queryset = Assessment.objects.none()
     serializer_class = AssessmentSerializer
     permission_classes = [IsStaffOrTeacherAcademicEditor]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
             queryset = Assessment.objects.all()
@@ -91,11 +107,15 @@ class AssessmentViewSet(viewsets.ModelViewSet):
         ).order_by("due_date", "title")
 
 
-class AssessmentResultViewSet(viewsets.ModelViewSet):
+class AssessmentResultViewSet(PortalModelViewSet):
+    integer_filters = ('class_group', 'assessment')
+    queryset = AssessmentResult.objects.none()
     serializer_class = AssessmentResultSerializer
     permission_classes = [IsStaffOrTeacherAcademicEditor]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         queryset = AssessmentResult.objects.select_related(
             "assessment__class_group__teacher__user",
@@ -124,12 +144,20 @@ class AssessmentResultViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(graded_at=timezone.now())
 
+    def perform_update(self, serializer):
+        serializer.save(graded_at=timezone.now())
 
-class AttendanceRecordViewSet(viewsets.ModelViewSet):
+
+class AttendanceRecordViewSet(PortalModelViewSet):
+    date_filters = ("date",)
+    integer_filters = ('class_group',)
+    queryset = AttendanceRecord.objects.none()
     serializer_class = AttendanceRecordSerializer
     permission_classes = [IsStaffOrTeacherAcademicEditor]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         queryset = AttendanceRecord.objects.select_related(
             "class_group__subject", "student__user", "recorded_by"
@@ -156,38 +184,75 @@ class AttendanceRecordViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(recorded_by=self.request.user)
 
+    @extend_schema(request=AttendanceBatchSerializer, responses=AttendanceRecordSerializer(many=True))
+    @action(detail=False, methods=["post"], url_path="batch")
+    def batch(self, request):
+        serializer = AttendanceBatchSerializer(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        group, day = data["class_group"], data["date"]
+        held_at = timezone.make_aware(datetime.combine(day, time(12)))
+        saved = []
+        with transaction.atomic():
+            # Serialize roster submissions for the same offering.
+            ClassGroup.objects.select_for_update().get(pk=group.pk)
+            for item in data["records"]:
+                existing = AttendanceRecord.objects.filter(class_group=group, student_id=item["student"], held_at__date=day)
+                if existing.count() > 1:
+                    raise ValidationError({"date": "Há várias sessões nesta data. Edite os registros individualmente pela API."})
+                record = existing.first()
+                if record:
+                    record.present = item["present"]
+                    record.recorded_by = request.user
+                    record.save(update_fields={"present", "recorded_by"})
+                else:
+                    record = AttendanceRecord.objects.create(class_group=group, student_id=item["student"], held_at=held_at, present=item["present"], recorded_by=request.user)
+                saved.append(record.pk)
+        records = self.get_queryset().filter(pk__in=saved)
+        return Response(self.get_serializer(records, many=True).data)
 
-class StudentProfileViewSet(viewsets.ModelViewSet):
+
+class StudentProfileViewSet(PortalModelViewSet):
+    queryset = StudentProfile.objects.none()
     serializer_class = StudentProfileSerializer
     permission_classes = [IsStudentProfileOwnerOrStaff]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
             return StudentProfile.objects.select_related("user", "course").all()
         if user.groups.filter(name="Professor").exists():
             return StudentProfile.objects.filter(
                 classenrollment__class_group__teacher__user=user
-            ).distinct()
+            ).select_related("user", "course").distinct()
         return StudentProfile.objects.filter(user=user).select_related("user", "course")
 
 
-class TeacherProfileViewSet(viewsets.ModelViewSet):
+class TeacherProfileViewSet(PortalModelViewSet):
+    queryset = TeacherProfile.objects.none()
     serializer_class = TeacherProfileSerializer
     permission_classes = [IsStaffOrReadOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
-            return TeacherProfile.objects.all()
-        return TeacherProfile.objects.filter(user=user)
+            return TeacherProfile.objects.select_related("user").all()
+        return TeacherProfile.objects.filter(user=user).select_related("user")
 
 
-class SubjectViewSet(viewsets.ModelViewSet):
+class SubjectViewSet(PortalModelViewSet):
+    integer_filters = ('period',)
+    queryset = Subject.objects.none()
     serializer_class = SubjectSerializer
     permission_classes = [IsStaffOrReadOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         queryset = Subject.objects.all()
         search = self.request.query_params.get("search")
         period = self.request.query_params.get("period")
@@ -210,24 +275,31 @@ class SubjectViewSet(viewsets.ModelViewSet):
         ).order_by("period", "name")
 
 
-class ClassGroupViewSet(viewsets.ModelViewSet):
+class ClassGroupViewSet(PortalModelViewSet):
+    queryset = ClassGroup.objects.none()
     serializer_class = ClassGroupSerializer
     permission_classes = [IsStaffOrReadOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
-            return ClassGroup.objects.all().select_related("subject", "teacher__user").annotate(students_count=Count("classenrollment"))
+            return ClassGroup.objects.all().select_related("subject", "teacher__user", "term").annotate(students_count=Count("classenrollment")).order_by("-year", "semester", "name", "pk")
         if user.groups.filter(name="Professor").exists():
-            return ClassGroup.objects.filter(teacher__user=user).select_related("subject", "teacher__user").annotate(students_count=Count("classenrollment"))
-        return ClassGroup.objects.filter(classenrollment__student__user=user).select_related("subject", "teacher__user").annotate(students_count=Count("classenrollment"))
+            return ClassGroup.objects.filter(teacher__user=user).select_related("subject", "teacher__user", "term").annotate(students_count=Count("classenrollment")).order_by("-year", "semester", "name", "pk")
+        return ClassGroup.objects.filter(pk__in=ClassEnrollment.objects.filter(student__user=user).values("class_group_id")).select_related("subject", "teacher__user", "term").annotate(students_count=Count("classenrollment")).order_by("-year", "semester", "name", "pk")
 
 
-class ClassEnrollmentViewSet(viewsets.ModelViewSet):
+class ClassEnrollmentViewSet(PortalModelViewSet):
+    integer_filters = ('class_group',)
+    queryset = ClassEnrollment.objects.none()
     serializer_class = ClassEnrollmentSerializer
     permission_classes = [IsStaffOrReadOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
             queryset = ClassEnrollment.objects.all()
@@ -247,11 +319,15 @@ class ClassEnrollmentViewSet(viewsets.ModelViewSet):
         ).order_by("student__user__last_name", "student__user__first_name", "pk")
 
 
-class GradeViewSet(viewsets.ModelViewSet):
+class GradeViewSet(PortalModelViewSet):
+    integer_filters = ('class_group', 'subject')
+    queryset = Grade.objects.none()
     serializer_class = GradeSerializer
     permission_classes = [IsStaffOrTeacherGradeEditor]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
             queryset = Grade.objects.all()
@@ -284,11 +360,14 @@ class GradeViewSet(viewsets.ModelViewSet):
         return queryset.select_related("student__user", "subject", "class_group").order_by("subject__name", "attempt")
 
 
-class AcademicCalendarViewSet(viewsets.ModelViewSet):
+class AcademicCalendarViewSet(PortalModelViewSet):
+    queryset = AcademicCalendar.objects.none()
     serializer_class = AcademicCalendarSerializer
     permission_classes = [IsStaffOrReadOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         queryset = AcademicCalendar.objects.all().order_by("start_date")
         event_type = self.request.query_params.get("event_type")
         active_only = self.request.query_params.get("active_only")
@@ -300,11 +379,15 @@ class AcademicCalendarViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class WeeklyScheduleViewSet(viewsets.ModelViewSet):
+class WeeklyScheduleViewSet(PortalModelViewSet):
+    integer_filters = ('subject',)
+    queryset = WeeklySchedule.objects.none()
     serializer_class = WeeklyScheduleSerializer
     permission_classes = [IsStaffOrReadOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
             queryset = WeeklySchedule.objects.all()

@@ -9,6 +9,7 @@ import {
   FolderOpen,
   GraduationCap,
   Home,
+  X,
   Mail,
   Receipt,
   User,
@@ -17,24 +18,19 @@ import {
 
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { buildAdminUrl } from "../../utils/adminUrl";
 import { getUserRole } from "../../utils/roles";
 
-function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
+function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse, hidden = false }) {
   const { user } = useAuth();
 
   const role = getUserRole(user);
   const isProfessor = role === "professor";
   const isAdmin = role === "admin";
   const isStudent = role === "student";
-  const invoiceAdminUrl = buildAdminUrl(
-    import.meta.env.VITE_DJANGO_ADMIN_URL,
-    "management_app/financialinvoice/",
-    { allowLocalhost: import.meta.env.DEV },
-  );
 
   return (
     <aside
+      inert={hidden}
       id="primary-navigation"
       aria-label="Navegação principal"
       className={`sidebar ${isOpen ? "sidebar-open" : ""} ${isCollapsed ? "is-collapsed" : ""}`}
@@ -59,6 +55,7 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
         {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
       </button>
 
+      <button type="button" className="icon-button sidebar-close" onClick={onClose} aria-label="Fechar menu de navegação"><X size={20} /></button>
       <nav id="sidebar-nav" className="sidebar-nav">
         {isStudent && (
           <NavLink to="/dashboard" onClick={onClose} title="Dashboard">
@@ -147,12 +144,12 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
               <span>Calendário</span>
             </NavLink>
 
-            {invoiceAdminUrl && (
-              <a href={invoiceAdminUrl} target="_blank" rel="noreferrer" title="Financeiro">
-                <Receipt size={20} />
-                <span>Financeiro</span>
-              </a>
-            )}
+            <NavLink to="/admin/management?section=users" onClick={onClose} title="Gestão acadêmica">
+              <GraduationCap size={20} /><span>Gestão acadêmica</span>
+            </NavLink>
+            <NavLink to="/admin/management?section=invoices" onClick={onClose} title="Financeiro">
+              <Receipt size={20} /><span>Financeiro</span>
+            </NavLink>
           </>
         )}
 

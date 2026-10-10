@@ -344,3 +344,18 @@
     width: 100%;
   }
 }
+.management-nav { flex-flow: row wrap; gap: 8px; }
+.sidebar-close { display: none; }
+.app-content, .main-content, .base-card, .form-field { min-width: 0; }
+.ticket-item > div { min-width: 0; width: 100%; }
+.ticket-item p, .file-record p, td { overflow-wrap: anywhere; }
+.form-field { display: grid; gap: 8px; }
+.form-field input, .form-field select, .form-field textarea { width: 100%; min-width: 0; }
+.form-field input[type="checkbox"] { width: 20px; height: 20px; }
+@media (max-width: 900px) { .sidebar-close { display: flex; margin: 0 0 12px auto; } }
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: minmax(0, 1fr); }
+  .logout-button svg { display: block; }
+  .management-nav .btn { width: auto; }
+  .ticket-item form { width: 100%; }
+}

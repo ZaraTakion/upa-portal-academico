@@ -34,8 +34,7 @@ function Financial() {
       });
 
       setInvoices(response.data);
-    } catch (error) {
-      console.error("Erro ao carregar financeiro:", error);
+    } catch {
       setAlertType("error");
       setFeedback("Erro ao carregar informações financeiras.");
     } finally {

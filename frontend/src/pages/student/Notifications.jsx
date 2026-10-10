@@ -31,8 +31,7 @@ function Notifications() {
       });
 
       setNotifications(response.data);
-    } catch (error) {
-      console.error("Erro ao carregar notificações:", error);
+    } catch {
       setAlertType("error");
       setFeedback("Não foi possível carregar as notificações.");
     } finally {
@@ -48,8 +47,7 @@ function Notifications() {
       setFeedback("Notificação marcada como lida.");
 
       loadNotifications();
-    } catch (error) {
-      console.error("Erro ao marcar notificação:", error);
+    } catch {
       setAlertType("error");
       setFeedback("Erro ao atualizar notificação.");
     }

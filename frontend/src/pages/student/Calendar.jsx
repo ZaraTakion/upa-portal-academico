@@ -1,6 +1,7 @@
 import { CalendarDays, Filter } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import Alert from "../../components/feedback/Alert";
 import api from "../../api/axios";
 import { formatDate } from "../../utils/dateFormat";
 import EmptyState from "../../components/feedback/EmptyState";
@@ -14,13 +15,14 @@ function Calendar() {
   const [events, setEvents] = useState([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   async function loadEvents() {
     try {
       const response = await api.get("/academic/calendar/");
       setEvents(response.data);
-    } catch (error) {
-      console.error("Erro ao carregar calendário:", error);
+    } catch {
+      setLoadError("Não foi possível carregar o calendário.");
     } finally {
       setLoading(false);
     }
@@ -38,6 +40,7 @@ function Calendar() {
 
   return (
     <MainLayout>
+      {loadError && <Alert type="error" message={loadError} onRetry={() => window.location.reload()} />}
       <PageHeader
         eyebrow="Agenda institucional"
         title="Agenda Acadêmica"
@@ -49,6 +52,7 @@ function Calendar() {
           <Filter size={18} />
 
           <select
+            aria-label="Filtrar eventos por tipo"
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
           >

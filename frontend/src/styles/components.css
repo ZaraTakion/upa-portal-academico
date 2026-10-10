@@ -572,7 +572,7 @@
 }
 
 .notification-card.read {
-  opacity: 0.76;
+  background: var(--surface-soft);
 }
 
 .notification-card h2 {
@@ -623,3 +623,7 @@
 .checkbox-filter input {
   width: auto;
 }
+.stat-card { overflow: hidden; }
+.field > label { font-weight: 600; }
+
+.table-wrapper:focus-visible { outline: 3px solid var(--focus-color); outline-offset: 2px; }
