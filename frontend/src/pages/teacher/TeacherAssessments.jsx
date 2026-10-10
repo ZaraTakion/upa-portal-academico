@@ -1,5 +1,5 @@
 import { Plus, Save } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
@@ -22,13 +22,18 @@ function TeacherAssessments() {
   const [roster, setRoster] = useState([]);
   const [results, setResults] = useState([]);
   const [scores, setScores] = useState({});
+  const [feedbacks, setFeedbacks] = useState({});
+  const [editing, setEditing] = useState(null);
+  const requestVersion = useRef(0);
   const [draft, setDraft] = useState({ title: "", category: "n1", weight: "1", maximum_score: "10", due_date: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [alertType, setAlertType] = useState("error");
 
   const loadAssessments = useCallback(async () => {
     if (!groupId) return;
+    const version = ++requestVersion.current;
     setLoading(true);
     try {
       const [assessmentResponse, rosterResponse, resultResponse] = await Promise.all([
@@ -36,18 +41,22 @@ function TeacherAssessments() {
         api.get(`/academic/class-enrollments/?class_group=${groupId}&status=active`),
         api.get(`/academic/assessment-results/?class_group=${groupId}`),
       ]);
+      if (version !== requestVersion.current) return;
       setAssessments(assessmentResponse.data);
       setRoster(rosterResponse.data);
       setResults(resultResponse.data);
       const initial = {};
+      const initialFeedback = {};
       resultResponse.data.forEach((result) => {
         initial[`${result.assessment}:${result.student}`] = result.score ?? "";
+        initialFeedback[`${result.assessment}:${result.student}`] = result.feedback || "";
       });
       setScores(initial);
+      setFeedbacks(initialFeedback);
     } catch {
-      setMessage("Não foi possível carregar as avaliações desta turma.");
+      if (version === requestVersion.current) { setAlertType("error"); setMessage("Não foi possível carregar as avaliações desta turma."); }
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   }, [groupId]);
 
@@ -68,7 +77,10 @@ function TeacherAssessments() {
   }, [searchParams]);
 
   useEffect(() => {
+    setAssessments([]);
+    setRoster([]);
     loadAssessments();
+    return () => { requestVersion.current += 1; };
   }, [loadAssessments]);
 
   async function createAssessment(event) {
@@ -76,16 +88,21 @@ function TeacherAssessments() {
     if (!groupId) return;
     setSaving(true);
     setMessage("");
+    setAlertType("error");
     try {
-      await api.post("/academic/assessments/", {
+      const payload = {
         ...draft,
         class_group: Number(groupId),
         weight: Number(draft.weight),
         maximum_score: Number(draft.maximum_score),
         due_date: draft.due_date || null,
-      });
+      };
+      if (editing) await api.patch(`/academic/assessments/${editing}/`, payload);
+      else await api.post("/academic/assessments/", payload);
+      setEditing(null);
       setDraft({ title: "", category: "n1", weight: "1", maximum_score: "10", due_date: "" });
-      setMessage("Avaliação criada.");
+      setAlertType("success");
+      setMessage(editing ? "Avaliação atualizada." : "Avaliação criada.");
       await loadAssessments();
     } catch (error) {
       const details = error.response?.data;
@@ -98,21 +115,23 @@ function TeacherAssessments() {
   async function saveResult(assessment, studentId) {
     const key = `${assessment.id}:${studentId}`;
     const existing = results.find((item) => item.assessment === assessment.id && item.student === studentId);
-    const score = scores[key] === "" ? null : Number(scores[key]);
+    const score = (scores[key] ?? "") === "" ? null : Number(scores[key]);
     setSaving(true);
     try {
-      const payload = { score };
+      const payload = { score, feedback: feedbacks[key] || "" };
+      let response;
       if (existing) {
-        await api.patch(`/academic/assessment-results/${existing.id}/`, payload);
+        response = await api.patch(`/academic/assessment-results/${existing.id}/`, payload);
       } else {
-        await api.post("/academic/assessment-results/", {
+        response = await api.post("/academic/assessment-results/", {
           assessment: assessment.id,
           student: studentId,
           ...payload,
         });
       }
+      setAlertType("success");
       setMessage("Nota salva.");
-      await loadAssessments();
+      setResults((current) => [...current.filter((item) => item.id !== response.data.id), response.data]);
     } catch (error) {
       const details = error.response?.data;
       setMessage(details ? Object.values(details).flat().join(" ") : "Não foi possível salvar a nota.");
@@ -130,9 +149,9 @@ function TeacherAssessments() {
     <MainLayout>
       <PageHeader eyebrow="Professor" title="Avaliações e notas" description="Crie avaliações com peso e prazo e registre as notas de cada estudante." />
       <section className="base-card form-card">
-        <SelectInput label="Turma" value={groupId} onChange={(event) => setGroupId(event.target.value)} options={groupOptions} required />
+        <SelectInput label="Turma" value={groupId} onChange={(event) => { setLoading(true); setGroupId(event.target.value); setEditing(null); }} options={groupOptions} required />
         <form className="form-stack assessment-create" onSubmit={createAssessment}>
-          <h2>Nova avaliação</h2>
+          <h2>{editing ? "Editar avaliação" : "Nova avaliação"}</h2>
           <TextInput label="Título" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} required maxLength={200} />
           <div className="toolbar">
             <SelectInput
@@ -151,11 +170,12 @@ function TeacherAssessments() {
             <TextInput label="Nota máxima" type="number" min="0.01" step="0.01" value={draft.maximum_score} onChange={(event) => setDraft({ ...draft, maximum_score: event.target.value })} required />
             <TextInput label="Prazo" type="date" value={draft.due_date} onChange={(event) => setDraft({ ...draft, due_date: event.target.value })} />
           </div>
-          <Button type="submit" disabled={saving || !groupId}><Plus size={16} /> Criar avaliação</Button>
+          <Button type="submit" disabled={saving || loading || !groupId}><Plus size={16} /> {editing ? "Salvar avaliação" : "Criar avaliação"}</Button>
+          {editing && <Button type="button" variant="secondary" onClick={() => { setEditing(null); setDraft({ title: "", category: "n1", weight: "1", maximum_score: "10", due_date: "" }); }}>Cancelar edição</Button>}
         </form>
       </section>
 
-      {message && <Alert type={message.includes("não foi") ? "error" : "success"} message={message} />}
+      {message && <Alert type={alertType} message={message} />}
       {loading ? <Loading text="Carregando avaliações..." /> : assessments.length === 0 ? (
         <EmptyState title="Nenhuma avaliação" message="Crie a primeira avaliação para esta turma." />
       ) : (
@@ -163,14 +183,18 @@ function TeacherAssessments() {
           {assessments.map((assessment) => (
             <article className="base-card" key={assessment.id}>
               <h2>{assessment.title}</h2>
+              <Button type="button" variant="secondary" disabled={saving} onClick={() => {
+                setEditing(assessment.id);
+                setDraft({ title: assessment.title, category: assessment.category, weight: assessment.weight, maximum_score: assessment.maximum_score, due_date: assessment.due_date || "" });
+                document.querySelector(".assessment-create input")?.focus();
+              }}>Editar avaliação</Button>
               <p>{assessment.category.toUpperCase()} · Peso {assessment.weight} · Máximo {assessment.maximum_score}{assessment.due_date ? ` · Prazo ${formatDate(assessment.due_date)}` : ""}</p>
               {roster.length === 0 ? <p>Sem estudantes ativos nesta turma.</p> : (
-                <div className="table-wrapper">
+                <div className="table-wrapper" tabIndex={0} role="region" aria-label="Resultados da avaliação">
                   <table>
                     <thead><tr><th>Estudante</th><th>Nota</th><th>Devolutiva</th><th>Ação</th></tr></thead>
                     <tbody>
                       {roster.map((enrollment) => {
-                        const result = results.find((item) => item.assessment === assessment.id && item.student === enrollment.student);
                         const key = `${assessment.id}:${enrollment.student}`;
                         return (
                           <tr key={enrollment.id}>
@@ -186,7 +210,7 @@ function TeacherAssessments() {
                                 onChange={(event) => setScores((current) => ({ ...current, [key]: event.target.value }))}
                               />
                             </td>
-                            <td>{result?.feedback || "—"}</td>
+                            <td><input type="text" aria-label={`Devolutiva para ${enrollment.student_name}`} value={feedbacks[key] ?? ""} onChange={(event) => setFeedbacks((current) => ({ ...current, [key]: event.target.value }))} /></td>
                             <td><Button type="button" variant="secondary" disabled={saving} onClick={() => saveResult(assessment, enrollment.student)}><Save size={16} /> Salvar</Button></td>
                           </tr>
                         );

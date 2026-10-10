@@ -14,32 +14,24 @@ import MainLayout from "../../components/layout/MainLayout";
 import BaseCard from "../../components/ui/BaseCard";
 import PageHeader from "../../components/ui/PageHeader";
 import StatCard from "../../components/ui/StatCard";
-import { buildAdminUrl } from "../../utils/adminUrl";
+import Alert from "../../components/feedback/Alert";
 
 function AdminPanel() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const adminBaseUrl = buildAdminUrl(
-    import.meta.env.VITE_DJANGO_ADMIN_URL,
-    "",
-    { allowLocalhost: import.meta.env.DEV },
-  );
-  const invoiceAdminUrl = buildAdminUrl(
-    import.meta.env.VITE_DJANGO_ADMIN_URL,
-    "management_app/financialinvoice/",
-    { allowLocalhost: import.meta.env.DEV },
-  );
+  const [error, setError] = useState("");
 
   useEffect(() => {
     api.get("/dashboard/summary/")
       .then((response) => setSummary(response.data))
-      .catch((error) => console.error("Erro ao carregar gestão:", error))
+      .catch(() => setError("Não foi possível carregar os indicadores administrativos."))
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <MainLayout>
       <PageHeader eyebrow="Administração" title="Painel de Gestão" description="Resumo institucional e acesso às ferramentas administrativas." />
+      {error && <Alert type="error" message={error} />}
       {loading ? <Loading text="Carregando painel administrativo..." /> : (
         <>
           <section className="stats-grid">
@@ -56,20 +48,16 @@ function AdminPanel() {
               icon={<Users />}
               title="Usuários"
               text="Gerencie contas, alunos, professores e permissões."
-              to={adminBaseUrl}
-              external
-              unavailableText="Configure VITE_DJANGO_ADMIN_URL para acessar o Django Admin."
+              to="/admin/management?section=users"
             />
             <AdminCard icon={<GraduationCap />} title="Gestão acadêmica" text="Cursos, períodos, disciplinas, turmas e regra de notas." to="/admin/management?section=courses" />
             <AdminCard icon={<CalendarDays />} title="Calendário" text="Cadastre feriados, provas, eventos e comunicados." to="/admin/management?section=calendar" />
-            <AdminCard icon={<Bell />} title="Comunicados" text="Consulte comunicados e notificações institucionais." to="/notifications" />
+            <AdminCard icon={<Bell />} title="Comunicados" text="Consulte comunicados e notificações institucionais." to="/admin/management?section=notifications" />
             <AdminCard
               icon={<Receipt />}
               title="Financeiro"
-              text="Gerencie faturas e vencimentos no Django Admin."
-              to={invoiceAdminUrl}
-              external
-              unavailableText="Configure VITE_DJANGO_ADMIN_URL para acessar as faturas."
+              text="Registre cobranças, titulares, vencimentos e situação financeira."
+              to="/admin/management?section=invoices"
             />
           </section>
         </>

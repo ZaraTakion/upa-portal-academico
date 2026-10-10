@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import Alert from "../../components/feedback/Alert";
 import api from "../../api/axios";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
@@ -15,6 +16,7 @@ function Subjects() {
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [appliedFilters, setAppliedFilters] = useState({ search: "", period: "" });
 
   // Keep draft filter input separate from the last submitted query.
@@ -30,8 +32,8 @@ function Subjects() {
           },
         });
         if (active) setSubjects(response.data);
-      } catch (error) {
-        console.error("Erro ao carregar disciplinas:", error);
+      } catch {
+        setLoadError("Não foi possível carregar as disciplinas.");
       } finally {
         if (active) setLoading(false);
       }
@@ -47,6 +49,7 @@ function Subjects() {
 
   return (
     <MainLayout>
+      {loadError && <Alert type="error" message={loadError} onRetry={() => window.location.reload()} />}
       <PageHeader
         eyebrow="Vida acadêmica"
         title="Disciplinas"

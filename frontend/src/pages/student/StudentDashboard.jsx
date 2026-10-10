@@ -28,8 +28,7 @@ function StudentDashboard() {
     try {
       const response = await api.get("/dashboard/summary/");
       setSummary(response.data);
-    } catch (error) {
-      console.error("Erro ao carregar dashboard:", error);
+    } catch {
       setSummary(null);
       setErrorMessage("Não foi possível carregar o dashboard.");
     } finally {

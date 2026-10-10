@@ -1,33 +1,49 @@
 import axios from "axios";
 import { resolveAllowedApiRequestUrl } from "../utils/apiRequestUrl";
+import { getAccessToken, setAccessToken } from "./session";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
   withCredentials: true,
+  timeout: 30000,
 });
 
 let refreshRequest;
+let csrfRequest;
+let csrfToken = "";
 
-function csrfToken() {
-  const cookie = document.cookie
-    .split("; ")
-    .find((item) => item.startsWith("csrftoken="));
-  return cookie ? decodeURIComponent(cookie.slice("csrftoken=".length)) : "";
+export function ensureCsrfToken() {
+  csrfRequest ||= api.get("/accounts/csrf/").then(({ data }) => {
+    csrfToken = data.csrfToken;
+    return csrfToken;
+  }).finally(() => { csrfRequest = undefined; });
+  return csrfRequest;
 }
 
-api.interceptors.request.use((config) => {
-  // This client includes credentials. Never dispatch an authenticated request
-  // to an untrusted origin or outside the API namespace.
+export async function refreshSession() {
+  refreshRequest ||= (async () => {
+    await ensureCsrfToken();
+    const { data } = await api.post("/token/refresh/");
+    setAccessToken(data.access);
+    return data.access;
+  })().finally(() => { refreshRequest = undefined; });
+  return refreshRequest;
+}
+
+export async function endSession() {
+  await ensureCsrfToken();
+  await api.post("/token/logout/");
+  setAccessToken(null);
+  localStorage.removeItem("currentUser");
+}
+
+api.interceptors.request.use(async (config) => {
   resolveAllowedApiRequestUrl(config.url, config.baseURL || api.defaults.baseURL, window.location.origin);
-
-  const token = localStorage.getItem("accessToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
+  const token = getAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   if (["post", "put", "patch", "delete"].includes(config.method?.toLowerCase())) {
-    const csrf = csrfToken();
-    if (csrf) config.headers["X-CSRFToken"] = csrf;
+    if (!csrfToken) await ensureCsrfToken();
+    config.headers["X-CSRFToken"] = csrfToken;
   }
   return config;
 });
@@ -36,32 +52,33 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const request = error.config;
-    const requestUrl = request?.url || "";
-    const isSessionEndpoint = /\/token\/(refresh|logout)\/?$|\/token\/?$/.test(requestUrl);
-
+    const isSessionEndpoint = /\/token\/(refresh|logout)\/?$|\/token\/?$/.test(request?.url || "");
     if (error.response?.status !== 401 || !request || request._retried || isSessionEndpoint) {
       return Promise.reject(error);
     }
-
     request._retried = true;
     try {
-      refreshRequest ||= api
-        .post("/token/refresh/", {}, { skipRefreshRetry: true })
-        .then((response) => response.data.access)
-        .finally(() => {
-          refreshRequest = undefined;
-        });
-      const access = await refreshRequest;
-      localStorage.setItem("accessToken", access);
+      const access = await refreshSession();
       request.headers.Authorization = `Bearer ${access}`;
       return api(request);
     } catch (refreshError) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("currentUser");
-      window.location.assign("/");
+      if ([401, 403].includes(refreshError.response?.status)) {
+        setAccessToken(null);
+        localStorage.removeItem("currentUser");
+        window.dispatchEvent(new Event("upa:session-expired"));
+      }
       return Promise.reject(refreshError);
     }
-  }
+  },
 );
 
 export default api;
+
+export async function logout() {
+  try {
+    await endSession();
+    window.location.assign("/");
+  } catch {
+    window.dispatchEvent(new Event("upa:logout-failed"));
+  }
+}

@@ -2,7 +2,7 @@ import { Bell, LogOut, Menu, Moon, Sun, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
-import { logout } from "../../utils/auth";
+import { logout } from "../../api/axios";
 import { getUserRole } from "../../utils/roles";
 
 function Navbar({ onOpenMenu, sidebarOpen = false }) {
@@ -28,11 +28,11 @@ function Navbar({ onOpenMenu, sidebarOpen = false }) {
         <button type="button" className="icon-button" onClick={toggleTheme} aria-label={theme === "light" ? "Ativar tema escuro" : "Ativar tema claro"}>
           {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
         </button>
-        <Link to={profilePath} className="profile-button">
+        <Link to={profilePath} className="profile-button" aria-label={`Abrir área de ${user?.full_name || user?.username || "usuário"}`}>
           <User size={18} />
           <span>{user?.full_name || user?.username || "Usuário"}</span>
         </Link>
-        <button type="button" className="logout-button" onClick={logout}>
+        <button type="button" className="logout-button" aria-label="Sair" onClick={logout}>
           <LogOut size={18} />
           <span>Sair</span>
         </button>

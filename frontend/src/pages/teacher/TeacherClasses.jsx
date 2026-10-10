@@ -2,6 +2,7 @@ import { CalendarCheck2, ClipboardCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import Alert from "../../components/feedback/Alert";
 import api from "../../api/axios";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
@@ -13,13 +14,14 @@ import PageHeader from "../../components/ui/PageHeader";
 function TeacherClasses() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   async function loadClasses() {
     try {
       const response = await api.get("/academic/class-groups/");
       setClasses(response.data);
-    } catch (error) {
-      console.error("Erro ao carregar turmas:", error);
+    } catch {
+      setLoadError("Não foi possível carregar suas turmas.");
     } finally {
       setLoading(false);
     }
@@ -31,6 +33,7 @@ function TeacherClasses() {
 
   return (
     <MainLayout>
+      {loadError && <Alert type="error" message={loadError} onRetry={() => window.location.reload()} />}
       <PageHeader
         eyebrow="Professor"
         title="Minhas Turmas"
@@ -55,7 +58,7 @@ function TeacherClasses() {
               <div className="teacher-class-meta">
                 <Link
                   to={`/teacher/students?class_group=${encodeURIComponent(item.id)}`}
-                  aria-label={`Ver alunos de ${item.name}`}
+                  aria-label={`${item.students_count} alunos · Ver lista de ${item.name}`}
                 >
                   <Users size={16} aria-hidden="true" />
                   {item.students_count} alunos · Ver lista
