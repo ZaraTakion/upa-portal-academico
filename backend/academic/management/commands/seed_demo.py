@@ -1,5 +1,6 @@
+from django.conf import settings
 from django.contrib.auth.models import Group, User
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from academic.models import (
     AcademicCalendar,
@@ -20,6 +21,9 @@ class Command(BaseCommand):
     help = "Cria dados de demonstração para apresentação do UPA"
 
     def handle(self, *args, **kwargs):
+        if not settings.DEBUG:
+            raise CommandError('seed_demo é exclusivo do desenvolvimento (DEBUG=True).')
+
         aluno_group, _ = Group.objects.get_or_create(name="Aluno")
         professor_group, _ = Group.objects.get_or_create(name="Professor")
         admin_group, _ = Group.objects.get_or_create(name="Administrador")

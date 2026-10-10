@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
-import { logout, saveUser } from "../utils/auth";
+import { clearSession, saveUser } from "../utils/auth";
 
 const AuthContext = createContext();
 
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error("Erro ao carregar usuário:", error);
       setUser(null);
-      logout();
+      clearSession();
       return null;
     } finally {
       setLoadingUser(false);

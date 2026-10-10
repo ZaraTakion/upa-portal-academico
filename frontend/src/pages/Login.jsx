@@ -7,6 +7,8 @@ import Alert from "../components/feedback/Alert";
 import Button from "../components/ui/Button";
 import TextInput from "../components/ui/TextInput";
 import { saveTokens } from "../utils/auth";
+import { getLoginErrorMessage } from "../utils/loginErrors";
+import { getRoleHome } from "../utils/roles";
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
@@ -32,14 +34,16 @@ function Login() {
 
       saveTokens(tokenResponse.data.access);
 
-      if (loadUser) {
-        await loadUser();
+      const loggedInUser = await loadUser();
+      if (!loggedInUser) {
+        setErrorMessage("A autenticação foi aceita, mas o perfil não pôde ser carregado. Verifique a conexão com a API.");
+        return;
       }
 
-      navigate("/dashboard");
+      navigate(getRoleHome(loggedInUser), { replace: true });
     } catch (error) {
       console.error("Erro no login:", error);
-      setErrorMessage("Usuário ou senha inválidos.");
+      setErrorMessage(getLoginErrorMessage(error));
     } finally {
       setLoading(false);
     }

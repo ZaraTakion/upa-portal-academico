@@ -7,26 +7,28 @@ const api = axios.create({
 });
 
 let refreshRequest;
+const sessionEndpoint = /^\/token\/(?:csrf\/|refresh\/|logout\/)?$/;
 
-function csrfToken() {
-  const cookie = document.cookie
-    .split("; ")
-    .find((item) => item.startsWith("csrftoken="));
-  return cookie ? decodeURIComponent(cookie.slice("csrftoken=".length)) : "";
+async function bootstrapCsrf() {
+  // The API's CSRF cookie can live on a different host than the React app.
+  // document.cookie on the frontend cannot read that cookie.
+  const response = await api.get("/token/csrf/");
+  const csrf = response.data?.csrf;
+  if (!csrf) throw new Error("A API não retornou o token CSRF.");
+  sessionStorage.setItem("csrfToken", csrf);
+  return csrf;
 }
 
 api.interceptors.request.use((config) => {
-  // This client includes credentials. Never dispatch an authenticated request
-  // to an untrusted origin or outside the API namespace.
-  resolveAllowedApiRequestUrl(config.url, config.baseURL || api.defaults.baseURL, window.location.origin);
-
+  resolveAllowedApiRequestUrl(
+    config.url, config.baseURL || api.defaults.baseURL, window.location.origin,
+  );
   const token = localStorage.getItem("accessToken");
-  if (token) {
+  if (token && !sessionEndpoint.test(config.url || "")) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-
   if (["post", "put", "patch", "delete"].includes(config.method?.toLowerCase())) {
-    const csrf = csrfToken();
+    const csrf = sessionStorage.getItem("csrfToken");
     if (csrf) config.headers["X-CSRFToken"] = csrf;
   }
   return config;
@@ -36,21 +38,18 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const request = error.config;
-    const requestUrl = request?.url || "";
-    const isSessionEndpoint = /\/token\/(refresh|logout)\/?$|\/token\/?$/.test(requestUrl);
-
-    if (error.response?.status !== 401 || !request || request._retried || isSessionEndpoint) {
+    const isSessionRequest = sessionEndpoint.test(request?.url || "");
+    if (error.response?.status !== 401 || !request || request._retried || isSessionRequest) {
       return Promise.reject(error);
     }
-
     request._retried = true;
     try {
-      refreshRequest ||= api
-        .post("/token/refresh/", {}, { skipRefreshRetry: true })
+      refreshRequest ||= bootstrapCsrf()
+        .then((csrf) => api.post("/token/refresh/", {}, {
+          headers: { "X-CSRFToken": csrf },
+        }))
         .then((response) => response.data.access)
-        .finally(() => {
-          refreshRequest = undefined;
-        });
+        .finally(() => { refreshRequest = undefined; });
       const access = await refreshRequest;
       localStorage.setItem("accessToken", access);
       request.headers.Authorization = `Bearer ${access}`;
@@ -58,10 +57,11 @@ api.interceptors.response.use(
     } catch (refreshError) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("currentUser");
+      sessionStorage.removeItem("csrfToken");
       window.location.assign("/");
       return Promise.reject(refreshError);
     }
-  }
+  },
 );
 
 export default api;
