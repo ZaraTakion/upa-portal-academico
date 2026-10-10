@@ -2,14 +2,13 @@ import os
 from pathlib import Path
 
 from django.db.models import Q
-from django.utils import timezone
 from django.http import FileResponse, Http404
-from rest_framework import viewsets
+from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from academic.models import ClassEnrollment
 from core.permissions import (
@@ -17,6 +16,8 @@ from core.permissions import (
     IsStaffOrCreateOnly,
     IsStaffOrReadOnly,
 )
+from core.viewsets import PortalModelViewSet
+
 from .models import AcademicFile, ContactMessage, FinancialInvoice
 from .serializers import (
     ALLOWED_UPLOADS,
@@ -26,15 +27,18 @@ from .serializers import (
 )
 
 
-class ContactMessageViewSet(viewsets.ModelViewSet):
+class ContactMessageViewSet(PortalModelViewSet):
+    queryset = ContactMessage.objects.none()
     serializer_class = ContactMessageSerializer
     permission_classes = [IsStaffOrCreateOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
-            return ContactMessage.objects.all().order_by("-created_at")
-        return ContactMessage.objects.filter(user=user).order_by("-created_at")
+            return ContactMessage.objects.select_related("user").all().order_by("-created_at")
+        return ContactMessage.objects.filter(user=user).select_related("user").order_by("-created_at")
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -47,12 +51,15 @@ class ContactMessageViewSet(viewsets.ModelViewSet):
         serializer.save(**update_fields)
 
 
-class AcademicFileViewSet(viewsets.ModelViewSet):
+class AcademicFileViewSet(PortalModelViewSet):
+    queryset = AcademicFile.objects.none()
     serializer_class = AcademicFileSerializer
     permission_classes = [CanManageAcademicFile]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
             queryset = AcademicFile.objects.all()
@@ -70,7 +77,7 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
                 )
             ).distinct()
         return queryset.select_related(
-            "user", "subject", "class_group", "class_group__teacher__user"
+            "user", "subject", "class_group", "class_group__teacher__user", "assignment"
         ).order_by("-uploaded_at")
 
     def perform_create(self, serializer):
@@ -132,6 +139,7 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
         else:
             serializer.save()
 
+    @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY})
     @action(detail=True, methods=["get"], url_path="download")
     def download(self, request, pk=None):
         academic_file = self.get_object()
@@ -154,11 +162,14 @@ class AcademicFileViewSet(viewsets.ModelViewSet):
         return response
 
 
-class FinancialInvoiceViewSet(viewsets.ModelViewSet):
+class FinancialInvoiceViewSet(PortalModelViewSet):
+    queryset = FinancialInvoice.objects.none()
     serializer_class = FinancialInvoiceSerializer
     permission_classes = [IsStaffOrReadOnly]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return self.queryset.none()
         user = self.request.user
         if user.is_staff:
             queryset = FinancialInvoice.objects.all()
@@ -168,4 +179,4 @@ class FinancialInvoiceViewSet(viewsets.ModelViewSet):
         status_param = self.request.query_params.get("status")
         if status_param:
             queryset = queryset.filter(status=status_param)
-        return queryset.order_by("due_date")
+        return queryset.select_related("user").order_by("due_date", "pk")

@@ -10,14 +10,13 @@ from .views import (
     ClassEnrollmentViewSet,
     ClassGroupViewSet,
     CourseViewSet,
-    GradeViewSet,
     GradePolicyViewSet,
+    GradeViewSet,
     StudentProfileViewSet,
     SubjectViewSet,
     TeacherProfileViewSet,
     WeeklyScheduleViewSet,
 )
-
 
 router = DefaultRouter()
 router.register("grade-policy", GradePolicyViewSet, basename="grade-policy")

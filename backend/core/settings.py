@@ -18,6 +18,7 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("Set SECRET_KEY in the environment.")
 
 DEBUG = env_bool("DEBUG")
+DEMO_MODE = env_bool("DEMO_MODE")
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
@@ -35,6 +36,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_spectacular",
+    "drf_spectacular_sidecar",
     "accounts",
     "academic",
     "dashboard",
@@ -44,6 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    "core.middleware.PrivateApiCacheMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -99,7 +102,7 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": os.environ.get("SQLITE_DATABASE_PATH", str(BASE_DIR / "db.sqlite3")),
         }
     }
 
@@ -156,6 +159,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": False,
+    "CHECK_REVOKE_TOKEN": True,
 }
 
 REST_FRAMEWORK = {
@@ -192,6 +196,7 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@upa.local")
 EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
 )
+EMAIL_FILE_PATH = os.environ.get("EMAIL_FILE_PATH", str(BASE_DIR / "demo-emails"))
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "25"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
@@ -222,7 +227,10 @@ X_FRAME_OPTIONS = "DENY"
 SPECTACULAR_SETTINGS = {
     "TITLE": "Portal Acadêmico UPA API",
     "DESCRIPTION": "API do portal acadêmico.",
-    "VERSION": "2.0.0",
+    "VERSION": "2.1.0-rc.1",
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
 }
 
 LOGGING = {
