@@ -31,7 +31,7 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
         aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"} aria-expanded={!isCollapsed} aria-controls="sidebar-nav">
         {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
       </button>
-      <nav id="sidebar-nav" className="sidebar-nav">
+      <nav id="sidebar-nav" className="sidebar-nav" aria-label="Navegação principal">
         <div className="sidebar-nav-group">Workspace</div>
         {role === "student" && (
           <>
