@@ -29,3 +29,7 @@ O cliente Axios autorizado aceita somente a origem e o caminho-base definidos em
 O access token ainda é guardado em `localStorage`, portanto um eventual XSS continua sendo um risco. Os refresh tokens são cookies HTTP-only; essa separação não elimina a necessidade de prevenir XSS e manter dependências atualizadas.
 
 A interface não usa um destino local alternativo quando `VITE_DJANGO_ADMIN_URL` está ausente ou inválida. Nesse caso, os links administrativos de usuários e faturas ficam indisponíveis até a configuração ser feita.
+
+## Publicação Vercel
+
+A aplicação publicada usa API relativa (/api) e Django Admin no mesmo domínio (/admin/). O frontend/.env.production contém somente URLs públicas, nunca credenciais. A configuração multisserviços fica no vercel.json na raiz do repositório. Consulte docs/VERCEL_DEPLOYMENT.md antes de usar banco persistente e homologação.

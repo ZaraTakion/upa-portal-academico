@@ -40,6 +40,8 @@ jobs:
         run: python manage.py check
       - name: Validate standalone demo launcher
         run: python ../scripts/dev_demo.py --help
+      - name: Verify Vercel Services routing
+        run: python ../scripts/check_vercel_config.py
       - name: Check production security settings
         env:
           SECURE_SSL_REDIRECT: "True"
