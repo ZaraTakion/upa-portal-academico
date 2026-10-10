@@ -1,5 +1,7 @@
 # Auditoria visual e implementação
 
+Registro histórico do PR #21. A reconciliação posterior com a main está documentada em [INTEGRATION_STATUS.md](../INTEGRATION_STATUS.md); as capturas atuais estão em [INTEGRATION_EVIDENCE.md](INTEGRATION_EVIDENCE.md).
+
 Base funcional: commit `5c19d23` da branch `improve/verified-release-20261010`, PR #20. A `main` ainda não incorpora essa revisão. Branch dedicada: `design/takion-campus-20261010`. Escopo desta entrega: apresentação, componentes React, estilos, metadados, ativos, testes de interface e documentação. Models, migrações, endpoints, cliente de autenticação e regras acadêmicas não foram alterados.
 
 ## Inventário e tratamento

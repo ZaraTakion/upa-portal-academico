@@ -35,7 +35,7 @@ Um cache compartilhado para limitação de tentativas em múltiplos workers requ
 
 ## Preparar banco e migrações
 
-1. Criar banco PostgreSQL e usuário próprios para o portal.
+1. Reutilizar o banco PostgreSQL existente do portal; confirmar o usuário e seus privilégios antes de mudar a configuração.
 2. Separar credenciais de runtime das usadas para migração/backup.
 3. Registrar o commit da release, salvar backup e pausar gravações antes de migrações sensíveis.
 4. Antes da migração acadêmica `0007`, executar a verificação somente de leitura:
@@ -56,7 +56,7 @@ python manage.py check --deploy --fail-level WARNING
 python manage.py collectstatic --noinput
 ```
 
-Em base nova, execute `migrate` antes de `check_academic_integrity`, pois as tabelas ainda não existem. Migrações preservam campos e registros; nenhuma migração desta release apaga dados. Verifique a operação primeiro em cópia restaurada do banco.
+O comando detecta um banco vazio e permite a migração inicial; depois de `migrate`, repita a verificação de integridade. Um schema parcial interrompe o preflight e exige diagnóstico. Migrações preservam campos e registros; nenhuma migração desta release apaga dados. Verifique a operação primeiro em cópia restaurada do banco.
 
 ## Backend e frontend
 

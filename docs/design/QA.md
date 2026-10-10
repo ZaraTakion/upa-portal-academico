@@ -1,5 +1,7 @@
 # Takion Campus — revisão visual e evidências
 
+Este é o registro histórico do PR #21, anterior à reconciliação com a main. Seus resultados e contagens não representam uma nova execução da integração. Consulte [evidências atuais](INTEGRATION_EVIDENCE.md) e [estado verificado](../INTEGRATION_STATUS.md) para os testes e limites desta branch.
+
 Data: 10/10/2026. Sistema executado localmente com build de produção React, Chromium real e API Django/PostgreSQL 17. Dados e credenciais são fictícios do seed de demonstração. Nenhuma evidência representa implantação pública.
 
 ## Comparação antes/depois

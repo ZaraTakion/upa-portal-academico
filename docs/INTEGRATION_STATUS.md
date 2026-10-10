@@ -10,8 +10,10 @@ Data: 10/10/2026. Este documento distingue execução local, GitHub e provedores
 - Branch de integração: `integration/takion-campus-final-20261010`, criada sobre main, sem worktree adicional.
 - Merge `c5cdb97`: preserva permissões, integridade, cadastros administrativos e sessão em memória do #20, mais launcher e provisionamento privado da main.
 - Merge `2feb880`: integra design system, fontes locais, marca, layouts e matriz visual do #21; conserva configuração frontend-only na Vercel e as regressões adicionais da main.
+- Commit `235622b`: corrige hospedagem gratuita, uploads, homologação sintética e regressões da integração.
+- [PR #25](https://github.com/ZaraTakion/takion-campus/pull/25): integração publicada como rascunho, sem conflitos com a main. Os PRs #20/#21 foram atualizados com referência à integração.
 
-As branches originais foram preservadas. O merge da integração em main depende dos checks obrigatórios; não interpretar os merges locais como PRs integrados no GitHub.
+As branches originais foram preservadas. Os cinco checks do [GitHub Actions no commit 235622b](https://github.com/ZaraTakion/takion-campus/actions/runs/38060644256) passaram: frontend, Django/SQLite, Django/PostgreSQL, setup autônomo e E2E. A suíte de navegador contém 86 cenários e inclui o zoom real obrigatório; não há testes desabilitados. A main continua preservada enquanto planos/elegibilidade, publicação e fluxos remotos não estão verificados. Não interpretar os merges desta branch como PRs integrados na main.
 
 ## Correções concretas
 
@@ -41,12 +43,15 @@ As branches originais foram preservadas. O merge da integração em main depende
 | Testes Node | 37 aprovados |
 | ESLint, build de produção e npm audit | Aprovados; zero vulnerabilidades npm |
 | PostgreSQL TLS | Conexão local TLS 1.3 com sslmode=verify-full e CA de teste confiada explicitamente |
+| Backup/restauração PostgreSQL local | 30 tabelas com conteúdo coincidente, 107 constraints e 29 sequências iguais; backup privado fora do Git |
+| Gunicorn com HTTPS local | Login, perfil, refresh e logout dos três perfis aprovados; certificado verificado e cookies Secure/HttpOnly confirmados |
+| Startup em PostgreSQL vazio | Preflight, todas as migrações e integridade após migração aprovados |
 | Setup local repetido | Launcher prepara banco sintético e repete sem reinstalar |
 | Matriz visual/design | 46 cenários aprovados, 11 larguras, claro/escuro, axe, teclado e redução de movimento |
 | Fluxos Playwright | 39 cenários aprovados: 37 na execução completa e 2 após correções, com regressão direcionada de navegação também aprovada |
-| Zoom real via extensão | Bloqueado por política administrativa do Chromium deste ambiente; não substituído por CSS zoom nem marcado como aprovado |
+| Zoom real via extensão | Aprovado no CI completo; continua bloqueado pela política administrativa do Chromium local, sem contornar essa política |
 
-A matriz percorre 40 combinações de página/perfil em 320, 360, 390, 430, 768, 1024, 1366, 1440, 1920, 2560 e 3840 px nos dois temas: 880 composições. Axe cobre 160 combinações dessa matriz. As capturas antigas em `docs/design/evidence` são históricas; resultados desta execução foram conservados como artefatos do ambiente. Não houve avaliação NVDA/VoiceOver, Safari/Firefox ou dispositivos físicos; não se afirma certificação WCAG.
+A matriz percorre 40 combinações de página/perfil em 320, 360, 390, 430, 768, 1024, 1366, 1440, 1920, 2560 e 3840 px nos dois temas: 880 composições. Axe cobre 160 combinações dessa matriz. As capturas anteriores do PR #21 são históricas; [16 capturas atuais](design/INTEGRATION_EVIDENCE.md) mostram login e os três perfis em 1440/390 px e nos dois temas. Não houve avaliação NVDA/VoiceOver, Safari/Firefox ou dispositivos físicos; não se afirma certificação WCAG.
 
 ## Funcionalidades por perfil
 
@@ -62,9 +67,9 @@ Os testes de navegador usam build React real e Django/PostgreSQL locais. A compr
 
 | Provedor | Recurso existente | Evidência atual |
 | --- | --- | --- |
-| Render | `srv-db4rlfvlot8c73cp2ks0`, `takion-campus-api` | API sem credencial recebeu 401; plano efetivo, logs e deploy ainda não verificados |
+| Render | `srv-db4rlfvlot8c73cp2ks0`, `takion-campus-api` | API recebeu 401; readiness pública expirou após 90 segundos; plano efetivo, logs e deploy ainda não verificados |
 | Neon | `winter-river-76082998`, branch `br-steep-mountain-b7rfe5zs` | API sem credencial recebeu 401; não houve conexão ao Neon nem migração remota |
-| Vercel | Projeto existente a localizar por API | Requisição recebeu 403; plano/elegibilidade, domínio e publicação ainda não verificados |
+| Vercel | Projeto existente a localizar por API | Requisição recebeu 403, código forbidden; plano/elegibilidade, domínio e publicação ainda não verificados |
 
 O usuário informou que cadastrou segredos de rede. No runtime associado à conversa, a ferramenta de status ainda retorna spec revision 1, sem secrets, aliases de identidade ou variáveis; os três bindings do rascunho constavam como não salvos na leitura. Isso não prova que o cadastro em outro estado/configuração falhou. Significa que esta sessão ainda não demonstrou acesso autenticado aos provedores. Não foram solicitados valores em chat, expostos tokens, contratados planos nem criados recursos duplicados.
 
@@ -77,6 +82,6 @@ O usuário informou que cadastrou segredos de rede. No runtime associado à conv
 5. Localizar o projeto Vercel existente, confirmar domínio e uso permitido no Hobby; configurar `/api` e Admin HTTPS, publicar uma release validada e testar os três perfis no domínio real.
 6. Verificar entrega SMTP externa; captura local de email não prova envio público.
 7. Storage persistente continua pendente. Supabase Storage Free foi investigado na documentação oficial como alternativa S3; nenhum bucket foi criado e nenhuma garantia de plano sem cobrança foi presumida.
-8. Executar o teste de zoom real em runner que permita a extensão de teste; a política deste Chromium não foi contornada. Os testes permanecem no CI.
+8. Zoom real foi validado no runner do GitHub Actions. A execução local continua limitada pela política deste Chromium; essa política não foi contornada.
 
 Links previstos: [repositório](https://github.com/ZaraTakion/takion-campus), [PR #20](https://github.com/ZaraTakion/takion-campus/pull/20), [PR #21](https://github.com/ZaraTakion/takion-campus/pull/21), [painel Render existente](https://dashboard.render.com/web/srv-db4rlfvlot8c73cp2ks0). `https://takion-campus-api.onrender.com` é o domínio previsto, sem readiness pública comprovada. Não há URL Vercel operacional verificada nesta sessão.

@@ -8,9 +8,11 @@ Portal Full-Stack para centralizar a vida acadêmica de estudantes, professores 
 
 **Release candidata: 2.1.0-rc.1, com identidade Takion Campus.** O redesign usa superfícies creme/mint, tipografia editorial, monograma próprio e composições por perfil. Consulte o [Design System](docs/design/DESIGN_SYSTEM.md), a [galeria antes/depois e QA](docs/design/QA.md) e a [pesquisa preliminar do nome](docs/design/BRAND_RESEARCH.md). O [relatório da revisão Full-Stack anterior](docs/RELEASE.md) preserva o histórico de engenharia.
 
-![Entrada do Takion Campus](docs/design/evidence/after/login-1440.jpg)
+![Entrada atual do Takion Campus](docs/design/evidence/integration/public-1440-light.png)
 
 A branch `integration/takion-campus-final-20261010` reconcilia a `main` com as branches dos PRs #20 e #21. A publicação externa permanece pendente de acesso aos provedores. Consulte o [estado verificado da integração](docs/INTEGRATION_STATUS.md); imagens e relatórios anteriores são evidências locais, não prova de deploy público.
+
+As [16 capturas atuais da integração](docs/design/INTEGRATION_EVIDENCE.md) mostram login e os três perfis em desktop/celular, nos temas claro e escuro, com banco sintético local.
 
 ## Funcionalidades e perfis
 
@@ -132,7 +134,7 @@ npm run preview -- --host 127.0.0.1 --port 5173 --strictPort
 npm run test:e2e
 ```
 
-Os testes cobrem os três perfis, persistência, bloqueios no servidor, uploads/downloads privados, recuperação de senha, falhas de rede, seis larguras de tela e verificações automatizadas WCAG com axe. Relatórios, capturas e traces ficam em diretórios ignorados pelo Git e são anexados ao CI.
+Os testes cobrem os três perfis, persistência, bloqueios no servidor, uploads/downloads privados, recuperação de senha, falhas de rede, seis larguras nos fluxos funcionais e onze larguras na matriz de design, com verificações automatizadas WCAG por axe. Relatórios, capturas e traces ficam em diretórios ignorados pelo Git e são anexados ao CI.
 
 ## Segurança e documentação da API
 
@@ -150,4 +152,4 @@ Após autenticação de administrador no Django Admin, abra `/api/docs/`, `/api/
 
 Consulte [OPERATIONS.md](docs/OPERATIONS.md) para variáveis, PostgreSQL, armazenamento privado, HTTPS, Gunicorn, backups, restauração, health checks e rollback. `/health/` mede a aplicação; `/health/ready/` verifica acesso ao banco.
 
-A release não inclui implantação externa, contratação de serviços, gateway de pagamento, integração com ERP universitário ou envio SMTP verificado em uma instituição. Acessibilidade automatizada não substitui avaliação manual com leitores de tela. Não há alegação de pentest, teste de carga ou certificação LGPD/WCAG.
+A implantação externa e o envio SMTP continuam pendentes de validação nos provedores. Não há gateway de pagamento nem integração com ERP universitário. Acessibilidade automatizada não substitui avaliação manual com leitores de tela. Não há alegação de pentest, teste de carga ou certificação LGPD/WCAG.
