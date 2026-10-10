@@ -24,13 +24,13 @@ ALLOWED_HOSTS = [
     for host in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if host.strip()
 ]
-# Trust only the precise preview host supplied by Vercel; no wildcard hosts.
-VERCEL_HOST = os.environ.get("VERCEL_URL", "").strip().lower()
-if os.environ.get("VERCEL") and re.fullmatch(r"[a-z0-9-]+\.vercel\.app", VERCEL_HOST):
-    if VERCEL_HOST not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(VERCEL_HOST)
+# Render exposes an exact hostname. Keep wildcard domains disabled.
+RENDER_HOST = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip().lower()
+if os.environ.get("RENDER") and re.fullmatch(r"[a-z0-9-]+\.onrender\.com", RENDER_HOST):
+    if RENDER_HOST not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(RENDER_HOST)
 else:
-    VERCEL_HOST = ""
+    RENDER_HOST = ""
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -196,9 +196,7 @@ CSRF_TRUSTED_ORIGINS = [
     for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
     if origin.strip()
 ]
-if VERCEL_HOST and f"https://{VERCEL_HOST}" not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{VERCEL_HOST}")
-FRONTEND_URL = os.environ.get("FRONTEND_URL", f"https://{VERCEL_HOST}" if VERCEL_HOST else "http://localhost:5173").rstrip("/")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173").rstrip("/")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@upa.local")
 EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"

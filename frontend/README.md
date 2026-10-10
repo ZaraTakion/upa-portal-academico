@@ -30,6 +30,11 @@ O access token ainda é guardado em `localStorage`, portanto um eventual XSS con
 
 A interface não usa um destino local alternativo quando `VITE_DJANGO_ADMIN_URL` está ausente ou inválida. Nesse caso, os links administrativos de usuários e faturas ficam indisponíveis até a configuração ser feita.
 
-## Publicação Vercel
+## Publicação gratuita (Vercel + Render)
 
-A aplicação publicada usa API relativa (/api) e Django Admin no mesmo domínio (/admin/). O frontend/.env.production contém somente URLs públicas, nunca credenciais. A configuração multisserviços fica no vercel.json na raiz do repositório. Consulte docs/VERCEL_DEPLOYMENT.md antes de usar banco persistente e homologação.
+Na Vercel escolha **Root Directory: frontend** e **Framework Preset: Vite**.
+O arquivo `frontend/vercel.json` oferece fallback da SPA.
+Configure `VITE_API_URL=https://SEU-BACKEND.onrender.com/api` e
+`VITE_DJANGO_ADMIN_URL=https://SEU-BACKEND.onrender.com/admin/` no painel
+Vercel antes de construir o site. O backend Django roda no Render, não na Vercel.
+Consulte `../docs/VERCEL_DEPLOYMENT.md`.
