@@ -20,3 +20,12 @@ test("does not invent a local URL when configuration is missing or invalid", () 
 test("rejects localhost when building for production", () => {
   assert.equal(buildAdminUrl("http://localhost:8000/admin/", "", { allowLocalhost: false }), null);
 });
+
+test("supports same-origin Django admin but never protocol-relative or arbitrary paths", () => {
+  const browserOrigin = "https://takion-campus.vercel.app";
+  assert.equal(buildAdminUrl("/admin/", "", { browserOrigin }), browserOrigin + "/admin/");
+  assert.equal(buildAdminUrl("/admin/", "management_app/financialinvoice/", { browserOrigin }), browserOrigin + "/admin/management_app/financialinvoice/");
+  assert.equal(buildAdminUrl("//attacker.test/", "", { browserOrigin }), null);
+  assert.equal(buildAdminUrl("/other/", "", { browserOrigin }), null);
+  assert.equal(buildAdminUrl("/admin/?next=attacker.test", "", { browserOrigin }), null);
+});

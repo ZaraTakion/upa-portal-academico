@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
@@ -23,6 +24,13 @@ ALLOWED_HOSTS = [
     for host in os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if host.strip()
 ]
+# Trust only the precise preview host supplied by Vercel; no wildcard hosts.
+VERCEL_HOST = os.environ.get("VERCEL_URL", "").strip().lower()
+if os.environ.get("VERCEL") and re.fullmatch(r"[a-z0-9-]+\.vercel\.app", VERCEL_HOST):
+    if VERCEL_HOST not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(VERCEL_HOST)
+else:
+    VERCEL_HOST = ""
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -99,7 +107,8 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            # Optional local-only isolated database for the demo launcher.
+            "NAME": Path(os.environ["SQLITE_DB_PATH"]) if DEBUG and os.environ.get("SQLITE_DB_PATH") else BASE_DIR / "db.sqlite3",
         }
     }
 
@@ -187,7 +196,9 @@ CSRF_TRUSTED_ORIGINS = [
     for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
     if origin.strip()
 ]
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+if VERCEL_HOST and f"https://{VERCEL_HOST}" not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{VERCEL_HOST}")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", f"https://{VERCEL_HOST}" if VERCEL_HOST else "http://localhost:5173").rstrip("/")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@upa.local")
 EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
@@ -220,8 +231,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Portal Acadêmico UPA API",
-    "DESCRIPTION": "API do portal acadêmico.",
+    "TITLE": "Takion Campus API",
+    "DESCRIPTION": "API do Campus Folio (evolução do UPA Portal Acadêmico).",
     "VERSION": "2.0.0",
 }
 

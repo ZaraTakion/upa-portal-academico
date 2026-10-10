@@ -1,6 +1,6 @@
-# UPA — Portal Acadêmico
+# Takion Campus — Campus Folio (evolução do UPA Portal Acadêmico)
 
-Portal web para estudantes, professores e equipes administrativas. O projeto combina uma API em Django REST Framework com uma interface React.
+Portal web acadêmico para estudantes, professores e equipes administrativas, desenvolvido pela Takion Software. O projeto combina uma API em Django REST Framework com uma interface React.
 
 ## Funcionalidades
 
@@ -23,6 +23,28 @@ Portal web para estudantes, professores e equipes administrativas. O projeto com
 - Python 3.13.
 - Node.js 22 e npm.
 - PostgreSQL em produção. SQLite é usado por padrão no desenvolvimento local.
+
+## Demonstração autônoma (Windows, Linux ou macOS)
+
+Para subir uma instância **somente local** com estudantes, professor e administrador,
+instale Python 3.13+ e Node.js 22+ e execute da raiz do repositório:
+
+```bash
+python scripts/dev_demo.py
+```
+
+Este comando cria um ambiente Python isolado, instala dependências, provisiona um
+banco **SQLite dedicado** em `backend/.demo.sqlite3`, executa migrações e
+`seed_demo`, instala o frontend e inicia Django e Vite em `127.0.0.1`
+(portas 8000 e 5173). A chave local é gerada uma vez e armazenada em arquivo
+ignorado pelo Git. Pressione Ctrl+C para parar os dois serviços. Para instalar
+sem iniciar, use `--setup-only`; para reiniciar sem reinstalar dependências,
+use `--no-install`. Credenciais de demonstração aparecem no terminal; nunca
+publique essa instância na Internet.
+
+O script recusa rodar com `DATABASE_URL` configurada, recusa `DEBUG=False`
+e nunca altera um banco PostgreSQL. Essas contas **não** são provisionadas em
+produção. Veja [a matriz de testes](docs/TEST_PLAN_CAMPUS_FOLIO.md).
 
 ## Desenvolvimento local
 

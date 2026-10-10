@@ -4,6 +4,7 @@ export function isAuthenticated() {
 
 export function saveTokens(access) {
   localStorage.setItem("accessToken", access);
+  localStorage.setItem("sessionStarted", "1");
   localStorage.removeItem("refreshToken");
 }
 
@@ -16,35 +17,42 @@ export function getUser() {
   if (!stored) return null;
   try {
     const user = JSON.parse(stored);
-    if (user && typeof user === "object" && !Array.isArray(user)) {
-      return user;
-    }
+    if (user && typeof user === "object" && !Array.isArray(user)) return user;
   } catch {
-    // Ignore invalid cached profile data; the server remains authoritative.
+    // Cache is not authoritative; ignore malformed sessions.
   }
   localStorage.removeItem("currentUser");
   return null;
 }
 
-function readCsrfToken() {
-  const cookie = document.cookie
-    .split("; ")
-    .find((item) => item.startsWith("csrftoken="));
-  return cookie ? decodeURIComponent(cookie.slice("csrftoken=".length)) : "";
-}
-
-export function logout({ revoke = true } = {}) {
-  if (revoke) {
-    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-    fetch(`${apiBase.replace(/\/$/, "")}/token/logout/`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "X-CSRFToken": readCsrfToken() },
-    }).catch(() => {});
-  }
+export function clearSession() {
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("currentUser");
+  localStorage.removeItem("sessionStarted");
+  sessionStorage.removeItem("csrfToken");
+}
+
+export async function logout({ revoke = true } = {}) {
+  if (revoke) {
+    try {
+      const base = (import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "/api" : "http://localhost:8000/api")).replace(/\/$/, "");
+      const csrfResponse = await fetch(`${base}/token/csrf/`, {
+        credentials: "include",
+      });
+      if (csrfResponse.ok) {
+        const { csrf } = await csrfResponse.json();
+        await fetch(`${base}/token/logout/`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "X-CSRFToken": csrf },
+        });
+      }
+    } catch {
+      // Even when the server is offline, clear all local authentication state.
+    }
+  }
+  clearSession();
   window.location.assign("/");
 }
 

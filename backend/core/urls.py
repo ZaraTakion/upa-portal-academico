@@ -12,6 +12,7 @@ from drf_spectacular.views import (
 from rest_framework.permissions import IsAdminUser
 
 from accounts.views import CookieTokenRefreshView, LoginTokenObtainPairView, LogoutView
+from accounts.csrf import CSRFTokenView
 
 
 def health_check(request):
@@ -25,6 +26,7 @@ urlpatterns = [
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema", permission_classes=[IsAdminUser]), name="swagger-ui"),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema", permission_classes=[IsAdminUser]), name="redoc"),
     path("api/token/", LoginTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/csrf/", CSRFTokenView.as_view(), name="token_csrf"),
     path("api/token/refresh/", CookieTokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/logout/", LogoutView.as_view(), name="token_logout"),
     path("api/accounts/", include("accounts.urls")),

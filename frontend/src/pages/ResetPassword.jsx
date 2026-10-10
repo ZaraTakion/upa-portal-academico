@@ -51,7 +51,7 @@ function ResetPassword() {
       <section className="auth-panel">
         <div className="auth-brand">
           <div className="auth-logo"><KeyRound size={28} /></div>
-          <div><strong>Nova senha</strong><span>UPA Portal Acadêmico</span></div>
+          <div><strong>Nova senha</strong><span>Takion Campus · Campus Folio</span></div>
         </div>
 
         <div className="auth-copy">

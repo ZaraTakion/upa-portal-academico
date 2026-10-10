@@ -1,12 +1,11 @@
 {
-  "name": "UPA - Portal Acadêmico",
-  "short_name": "UPA",
-  "description": "Portal Acadêmico",
+  "name": "Takion Campus — Campus Folio",
+  "short_name": "Takion",
+  "description": "Seu espaço acadêmico para aprender, acompanhar e organizar.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#153b67",
-  "orientation": "portrait",
+  "background_color": "#F7F5EF",
+  "theme_color": "#185E5B",
   "icons": [
     {
       "src": "/favicon.svg",

@@ -1,0 +1,197 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap");
+
+/* Campus Folio — identidade baseada na especificação Takion Campus, 09/2026. */
+:root {
+  --primary: #185e5b;
+  --primary-hover: #114a47;
+  --primary-soft: #dff1eb;
+  --primary-ring: rgb(24 94 91 / 19%);
+  --focus-color: #185e5b;
+  --background: #f7f5ef;
+  --surface: #fff;
+  --surface-soft: #f1f5f2;
+  --surface-muted: #e6efeb;
+  --text-primary: #202d31;
+  --text-secondary: #475b5b;
+  --text-muted: #596968;
+  --border: #d9e1dc;
+  --border-strong: #a9bcb6;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --sidebar-width: 266px;
+  --content-max-width: 1740px;
+  --archive-wine: #783e55;
+  --shadow-sm: 0 3px 12px rgb(32 45 49 / 5%);
+  --shadow-md: 0 12px 32px rgb(32 45 49 / 8%);
+  --shadow-lg: 0 22px 60px rgb(32 45 49 / 13%);
+}
+
+[data-theme="dark"] {
+  --background: #121e20;
+  --surface: #1a2b2c;
+  --surface-soft: #243638;
+  --surface-muted: #304547;
+  --primary: #a8e6d8;
+  --primary-hover: #d0fff2;
+  --primary-soft: #294844;
+  --primary-ring: rgb(168 230 216 / 22%);
+  --focus-color: #a8e6d8;
+  --text-primary: #f3f7f4;
+  --text-secondary: #c7d7d1;
+  --text-muted: #b8c8c2;
+  --text-inverse: #142c2a;
+  --border: #3d5350;
+  --border-strong: #64817a;
+  --archive-wine: #e6b3c7;
+}
+
+body, button, input, select, textarea {
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+h1, .folio-editorial-title, .auth-visual-card > strong {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+h2, h3 { letter-spacing: -0.025em; }
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid var(--focus-color);
+  outline-offset: 3px;
+}
+.main-content { width: min(100%, var(--content-max-width)); margin: 0 auto; padding: clamp(20px, 3vw, 48px); }
+.app-shell { background: var(--background); }
+.sidebar { background: var(--surface); padding: 28px 18px; }
+.sidebar-logo { border-radius: 13px; width: 42px; height: 42px; font-family: "Fraunces", Georgia, serif; font-size: 1.6rem; }
+.sidebar-brand { border-bottom: 1px solid var(--border); padding: 0 5px 27px; margin-bottom: 20px; }
+.sidebar-brand strong { font-size: 1rem; letter-spacing: -0.025em; text-transform: lowercase; }
+.sidebar-brand span { font-size: 0.72rem; letter-spacing: 0.095em; text-transform: uppercase; }
+.sidebar-nav-group { padding: 18px 0 6px 14px; color: var(--text-muted); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.13em; text-transform: uppercase; }
+.sidebar-nav a { font-size: .9rem; font-weight: 650; min-height: 45px; border-radius: 10px; }
+.sidebar-nav a.active { box-shadow: none; background: var(--primary-soft); color: var(--primary); }
+.sidebar-nav a:hover { transform: none; }
+.sidebar.is-collapsed .sidebar-nav-group { font-size: 0; padding: 17px 0 4px; }
+.sidebar.is-collapsed .sidebar-nav-group::after { content: ""; height: 1px; background: var(--border); display: block; }
+.sidebar-collapse-button { right: 8px; top: 93px; z-index: 4; }
+.navbar { padding: 12px clamp(20px,3vw,46px); border-bottom-color: var(--border); }
+.navbar-title { font-size: .85rem; font-weight: 600; letter-spacing: .01em; }
+.navbar-title strong { color: var(--text-primary); }
+.navbar-title em { color: var(--text-muted); font-style: normal; padding: 0 8px; }
+.profile-button { min-width: 0; }
+[data-theme="dark"] .icon-button, [data-theme="dark"] .profile-button { background: var(--surface); border-color: var(--border); color: var(--text-primary); }
+[data-theme="dark"] .profile-button:hover { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+.base-card, .table-wrapper { box-shadow: none; }
+.base-card { border-radius: var(--radius-lg); }
+.base-card:hover { box-shadow: var(--shadow-sm); }
+
+/* Login: editorial intro + useful product preview, no artificial academic data. */
+.auth-page { grid-template-columns: minmax(330px, 43%) minmax(0, 1fr); background: var(--background); }
+.auth-panel { padding: clamp(30px,5vw,94px); background: var(--background); }
+.auth-brand { margin-bottom: clamp(42px,7vh,94px); }
+.auth-logo { width: 54px; height: 54px; border-radius: 14px; background: var(--primary); color: var(--text-inverse); }
+.auth-brand strong { font-size: 1.1rem; text-transform: lowercase; }
+.auth-brand span { font-size: .78rem; text-transform: uppercase; letter-spacing: .09em; }
+.auth-copy h1 { font-size: clamp(2.6rem,4.8vw,4.3rem); line-height: 1.1; }
+.auth-copy p { max-width: 48ch; }
+.auth-intro { color: var(--archive-wine); letter-spacing: .12em; font-weight: 800; font-size: .72rem; text-transform: uppercase; }
+.auth-form { max-width: 440px; }
+.auth-form .btn { border-radius: 12px; min-height: 50px; }
+.auth-visual { background: #123334; padding: clamp(22px,5vw,80px); position: relative; overflow: hidden; }
+.auth-visual::before { content: ""; position: absolute; width: 480px; height: 480px; top: -240px; right: -160px; border: 1px solid rgb(225 246 237 / 15%); border-radius: 50%; box-shadow: 0 0 0 55px rgb(225 246 237 / 4%), 0 0 0 110px rgb(225 246 237 / 3%); }
+[data-theme="dark"] .auth-visual { background: #112829; }
+.auth-visual-card { padding: clamp(25px,4vw,55px); width: 100%; max-width: 600px; border-radius: 24px; background: #fff; color: #202d31; box-shadow: 0 24px 80px rgb(0 0 0 / 12%); }
+.auth-visual-card::before { display: none; }
+.auth-visual-card span { color: #185e5b; }
+.auth-visual-card strong { color: #202d31; font-size: clamp(1.7rem,2.8vw,2.8rem); margin: 18px 0; }
+.auth-visual-card p { color: #52615d; }
+.folio-preview { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 30px; }
+.folio-preview div { border-radius: 12px; padding: 14px 10px; min-height: 70px; background: #f7f5ef; color: #185e5b; font-size: .8rem; font-weight: 700; display: grid; place-items: center; text-align: center; }
+
+/* Dashboard: real API data only; intentionally different information order on phones. */
+.folio-view { display: flex; flex-direction: column; gap: 24px; }
+.folio-view > * { margin: 0; }
+.dashboard-hero { background: var(--primary-soft); border-color: var(--border); padding: clamp(24px,4vw,42px); align-items: center; }
+.dashboard-hero::after { display: none; }
+.dashboard-hero h1 { color: var(--text-primary); font-size: clamp(2rem,3.5vw,3.2rem); }
+.dashboard-hero p { color: var(--text-secondary); max-width: 55ch; }
+.hero-pill { background: var(--surface); color: var(--primary); border: 1px solid var(--border); border-radius: var(--radius-full); font-weight: 700; }
+.folio-stats { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
+.folio-stats .stat-card { min-height: 148px; border-top: 1px solid var(--border); }
+.folio-stats .stat-card::before { display: none; }
+.folio-stats .stat-icon { width: 35px; height: 35px; margin-bottom: 10px; }
+.folio-stats .stat-card strong { font-size: clamp(1.6rem,2vw,2.2rem); font-family: "Fraunces", Georgia, serif; font-weight: 500; }
+.folio-priority { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(260px,1fr); gap: 16px; }
+.folio-feature, .folio-attention { min-height: 200px; }
+.folio-feature h2, .folio-attention h2 { font-size: 1.15rem; }
+.folio-feature-main { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; margin-top: 25px; }
+.folio-feature-main strong { display: block; color: var(--primary); font-weight: 800; font-size: clamp(1.2rem,2vw,1.5rem); }
+.folio-feature-main p { margin: 6px 0 0; }
+.folio-day-chip { flex: 0 0 auto; border-radius: 12px; padding: 11px 15px; background: var(--primary-soft); color: var(--primary); text-align: center; font-weight: 800; }
+.folio-attention { background: var(--surface); }
+.folio-quick-links { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 18px; }
+.folio-quick-links a, .folio-section-link { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; font-size: .88rem; font-weight: 800; }
+.folio-dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.folio-dashboard-grid .premium-panel { min-height: 240px; }
+.folio-dashboard-grid .panel-header h2 { font-family: "DM Sans", sans-serif; }
+.folio-dashboard-grid .simple-list li { align-items: flex-start; }
+.folio-dashboard-grid .simple-list li > span { font-variant-numeric: tabular-nums; }
+.folio-date-subtitle { color: var(--text-muted); font-weight: 700; font-size: .85rem; margin: 0; }
+.folio-empty { margin: 14px 0 0; color: var(--text-secondary); }
+.folio-subject-table table { min-width: 650px; }
+.folio-subject-table th { background: var(--surface-soft); }
+.folio-subject-table tbody td:first-child { font-weight: 800; }
+.folio-subject-mobile { display: none; }
+.folio-toolbar { margin-top: 12px; }
+.folio-tagline { color: var(--archive-wine); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+.folio-error { margin: 15px 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
+
+/* Consistent readability for narrow and extremely wide viewports. */
+@media (max-width: 1200px) {
+  .folio-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .folio-priority { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 900px) {
+  .sidebar { z-index: 65; }
+  .folio-view .folio-priority { order: 1; }
+  .folio-view .folio-dashboard-grid { order: 2; }
+  .folio-view .folio-stats { order: 3; }
+  .folio-priority { grid-template-columns: 1fr; }
+  .folio-attention { order: -1; }
+  .auth-page { grid-template-columns: 1fr; }
+  .auth-panel { min-height: 100vh; }
+  .navbar-title { display: inline; font-size: .8rem; }
+  .navbar-title em, .navbar-title .folio-crumb-parent { display: none; }
+}
+@media (max-width: 640px) {
+  .folio-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .folio-priority, .folio-dashboard-grid { grid-template-columns: minmax(0,1fr); }
+  .folio-feature, .folio-attention { min-height: 0; }
+  .folio-feature-main { align-items: flex-start; flex-direction: column; }
+  .folio-feature-main .folio-day-chip { order: -1; }
+  .folio-subject-table { display: none; }
+  .folio-subject-mobile { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .folio-subject-mobile .subject-card { min-height: 0; }
+  .folio-view { gap: 16px; }
+  .dashboard-hero { padding: 24px; }
+  .folio-stats .stat-card { padding: 16px; min-height: 136px; }
+  .auth-copy h1 { font-size: clamp(2.15rem,9vw,3rem); }
+  .auth-panel { padding: 28px 22px; }
+}
+@media (max-width: 359px) {
+  .folio-stats { grid-template-columns: 1fr; }
+  .navbar-title { display: none; }
+  .main-content { padding: 15px; }
+}
+@media (min-width: 1920px) {
+  .main-content { padding-inline: 64px; }
+  .folio-view { gap: 28px; }
+}
+
+/* Preserve readable contrast throughout instant theme-token changes.
+   Only geometry is animated; foreground and surface color update atomically. */
+.sidebar-nav a,
+.profile-button,
+.logout-button {
+  transition: transform var(--transition-fast);
+}
