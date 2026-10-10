@@ -66,7 +66,7 @@ function StudentDashboard() {
             <div className="panel-header"><div><span className="mini-eyebrow">Agenda</span><h2>Sua próxima aula</h2></div><Clock3 size={20} aria-hidden="true" /></div>
             {next ? (
               <div className="folio-feature-main">
-                <div><strong>{next.subject}</strong><p>{next.weekday} · {next.start_time.slice(0, 5)}–{next.end_time.slice(0, 5)}{next.location ? \` · \${next.location}\` : ""}</p></div>
+                <div><strong>{next.subject}</strong><p>{next.weekday} · {next.start_time.slice(0, 5)}–{next.end_time.slice(0, 5)}{next.location ? ` · ${next.location}` : ""}</p></div>
                 <div className="folio-day-chip">{next.dayOffset === 0 ? "Hoje" : next.dayOffset === 1 ? "Amanhã" : "Em " + next.dayOffset + " dias"}</div>
               </div>
             ) : <p className="folio-empty">Não há aulas cadastradas para sua agenda.</p>}
@@ -74,8 +74,8 @@ function StudentDashboard() {
           </BaseCard>
           <BaseCard className="folio-attention">
             <div className="panel-header"><div><span className="mini-eyebrow">Para acompanhar</span><h2>O que pede sua atenção</h2></div><Bell size={20} aria-hidden="true" /></div>
-            <p>{summary.unread_notifications ? \`\${summary.unread_notifications} aviso(s) não lido(s).\` : "Você não tem avisos novos."}</p>
-            <p>{summary.pending_invoices ? \`\${summary.pending_invoices} pendência(s) financeira(s).\` : "Nenhuma pendência financeira registrada."}</p>
+            <p>{summary.unread_notifications ? `${summary.unread_notifications} aviso(s) não lido(s).` : "Você não tem avisos novos."}</p>
+            <p>{summary.pending_invoices ? `${summary.pending_invoices} pendência(s) financeira(s).` : "Nenhuma pendência financeira registrada."}</p>
             <div className="folio-quick-links"><Link to="/notifications">Notificações</Link><Link to="/financial">Financeiro</Link></div>
           </BaseCard>
         </section>
@@ -85,7 +85,7 @@ function StudentDashboard() {
             <div className="panel-header"><div><span className="mini-eyebrow">Minha semana</span><h2>Agenda de aulas</h2></div><CalendarDays size={20} aria-hidden="true" /></div>
             {!schedule.length ? <p className="folio-empty">Nenhuma aula cadastrada.</p> : (
               <ul className="simple-list">
-                {schedule.map((item) => <li key={item.id}><div><strong>{item.subject}</strong><p>{item.weekday}{item.location ? \` · \${item.location}\` : ""}</p></div>
+                {schedule.map((item) => <li key={item.id}><div><strong>{item.subject}</strong><p>{item.weekday}{item.location ? ` · ${item.location}` : ""}</p></div>
                   <span>{item.start_time.slice(0,5)}–{item.end_time.slice(0,5)}</span></li>)}
               </ul>
             )}

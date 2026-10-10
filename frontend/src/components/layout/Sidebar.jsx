@@ -22,7 +22,7 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse }) {
   );
   return (
     <aside id="primary-navigation" aria-label="Navegação principal"
-      className={\`sidebar \${isOpen ? "sidebar-open" : ""} \${isCollapsed ? "is-collapsed" : ""}\`}>
+      className={`sidebar ${isOpen ? "sidebar-open" : ""} ${isCollapsed ? "is-collapsed" : ""}`}>
       <div className="sidebar-brand">
         <div className="sidebar-logo" aria-hidden="true">T</div>
         <div className="sidebar-brand-text"><strong>takion campus</strong><span>Campus Folio</span></div>
