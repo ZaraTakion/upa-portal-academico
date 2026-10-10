@@ -28,13 +28,13 @@ async function login(page, username, password) {
   await page.goto(baseUrl);
   await page.getByLabel("Usuário").fill(username);
   await page.getByLabel("Senha").fill(password);
-  await page.getByRole("button", { name: "Entrar no campus" }).click();
+  await page.getByRole("button", { name: "Entrar no Portal" }).click();
 }
 
 test("visitor sees Campus Folio login and protected pages redirect", async ({ page }) => {
   await page.goto(`${baseUrl}/teacher/classes`);
   await expect(page).toHaveURL(`${baseUrl}/`);
-  await expect(page.getByRole("heading", { name: "Um espaço para aprender." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Seu próximo capítulo." })).toBeVisible();
   await expectNoAccessibilityViolations(page);
 });
 
@@ -81,8 +81,14 @@ test("mobile layout keeps primary actions usable", async ({ page }) => {
 const apiUrl = "http://127.0.0.1:8000/api";
 
 async function apiAs(page, method, path, data) {
-  const access = await page.evaluate(() => localStorage.getItem("accessToken"));
-  expect(access).toBeTruthy();
+  const username = await page.evaluate(() => JSON.parse(localStorage.getItem("currentUser")).username);
+  const password = { rodrigo: "aluno123", leandro: "prof123", admin: "admin123" }[username];
+  const csrf = await (await page.request.get(`${apiUrl}/accounts/csrf/`)).json();
+  const loginResponse = await page.request.post(`${apiUrl}/token/`, {
+    data: { username, password }, headers: { "X-CSRFToken": csrf.csrfToken },
+  });
+  expect(loginResponse.status()).toBe(200);
+  const access = (await loginResponse.json()).access;
   const options = { method, headers: { Authorization: `Bearer ${access}` } };
   if (data !== undefined) options.data = data;
   return page.request.fetch(`${apiUrl}${path}`, options);
@@ -114,19 +120,19 @@ test("refresh recovers an expired access token and a missing cached token", asyn
   await page.reload();
   await expect(page.getByRole("heading", { name: /Olá, Rodrigo Maciel/ })).toBeVisible();
   const restored = await page.evaluate(() => localStorage.getItem("accessToken"));
-  expect(restored).not.toBe("expired-token-for-test");
+  expect(restored).toBeNull();
 
   await page.evaluate(() => localStorage.removeItem("accessToken"));
   await page.reload();
   await expect(page).toHaveURL(`${baseUrl}/dashboard`);
   await expect(page.getByRole("heading", { name: /Olá, Rodrigo Maciel/ })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem("accessToken"))).toBeTruthy();
+  expect(await page.evaluate(() => localStorage.getItem("accessToken"))).toBeNull();
 });
 
 test("logout clears session and denies navigation to authenticated pages", async ({ page }) => {
   await login(page, "rodrigo", "aluno123");
   await expect(page).toHaveURL(`${baseUrl}/dashboard`);
-  await page.getByRole("button", { name: "Sair do campus" }).click();
+  await page.getByRole("button", { name: "Sair" }).click();
   await expect(page).toHaveURL(`${baseUrl}/`);
   expect(await page.evaluate(() => localStorage.getItem("accessToken"))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem("sessionStarted"))).toBeNull();

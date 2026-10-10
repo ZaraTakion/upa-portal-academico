@@ -1,6 +1,6 @@
-# Operação e implantação — UPA
+# Operação e implantação — Takion Campus
 
-Este guia prepara a implantação. Não foram provisionados serviços nem executados deployments manuais. Ao abrir o PR, uma integração Vercel preexistente criou automaticamente um preview do frontend; esse evento e seu bloqueio estão registrados em RELEASE.md. Use banco e arquivos de teste ao validar procedimentos. Publicação, recursos pagos e merge dependem de aprovação específica.
+Este guia prepara a implantação. Não foram provisionados serviços nem executados deployments manuais. Na revisão Full-Stack anterior (PR #20), uma integração Vercel preexistente criou automaticamente um preview do frontend; esse evento está registrado em RELEASE.md. O bloqueio em ambos os arquivos vercel.json também inclui a branch design/takion-campus-20261010. Use banco e arquivos de teste ao validar procedimentos. Publicação, recursos pagos e merge dependem de aprovação específica.
 
 ## Configuração
 

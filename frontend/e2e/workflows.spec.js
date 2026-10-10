@@ -23,7 +23,7 @@ async function token(request, username, password) {
 }
 
 async function axe(page) {
-  await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => {}))));
+  await page.evaluate(() => Promise.all(document.getAnimations().filter(animation => Number.isFinite(animation.effect.getComputedTiming().iterations)).map((animation) => animation.finished.catch(() => {}))));
   await page.addScriptTag({ path: fileURLToPath(new URL("../node_modules/axe-core/axe.min.js", import.meta.url)) });
   const violations = await page.evaluate(async () => (await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] } })).violations.map(({ id, nodes }) => ({ id, nodes: nodes.map(({ target }) => target) })));
   expect(violations).toEqual([]);

@@ -1,5 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Takion Campus">
-  <rect width="64" height="64" rx="15" fill="#185E5B"/>
-  <path d="M15 16h34v9H37v26H27V25H15z" fill="#F7F5EF"/>
-  <circle cx="49" cy="47" r="4" fill="#DFF1EB"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="10" fill="#e3eee5"/><path d="M47 22c0-11-6-16-16-16S13 14 13 26v27h34M20 26h20M31 26v26M20 56h27" stroke="#245e54" stroke-width="2.5"/><path d="M39 10h12v12" stroke="#682c40" stroke-width="2.5"/></svg>

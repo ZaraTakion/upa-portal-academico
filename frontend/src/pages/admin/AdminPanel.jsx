@@ -1,4 +1,5 @@
 import {
+  ArrowUpRight,
   Bell,
   CalendarDays,
   GraduationCap,
@@ -22,61 +23,134 @@ function AdminPanel() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api.get("/dashboard/summary/")
+    api
+      .get("/dashboard/summary/")
       .then((response) => setSummary(response.data))
-      .catch(() => setError("Não foi possível carregar os indicadores administrativos."))
+      .catch(() =>
+        setError("Não foi possível carregar os indicadores administrativos."),
+      )
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <MainLayout>
-      <PageHeader eyebrow="Administração" title="Painel de Gestão" description="Resumo institucional e acesso às ferramentas administrativas." />
+      <PageHeader
+        eyebrow="Administração"
+        title="Painel de Gestão"
+        description="Resumo institucional e acesso às ferramentas administrativas."
+      />
       {error && <Alert type="error" message={error} />}
-      {loading ? <Loading text="Carregando painel administrativo..." /> : (
+      {loading ? (
+        <Loading text="Carregando painel administrativo..." />
+      ) : (
         <>
-          <section className="stats-grid">
+          <section className="stats-grid admin-stats">
             <StatCard label="Alunos" value={summary?.total_students ?? 0} />
-            <StatCard label="Professores" value={summary?.total_teachers ?? 0} />
-            <StatCard label="Disciplinas" value={summary?.total_subjects ?? 0} />
+            <StatCard
+              label="Professores"
+              value={summary?.total_teachers ?? 0}
+            />
+            <StatCard
+              label="Disciplinas"
+              value={summary?.total_subjects ?? 0}
+            />
             <StatCard label="Turmas" value={summary?.total_class_groups ?? 0} />
             <StatCard label="Eventos" value={summary?.total_events ?? 0} />
-            <StatCard label="Notificações" value={summary?.total_notifications ?? 0} />
+            <StatCard
+              label="Notificações"
+              value={summary?.total_notifications ?? 0}
+            />
             <StatCard label="Financeiro" value={summary?.total_invoices ?? 0} />
           </section>
-          <section className="cards-grid">
-            <AdminCard
-              icon={<Users />}
-              title="Usuários"
-              text="Gerencie contas, alunos, professores e permissões."
-              to="/admin/management?section=users"
-            />
-            <AdminCard icon={<GraduationCap />} title="Gestão acadêmica" text="Cursos, períodos, disciplinas, turmas e regra de notas." to="/admin/management?section=courses" />
-            <AdminCard icon={<CalendarDays />} title="Calendário" text="Cadastre feriados, provas, eventos e comunicados." to="/admin/management?section=calendar" />
-            <AdminCard icon={<Bell />} title="Comunicados" text="Consulte comunicados e notificações institucionais." to="/admin/management?section=notifications" />
-            <AdminCard
-              icon={<Receipt />}
-              title="Financeiro"
-              text="Registre cobranças, titulares, vencimentos e situação financeira."
-              to="/admin/management?section=invoices"
-            />
-          </section>
+          <div className="admin-workspace">
+            <section
+              className="admin-directory"
+              aria-label="Ferramentas administrativas"
+            >
+              <AdminCard
+                icon={<Users />}
+                title="Usuários"
+                text="Gerencie contas, alunos, professores e permissões."
+                to="/admin/management?section=users"
+              />
+              <AdminCard
+                icon={<GraduationCap />}
+                title="Gestão acadêmica"
+                text="Cursos, períodos, disciplinas, turmas e regra de notas."
+                to="/admin/management?section=courses"
+              />
+              <AdminCard
+                icon={<CalendarDays />}
+                title="Calendário"
+                text="Cadastre feriados, provas, eventos e comunicados."
+                to="/admin/management?section=calendar"
+              />
+              <AdminCard
+                icon={<Bell />}
+                title="Comunicados"
+                text="Consulte comunicados e notificações institucionais."
+                to="/admin/management?section=notifications"
+              />
+              <AdminCard
+                icon={<Receipt />}
+                title="Financeiro"
+                text="Registre cobranças, titulares, vencimentos e situação financeira."
+                to="/admin/management?section=invoices"
+              />
+            </section>
+            <aside className="admin-note">
+              <span className="eyebrow">Rotina administrativa</span>
+              <h2>Um registro bem cuidado.</h2>
+              <p>
+                Organize os cadastros acadêmicos e mantenha o histórico de
+                estudantes e docentes.
+              </p>
+              <Link to="/admin/management?section=enrollments">
+                Consultar matrículas{" "}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </Link>
+              <Link to="/contact">
+                Acompanhar atendimento{" "}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </Link>
+            </aside>
+          </div>
         </>
       )}
     </MainLayout>
   );
 }
 
-function AdminCard({ icon, title, text, to, external = false, unavailableText }) {
+function AdminCard({
+  icon,
+  title,
+  text,
+  to,
+  external = false,
+  unavailableText,
+}) {
   return (
     <BaseCard className="admin-card">
       <div className="admin-card-icon">{icon}</div>
-      <h2>{title}</h2>
-      <p>{text}</p>
-      {to
-        ? external
-          ? <a href={to} target="_blank" rel="noreferrer">Abrir gestão <span aria-hidden="true">↗</span></a>
-          : <Link to={to}>Abrir gestão</Link>
-        : <p className="admin-card-unavailable" role="status">{unavailableText}</p>}
+      <div>
+        <h2>{title}</h2>
+        <p>{text}</p>
+      </div>
+      {to ? (
+        external ? (
+          <a href={to} target="_blank" rel="noreferrer">
+            Abrir gestão <span aria-hidden="true">↗</span>
+          </a>
+        ) : (
+          <Link to={to} aria-label={`Abrir gestão de ${title}`}>
+            Abrir gestão <ArrowUpRight size={16} aria-hidden="true" />
+          </Link>
+        )
+      ) : (
+        <p className="admin-card-unavailable" role="status">
+          {unavailableText}
+        </p>
+      )}
     </BaseCard>
   );
 }

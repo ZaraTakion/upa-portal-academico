@@ -1,4 +1,5 @@
-import { ArrowLeft, Mail } from "lucide-react";
+import AuthLayout from "../components/layout/AuthLayout";
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -31,39 +32,31 @@ function ForgotPassword() {
   }
 
   return (
-    <main className="auth-page auth-page-simple">
-      <section className="auth-panel">
-        <div className="auth-brand">
-          <div className="auth-logo"><Mail size={28} /></div>
-          <div><strong>Recuperação de senha</strong><span>Takion Campus · Campus Folio</span></div>
-        </div>
+    <AuthLayout
+      eyebrow="Recuperação de acesso"
+      title="Redefina seu acesso"
+      description="Informe o e-mail cadastrado. Se houver uma conta ativa, enviaremos um link temporário para criar uma nova senha."
+    >
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <TextInput
+          label="E-mail cadastrado"
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="voce@exemplo.com"
+          autoComplete="email"
+          required
+        />
+        <Alert type={alertType} message={feedback} />
+        <Button type="submit" disabled={loading}>
+          {loading ? "Enviando..." : "Enviar link de redefinição"}
+        </Button>
+      </form>
 
-        <div className="auth-copy">
-          <h1>Redefina seu acesso</h1>
-          <p>Informe o e-mail cadastrado. Se houver uma conta ativa, enviaremos um link temporário para criar uma nova senha.</p>
-        </div>
-
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <TextInput
-            label="E-mail cadastrado"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="voce@exemplo.com"
-            autoComplete="email"
-            required
-          />
-          <Alert type={alertType} message={feedback} />
-          <Button type="submit" disabled={loading}>
-            {loading ? "Enviando..." : "Enviar link de redefinição"}
-          </Button>
-        </form>
-
-        <Link to="/" className="auth-link">
-          <ArrowLeft size={16} /> Voltar para login
-        </Link>
-      </section>
-    </main>
+      <Link to="/" className="auth-link">
+        <ArrowLeft size={16} /> Voltar para login
+      </Link>
+    </AuthLayout>
   );
 }
 
