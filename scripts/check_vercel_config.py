@@ -10,6 +10,14 @@ services = config["services"]
 assert set(services) == {"backend", "frontend"}
 assert services["backend"]["root"] == "backend"
 assert services["frontend"]["root"] == "frontend"
+assert services["backend"]["framework"] == "django"
+assert services["frontend"]["framework"] == "vite"
+# This application has no server-to-server service calls. React executes API
+# requests in the browser through same-origin public /api/ routes.
+# A binding (runtime-only Vercel injected URL) would not be available to Vite
+# during the build or to browser JavaScript.
+assert not services["frontend"].get("bindings"), "Frontend browser API calls must not use service bindings"
+assert not services["backend"].get("bindings"), "Do not add unused backend-to-frontend bindings"
 assert (root / "backend/manage.py").is_file()
 assert (root / "frontend/package.json").is_file()
 routes = config["rewrites"]
@@ -37,4 +45,8 @@ env = (root / "frontend/.env.production").read_text(encoding="utf-8")
 assert "VITE_API_URL=/api" in env
 assert "VITE_DJANGO_ADMIN_URL=/admin/" in env
 assert "localhost" not in env
-print("Vercel Services routing and frontend configuration: OK")
+frontend_api = (root / "frontend/src/api/axios.js").read_text(encoding="utf-8")
+frontend_auth = (root / "frontend/src/utils/auth.js").read_text(encoding="utf-8")
+assert 'import.meta.env.PROD ? "/api"' in frontend_api
+assert 'import.meta.env.PROD ? "/api"' in frontend_auth
+print("Vercel Services routing, same-origin browser API and binding contract: OK")

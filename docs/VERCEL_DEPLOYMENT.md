@@ -63,3 +63,22 @@ O nome sugerido é ZaraTakion/takion-campus. A renomeação só será feita apó
 O CI valida a sintaxe e as prioridades de roteamento previstas no arquivo, não confirma a interpretação feita pelos serviços Vercel nem a presença dos provedores externos. É obrigatório um deploy protegido de Preview para validar os fluxos completos antes de promover para Production.
 
 Documentação consultada: https://vercel.com/kb/guide/vercel-services e https://vercel.com/docs/frameworks/full-stack/django.
+
+## Serviços, caminhos públicos e bindings — aguardando confirmação
+
+**Serviços:** `frontend` em `frontend/` (framework `vite`) e `backend` em `backend/` (framework `django`).
+
+**Caminhos públicos:**
+
+- `frontend`: `/` e rotas SPA (`/dashboard`, `/subjects`, `/teacher/*`, `/admin-panel`, `/reset-password/*`), além de `/assets/*`, `/favicon.svg` e `/manifest.json`.
+- `backend`: `/api/*` (JWT, usuários e dados), `/admin/*` (Django Admin), `/static/*` (CSS e JS da administração) e `/health/` (verificação simples).
+- Toda correspondência é avaliada por ordem, antes da regra genérica de SPA. O prefixo `/api/` é preservado; o Django já declara esse prefixo em `backend/core/urls.py`.
+
+**Bindings internos: nenhum nesta versão.** O React/Vite é um frontend executado pelo navegador; o navegador usa a URL relativa `/api` para chamar o Django no mesmo domínio. Vercel bindings são disponibilizados *somente a funções backend em execução*, não durante builds Vite nem no JavaScript do cliente. O Django não faz chamadas HTTP para a aplicação React; `FRONTEND_URL` apenas define a base de links de recuperação de senha. Um binding `frontend -> backend` não resolveria a comunicação atual.
+
+**A confirmar antes da publicação:** (1) manter nomes `frontend` e `backend`? (2) manter as rotas acima públicas somente dentro do deployment protegido? (3) manter o contrato sem bindings até que exista efetiva chamada backend-to-backend?
+
+Atenção: 'serviço público' indica roteável através da Vercel, não acesso irrestrito. O deployment Preview deve ter Deployment Protection, e a API aplica autenticação/permissões. `GET /health/` não confirma saúde do PostgreSQL.
+
+Referências: https://vercel.com/docs/services ; https://vercel.com/docs/services/routing ; https://vercel.com/docs/services/bindings .
+
