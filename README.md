@@ -1,8 +1,16 @@
-# UPA — Portal Acadêmico
+# Takion Campus
+
+**by Takion Software**
+
+Sistema acadêmico independente de portfólio e demonstração, originado no UPA Portal Acadêmico. Não possui vínculo oficial com uma instituição educacional.
 
 Portal Full-Stack para centralizar a vida acadêmica de estudantes, professores e administradores. A interface React consulta uma API Django REST Framework; dados, permissões e regras acadêmicas são verificados no servidor.
 
-**Release candidata: 2.1.0-rc.1.** Consulte o [relatório de auditoria e entrega](docs/RELEASE.md) para resultados executados, CI, PR e limitações. A release requer revisão antes de merge ou implantação; o relatório registra também o preview disparado pela integração Vercel preexistente e seu bloqueio nesta branch.
+**Release candidata: 2.1.0-rc.1, com identidade Takion Campus.** O redesign usa superfícies creme/mint, tipografia editorial, monograma próprio e composições por perfil. Consulte o [Design System](docs/design/DESIGN_SYSTEM.md), a [galeria antes/depois e QA](docs/design/QA.md) e a [pesquisa preliminar do nome](docs/design/BRAND_RESEARCH.md). O [relatório da revisão Full-Stack anterior](docs/RELEASE.md) preserva o histórico de engenharia.
+
+![Entrada do Takion Campus](docs/design/evidence/after/login-1440.jpg)
+
+As mudanças são entregues para revisão, sem merge na `main` ou implantação pública. O PR de design parte da revisão funcional anterior; o bloqueio da integração Vercel foi estendido à branch de redesign.
 
 ## Funcionalidades e perfis
 

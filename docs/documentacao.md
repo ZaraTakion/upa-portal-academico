@@ -1,4 +1,6 @@
-# Referência técnica — UPA Portal Acadêmico
+# Referência técnica — Takion Campus
+
+Takion Campus é a identidade atual do projeto originado no UPA Portal Acadêmico. O [Design System](design/DESIGN_SYSTEM.md) documenta a apresentação; contratos e identificadores abaixo foram preservados.
 
 Esta referência descreve a implementação da release 2.1.0-rc.1. As evidências executadas estão em [RELEASE.md](RELEASE.md); configuração e operação estão em [OPERATIONS.md](OPERATIONS.md).
 
