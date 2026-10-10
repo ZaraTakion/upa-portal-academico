@@ -1,84 +1,75 @@
-# Implantação Vercel — Takion Campus
+# Deploy gratuito: Vercel (React) + Render (Django)
 
-**Estado:** configuração adicionada à branch de desenvolvimento. Deploy real ainda depende da conta Vercel, banco e armazenamento; não existe aprovação de produção neste documento.
+**Este guia substitui o antigo Vercel Services.** A configuração já está no GitHub;
+o deploy e a conexão com o banco ainda não foram realizados por esta alteração.
 
-## Importação com Vercel Services
+## Vercel — frontend (Hobby Free)
 
-1. Importe o repositório mantendo a **raiz do projeto** como Root Directory e escolha **Framework Preset: Services**.
-2. O arquivo vercel.json separa backend Django e frontend Vite, com /api/, /admin/, /static/ e /health/ roteados ao backend. Rotas e assets do React vão ao frontend; o fallback SPA usa index.html.
-3. A branch com as alterações é **feat/campus-folio-auth-and-ui**, no PR #22. A branch main ainda não contém essas melhorias. Não faça merge antes de confirmar a prévia.
-4. Habilite Deployment Protection na Preview. Restrinja acesso e não divulgue senhas de homologação.
+Importe `ZaraTakion/takion-campus` como **projeto único** e configure:
 
-## Variáveis no backend (Preview, privadas)
+- **Root Directory:** `frontend`
+- **Framework Preset:** `Vite`
+- **Build Command:** `npm run build` (padrão)
+- **Output Directory:** `dist` (padrão)
+- **Variáveis de ambiente:** `VITE_API_URL=https://SEU-BACKEND.onrender.com/api`
+  e `VITE_DJANGO_ADMIN_URL=https://SEU-BACKEND.onrender.com/admin/`.
 
-| Nome | Valor ou instrução |
-|---|---|
-| SECRET_KEY | Chave aleatória longa, gerada de forma privada |
-| DEBUG | False |
-| DATABASE_URL | URL PostgreSQL TLS isolada para Preview (ex.: Neon) |
-| USE_S3_STORAGE | True |
-| AWS_STORAGE_BUCKET_NAME | Bucket privado e persistente de homologação |
-| AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY | Credenciais privadas do bucket, nunca no frontend |
-| AWS_S3_ENDPOINT_URL / AWS_S3_REGION_NAME | Valores do provedor S3 escolhido |
-| CSRF_COOKIE_SAMESITE | Lax, pois frontend e backend compartilham a origem |
-| TRUST_PROXY_SSL_HEADER | True apenas se a borda Vercel sobrescrever X-Forwarded-Proto de forma confiável |
-| SECURE_SSL_REDIRECT / SESSION_COOKIE_SECURE / CSRF_COOKIE_SECURE / JWT_REFRESH_COOKIE_SECURE | True |
-| FRONTEND_URL | URL HTTPS correta para links de recuperação; sem valor explícito usa host exato do VERCEL_URL |
-| ALLOWED_HOSTS / CSRF_TRUSTED_ORIGINS | Acrescente domínios customizados; o preview host exato VERCEL_URL é adicionado pelo Django |
+Substitua `SEU-BACKEND` pelo URL real do serviço Render, não inclua localhost.
+O build bloqueia VITE_API_URL ausente/inválida quando executado na Vercel.
+`frontend/vercel.json` suporta acesso direto às rotas SPA.
 
-**Nunca habilite DEBUG ou senhas públicas para contornar dificuldades no login publicado.** Não habilite ALLOW_SQLITE_DATABASE ou ALLOW_LOCAL_MEDIA_STORAGE na Vercel. O filesystem das funções é efêmero; dados e arquivos precisam de serviços persistentes.
+## Render — backend (Free Web Service)
 
-## Variáveis no frontend (públicas)
+Conecte o mesmo repositório e escolha **Web Service**, plano **Free**, root
+directory **backend**, runtime Python. A configuração `render.yaml` da raiz
+serve de referência ou pode ser usada no fluxo de Blueprint.
 
-VITE_API_URL=/api e VITE_DJANGO_ADMIN_URL=/admin/. O arquivo frontend/.env.production inclui apenas essas URLs relativas, sem dados secretos.
+- Build: `pip install -r requirements.txt && python manage.py collectstatic --noinput`
+- Start: `python manage.py migrate --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT`
+- Health: `/health/`
+- Variáveis: `DEBUG=False`, `SECRET_KEY` aleatória privada,
+  `DATABASE_URL` PostgreSQL, `CORS_ALLOWED_ORIGINS=https://SEU-SITE.vercel.app`,
+  `CSRF_TRUSTED_ORIGINS=https://SEU-SITE.vercel.app`,
+  `FRONTEND_URL=https://SEU-SITE.vercel.app`,
+  `CSRF_COOKIE_SAMESITE=None`, `TRUST_PROXY_SSL_HEADER=True`.
+- Render fornece `RENDER_EXTERNAL_HOSTNAME`; Django confia apenas nesse hostname
+  validado e nos domínios adicionais de ALLOWED_HOSTS.
 
-## Banco e contas de teste
+## Banco (sem cobrança)
 
-Provisione um banco PostgreSQL separado para Preview; nunca use um banco de produção. Migrações são uma operação controlada fora do build. Em ambiente seguro e autenticado com as variáveis corretas, execute:
+**Não use Render Postgres Free como banco de longa duração:** expira em 30 dias.
+Prefira **Neon Free** (ou outro PostgreSQL persistente com franquia grátis).
+Configure `DATABASE_URL` somente no Render. Não coloque credenciais no chat,
+GitHub, frontend ou variáveis `VITE_*`.
 
-    cd backend
-    python manage.py migrate --noinput
+## Atenção aos limites de gratuidade
 
-Crie três usuários de homologação com senhas privadas, seus grupos (Aluno, Professor, Administrador) e respectivos perfis acadêmicos. O comando seed_demo foi feito apenas para desenvolvimento e falha com DEBUG=False. Não use as credenciais conhecidas do seed_demo em uma URL pública.
+Render Web Service Free entra em repouso após 15 minutos sem tráfego, portanto
+o primeiro login pode demorar. O Render Free não tem disco persistente; o
+`render.yaml` permite armazenamento temporário de demonstração
+(`ALLOW_LOCAL_MEDIA_STORAGE=True`) apenas para testar autenticação:
+**arquivos enviados serão perdidos em reinícios/redeploys**. Para materiais
+acadêmicos reais, use bucket privado persistente e `USE_S3_STORAGE=True`.
+A Vercel Hobby é para uso pessoal não comercial e possui limites de uso.
+Não autorize upgrade pago, add-ons ou cobranças.
 
-## Checklist para validação da Preview
+## Usuários de demonstração
 
-- [ ] GET /health/ retorna status ok.
-- [ ] GET /admin/login/ apresenta Django Admin; GET /static/admin/css/base.css retorna CSS.
-- [ ] Rotas do React como /dashboard e /teacher/classes suportam atualização direta da página sem 404.
-- [ ] Aluno entra, consulta dados próprios e recebe 403 ao tentar escrever dados exclusivos de admin.
-- [ ] Professor entra, vê turmas próprias e cria avaliação; não acessa funções de admin.
-- [ ] Administrador entra, acessa /admin-panel e cria curso; não usa perfil de aluno.
-- [ ] Refresh CSRF/cookie e logout são testados no navegador real.
-- [ ] Banco conserva os dados ao reiniciar ou publicar uma nova versão.
-- [ ] Arquivos enviados, baixados e revisados funcionam via bucket privado.
-- [ ] Logs, autorização e proteção da Preview estão conformes.
+A base remota começa sem contas. O comando `seed_demo` é **local apenas**
+e está bloqueado para `DEBUG=False`; não use as senhas públicas em sites
+hospedados. Crie usuários e grupos específicos para homologação com senhas
+privadas em um fluxo administrativo autenticado. Até provisioná-los, o login
+na Vercel não funcionará, mesmo com frontend e backend publicados.
 
-## Renomeação do GitHub
+## Verificações pós-deploy
 
-O nome sugerido é ZaraTakion/takion-campus. A renomeação só será feita após confirmação do proprietário em GitHub > Settings > General > Repository name > Rename. GitHub costuma redirecionar URLs antigas, mas é necessário conferir o remote local, integrações e o vínculo do projeto na Vercel.
+- Render `https://SEU-BACKEND.onrender.com/health/` → 200.
+- Vercel abre tela de login e não apresenta erro de build.
+- Login envia POST para `https://SEU-BACKEND.onrender.com/api/token/`.
+- Verifique CORS exato, CSRF, políticas do navegador para cookies de
+  terceiros, refresh token, logout e permissões dos três perfis.
+- Acesso direto às rotas do React funciona após recarregar.
+- Sem vazamento de credenciais e sem imagens ou dados privados em armazenamento efêmero.
 
-## Limitações
-
-O CI valida a sintaxe e as prioridades de roteamento previstas no arquivo, não confirma a interpretação feita pelos serviços Vercel nem a presença dos provedores externos. É obrigatório um deploy protegido de Preview para validar os fluxos completos antes de promover para Production.
-
-Documentação consultada: https://vercel.com/kb/guide/vercel-services e https://vercel.com/docs/frameworks/full-stack/django.
-
-## Serviços, caminhos públicos e bindings — aguardando confirmação
-
-**Serviços:** `frontend` em `frontend/` (framework `vite`) e `backend` em `backend/` (framework `django`).
-
-**Caminhos públicos:**
-
-- `frontend`: `/` e rotas SPA (`/dashboard`, `/subjects`, `/teacher/*`, `/admin-panel`, `/reset-password/*`), além de `/assets/*`, `/favicon.svg` e `/manifest.json`.
-- `backend`: `/api/*` (JWT, usuários e dados), `/admin/*` (Django Admin), `/static/*` (CSS e JS da administração) e `/health/` (verificação simples).
-- Toda correspondência é avaliada por ordem, antes da regra genérica de SPA. O prefixo `/api/` é preservado; o Django já declara esse prefixo em `backend/core/urls.py`.
-
-**Bindings internos: nenhum nesta versão.** O React/Vite é um frontend executado pelo navegador; o navegador usa a URL relativa `/api` para chamar o Django no mesmo domínio. Vercel bindings são disponibilizados *somente a funções backend em execução*, não durante builds Vite nem no JavaScript do cliente. O Django não faz chamadas HTTP para a aplicação React; `FRONTEND_URL` apenas define a base de links de recuperação de senha. Um binding `frontend -> backend` não resolveria a comunicação atual.
-
-**A confirmar antes da publicação:** (1) manter nomes `frontend` e `backend`? (2) manter as rotas acima públicas somente dentro do deployment protegido? (3) manter o contrato sem bindings até que exista efetiva chamada backend-to-backend?
-
-Atenção: 'serviço público' indica roteável através da Vercel, não acesso irrestrito. O deployment Preview deve ter Deployment Protection, e a API aplica autenticação/permissões. `GET /health/` não confirma saúde do PostgreSQL.
-
-Referências: https://vercel.com/docs/services ; https://vercel.com/docs/services/routing ; https://vercel.com/docs/services/bindings .
-
+**Resultado de GitHub Actions não comprova deploy real.** Após os URLs existirem,
+verifique os logs dos dois provedores e autenticação com contas de homologação.

@@ -1,0 +1,34 @@
+# Free, standalone Django API on Render. Connect an external persistent
+# PostgreSQL (e.g. Neon Free) in DATABASE_URL; secrets are never committed.
+services:
+  - type: web
+    name: takion-campus-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+    startCommand: "python manage.py migrate --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
+    healthCheckPath: /health/
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: TRUST_PROXY_SSL_HEADER
+        value: "True"
+      - key: CSRF_COOKIE_SAMESITE
+        value: "None"
+      # Demo limitation: files are NOT persistent on the free Render disk.
+      # Replace with USE_S3_STORAGE=True and private object storage for real use.
+      - key: ALLOW_LOCAL_MEDIA_STORAGE
+        value: "True"
+      - key: WEB_CONCURRENCY
+        value: "1"

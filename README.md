@@ -133,3 +133,11 @@ O script `backend/build.sh` instala dependências, executa `check --deploy`, col
 ## Dados de demonstração
 
 `python manage.py seed_demo` cria registros demonstrativos idempotentes para desenvolvimento. Não execute esse comando como parte do deploy de produção.
+
+## Implantação gratuita — Vercel e Render
+
+- Frontend: Vercel Hobby, **Root Directory: `frontend`**, preset Vite.
+- Backend: Render Free Web Service, **Root Directory: `backend`**, runtime Python.
+- Banco: PostgreSQL externo persistente (por exemplo, Neon Free; o PostgreSQL gratuito do próprio Render expira após 30 dias).
+- Configure os endereços e segredos nas plataformas, nunca no GitHub.
+- Consulte `docs/VERCEL_DEPLOYMENT.md` antes de fazer Deploy.
