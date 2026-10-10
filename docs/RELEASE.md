@@ -1,6 +1,6 @@
 # Release 2.1.0-rc.1 — auditoria e entrega
 
-Repositório exclusivo: `ZaraTakion/upa-portal-academico`. Base: `main` em `7c2a125`. Branch: `improve/verified-release-20261010`. Não houve merge, publicação externa ou contratação de serviços.
+Repositório exclusivo: `ZaraTakion/upa-portal-academico`. Base: `main` em `7c2a125`. Branch: `improve/verified-release-20261010`. Não houve merge, contratação de serviços ou deployment manual. Uma integração Vercel preexistente publicou automaticamente um preview ao abrir o PR; consulte o registro operacional abaixo.
 
 ## Diagnóstico da base
 
@@ -47,15 +47,15 @@ Correções relevantes: revogação de tokens após senha/desativação; proteç
 | Migrações / OpenAPI | Nenhuma migração pendente de geração; schema validado sem avisos. |
 | Produção React | Build aprovado; entrada 291,79 kB / gzip 95,76 kB, com divisão por rotas. |
 | pip-audit / npm audit | Nenhuma vulnerabilidade conhecida reportada no conjunto auditado. |
-| Playwright | Os 20 fluxos de integração passaram; a execução ampliada de 32 cenários está em validação final após correção de foco em tabela móvel. |
+| Playwright | 32 cenários aprovados, sem retry local; inclui os 20 fluxos de integração e 12 verificações de responsividade de professor/admin. |
 | Migração com dados | Ensaio isolado 0006 → 0007 preservou todos os campos de uma nota e a matrícula sintéticas. |
-| Backup inicial PostgreSQL | Dump/restore em banco separado preservou 13 usuários, 8 notas, 4 presenças e 6 registros de arquivos. |
+| Backup/restauração final PostgreSQL | Com a API parada, dump/restore preservou 19 usuários, 8 notas, 4 presenças e 12 registros de arquivos. Os 12 anexos restaurados tiveram SHA-256 idêntico; login/painel dos três perfis e os 12 downloads autenticados passaram no banco/armazenamento restaurados. |
 
 A auditoria inicial Python reportou 46 ocorrências de advisories em cinco dependências. Atualizações foram restritas aos pacotes afetados e seus requisitos. “Sem vulnerabilidade conhecida” representa a resposta das ferramentas na execução, não uma garantia de ausência de falhas.
 
 Os cenários de navegador verificam persistência de perfil, notas, chamada, usuários/perfis, cobranças, comunicados, atendimento e entregas; verificam também IDOR/BOLA, turma de outro professor, cookie HttpOnly, restauração/renovação/logout e recuperação com link de uso único. Responsividade é exercitada a 320, 390, 768, 1366, 1920 e 2560 px. Axe executa regras WCAG aplicáveis; capturas e traces acompanham o relatório do CI.
 
-O GitHub Actions será acompanhado após abertura do PR. Os resultados locais acima não substituem aprovação do workflow.
+PR aberto: [#20](https://github.com/ZaraTakion/upa-portal-academico/pull/20). GitHub Actions em acompanhamento: [execução 38012604010](https://github.com/ZaraTakion/upa-portal-academico/actions/runs/38012604010). Os resultados locais acima não substituem aprovação do workflow.
 
 ## Comandos e reprodução
 
@@ -96,7 +96,8 @@ Os comandos exigem configuração correspondente à finalidade: local, produçã
 - [x] Fluxos essenciais dos três perfis integrados ao banco.
 - [x] Permissões no servidor, integridade, migrações e PostgreSQL verificados.
 - [x] Testes críticos Python/Node, lint, segurança e build aprovados localmente.
-- [ ] Execução final ampliada de navegador e GitHub Actions aprovados.
+- [x] Execução final ampliada de navegador aprovada localmente.
+- [ ] GitHub Actions aprovado no commit final.
 - [x] README, referência, estudo de caso e guia de operação atualizados.
 - [ ] PR pronto para revisão com evidências finais.
 - [x] Versão candidata preparada; limitações externas explicitadas.
@@ -112,3 +113,9 @@ A release permanece candidata e aguardando revisão; o ambiente institucional n�
 - Arquivos são validados, mas não passam por antivírus neste projeto.
 - Logout revoga refresh; access anterior dura até 15 minutos. Troca de senha e desativação invalidam access também.
 - Pagamentos e integração com ERP institucional estão fora do escopo; o portal persiste registros financeiros e acadêmicos próprios.
+
+## Evento da integração de publicação existente
+
+A abertura do PR acionou a integração Vercel já instalada no repositório. Ela concluiu automaticamente o deployment de preview `D3Hd1s7PuRJ7dNnLZqQhWkjcw3Di` do commit `92e86f8`, confirmado pelo status GitHub e deployment `6974285887`. Isso não foi um deployment manual nem uma implantação integrada do Back-End. A produção existente não foi modificada.
+
+Foram acrescentados bloqueios de auto-deployment para esta branch nas configurações Vercel da raiz e do frontend, validados contra o schema oficial. A remoção do preview anterior permanece pendente de acesso à conta Vercel; o plugin foi localizado e sugerido, mas não está conectado. A integração existente é uma limitação operacional relevante ao requisito de não publicar sem aprovação.

@@ -1,6 +1,6 @@
 # Operação e implantação — UPA
 
-Este guia prepara a implantação; nenhum serviço foi criado ou publicado durante a revisão. Use banco e arquivos de teste ao validar procedimentos. Publicação, recursos pagos e merge dependem de aprovação específica.
+Este guia prepara a implantação. Não foram provisionados serviços nem executados deployments manuais. Ao abrir o PR, uma integração Vercel preexistente criou automaticamente um preview do frontend; esse evento e seu bloqueio estão registrados em RELEASE.md. Use banco e arquivos de teste ao validar procedimentos. Publicação, recursos pagos e merge dependem de aprovação específica.
 
 ## Configuração
 
@@ -116,3 +116,9 @@ Para S3, usar versionamento/lifecycle e processo de cópia/restauração do prov
 5. Confirmar readiness, login dos três perfis, leitura de notas e download; reabrir gravações.
 
 Nenhum rollback ou restore deve sobrescrever o banco ativo sem autorização operacional. Os comandos de ensaio desta revisão criam apenas bancos e arquivos descartáveis com dados sintéticos.
+
+## Integração Vercel existente
+
+`vercel.json` e `frontend/vercel.json` bloqueiam deployments Git automáticos da branch `improve/verified-release-20261010`, cobrindo configurações que usam a raiz do repositório ou o frontend como raiz do projeto. Outras branches conservam a configuração anterior; não houve alteração da integração ou da produção na conta Vercel. Os arquivos foram validados contra o schema oficial.
+
+O bloqueio de novos deployments não remove previews anteriores. A integração existente publicou um preview ao receber o PR inicial; remover esse preview exige acesso à conta Vercel. Não use um preview estático como prova de funcionamento Full-Stack: as evidências desta release vêm de API, PostgreSQL e frontend de produção executados juntos nos testes.
