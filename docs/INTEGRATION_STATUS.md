@@ -13,13 +13,13 @@ Data: 10/10/2026. Este documento distingue execução local, GitHub e provedores
 - Commit `235622b`: corrige hospedagem gratuita, uploads, homologação sintética e regressões da integração.
 - [PR #25](https://github.com/ZaraTakion/takion-campus/pull/25): integração publicada como rascunho, sem conflitos com a main. Os PRs #20/#21 foram atualizados com referência à integração.
 
-As branches originais foram preservadas. Os cinco checks do [GitHub Actions no commit 235622b](https://github.com/ZaraTakion/takion-campus/actions/runs/38060644256) passaram: frontend, Django/SQLite, Django/PostgreSQL, setup autônomo e E2E. A suíte de navegador contém 86 cenários e inclui o zoom real obrigatório; não há testes desabilitados. A main continua preservada enquanto planos/elegibilidade, publicação e fluxos remotos não estão verificados. Não interpretar os merges desta branch como PRs integrados na main.
+As branches originais foram preservadas. Os cinco checks do [GitHub Actions no commit d3ddf8f](https://github.com/ZaraTakion/takion-campus/actions/runs/38062130616) passaram: frontend, Django/SQLite, Django/PostgreSQL, setup autônomo e E2E. A suíte de navegador contém 86 cenários e inclui o zoom real obrigatório; não há testes desabilitados. A main continua preservada enquanto planos/elegibilidade, publicação e fluxos remotos não estão verificados. Não interpretar os merges desta branch como PRs integrados na main.
 
 ## Correções concretas
 
 - CSRF exigido também no login, mantendo a rota de bootstrap compatível da main e schema OpenAPI válido. Testes preservam a proteção adicionada pela release.
 - JWT access somente em memória e refresh HttpOnly, com renovação, rotação, blacklist, invalidação após troca de senha e logout.
-- Proxy `/api` de mesma origem com destino fixo ao domínio previsto do Render; build permite `/api` ou API HTTPS validada. Destino externo ainda deve ser confirmado no serviço antes de publicação.
+- Proxy `/api` de mesma origem com destino fixo ao domínio previsto do Render; build permite `/api` ou API HTTPS validada. O destino foi confirmado no serviço existente e a API pública passou no teste de readiness; o proxy Vercel ainda depende da publicação do frontend.
 - Downloads passam a retornar caminhos relativos, compatíveis com proxy e API direta, preservando validação de origem antes de enviar Bearer.
 - Tempo de requisição de 90 segundos para acomodar cold start, com erros reais exibidos pela interface.
 - Provisionamento privado exige `CAMPUS_ENVIRONMENT=preview`, opt-in, DEBUG=False e três senhas fortes. Cria registros sintéticos e não redefine resultados/senhas editados.
@@ -61,27 +61,27 @@ A matriz percorre 40 combinações de página/perfil em 320, 360, 390, 430, 768,
 | Professor | Turmas vinculadas, avaliações, lançamento de notas/frequência, materiais, atividades, devolutivas e bloqueio de registros de outro professor |
 | Administrador | Contas/perfis, cursos, turmas, matrículas, calendário, avisos, faturas informativas e resposta a chamados; restrições de integridade e contas sensíveis |
 
-Os testes de navegador usam build React real e Django/PostgreSQL locais. A comprovação dos três perfis no domínio implantado permanece pendente.
+Os testes de navegador usam build React real e Django/PostgreSQL locais. Os três perfis passaram em autenticação e operações reais na API pública Render, incluindo persistência após reinício. A comprovação no frontend React publicado permanece pendente.
 
 ## Infraestrutura: estado externo
 
+A [validação remota de 10/10/2026](REMOTE_VALIDATION.md) registra os testes públicos, IDs e limites da comprovação.
+
 | Provedor | Recurso existente | Evidência atual |
 | --- | --- | --- |
-| Render | `srv-db4rlfvlot8c73cp2ks0`, `takion-campus-api` | API recebeu 401; readiness pública expirou após 90 segundos; plano efetivo, logs e deploy ainda não verificados |
-| Neon | `winter-river-76082998`, branch `br-steep-mountain-b7rfe5zs` | API sem credencial recebeu 401; não houve conexão ao Neon nem migração remota |
-| Vercel | Projeto existente a localizar por API | Requisição recebeu 403, código forbidden; plano/elegibilidade, domínio e publicação ainda não verificados |
+| Render | `srv-db4rlfvlot8c73cp2ks0`, `takion-campus-api` | API autenticada HTTP 200; plano Free; deploy `dep-db56cdid0e5s73ec3a40` live em `d3ddf8f`; readiness pública HTTP 200; três perfis e Admin testados |
+| Neon | `winter-river-76082998`, branch `br-steep-mountain-b7rfe5zs` | Organização Free; banco vazio inspecionado antes das migrations; 30 tabelas após startup; conexão TLS e persistência de registros após reinício comprovadas |
+| Vercel | Nenhum projeto na conta pessoal nem na única equipe acessível | APIs HTTP 200; equipe Hobby ativa e OWNER; publicação aguarda confirmação de uso pessoal não comercial; nenhum projeto criado |
 
-O usuário informou que cadastrou segredos de rede. No runtime associado à conversa, a ferramenta de status ainda retorna spec revision 1, sem secrets, aliases de identidade ou variáveis; os três bindings do rascunho constavam como não salvos na leitura. Isso não prova que o cadastro em outro estado/configuração falhou. Significa que esta sessão ainda não demonstrou acesso autenticado aos provedores. Não foram solicitados valores em chat, expostos tokens, contratados planos nem criados recursos duplicados.
+Os três bindings publicados funcionam no runtime revisão 4. As falhas históricas 401/401/403 não se repetiram; não se atribui causa única sem evidência. Logs Render têm um bloqueio Cloudflare HTTP 403 separado da autenticação do serviço. Os domínios de documentação da API Render e SQL HTTPS Neon faltam na allowlist: receberam 403 do proxy e foram adicionados ao rascunho, ainda sem aplicação ao runtime.
 
 ## Limitações e retomada
 
-1. Aplicar os bindings já cadastrados à configuração efetivamente associada à sessão; testar APIs autenticadas e confirmar plano Free/Hobby e elegibilidade antes de mutações.
-2. No Render, inspecionar últimos logs/configuração e corrigir Root Directory/comandos sem redundância; transferir a conexão do projeto Neon existente por fluxo seguro.
-3. Fazer backup/inspeção do Neon antes de migrar base existente; confirmar TLS, constraints e persistência após redeploy.
-4. Provisionar somente contas privadas de homologação, sem seed local com senhas conhecidas no domínio público.
-5. Localizar o projeto Vercel existente, confirmar domínio e uso permitido no Hobby; configurar `/api` e Admin HTTPS, publicar uma release validada e testar os três perfis no domínio real.
-6. Verificar entrega SMTP externa; captura local de email não prova envio público.
-7. Storage persistente continua pendente. Supabase Storage Free foi investigado na documentação oficial como alternativa S3; nenhum bucket foi criado e nenhuma garantia de plano sem cobrança foi presumida.
-8. Zoom real foi validado no runner do GitHub Actions. A execução local continua limitada pela política deste Chromium; essa política não foi contornada.
+1. Confirmar elegibilidade pessoal não comercial no Hobby antes da publicação. Se for elegível, criar somente o projeto frontend necessário: as listagens autenticadas confirmaram zero projetos nos escopos acessíveis.
+2. Publicar React/Vite somente a partir de `frontend`, configurar origens exatas no Render e executar os três perfis no domínio público, incluindo o proxy `/api`. Testes locais e da API direta não substituem essa validação.
+3. Aplicar as adições de rede já salvas no rascunho; liberar também o domínio Vercel real quando for atribuído. Não recadastrar tokens que já autenticam.
+4. SMTP externo e backup/restauração do Neon ativo ainda não foram testados. O backup local não prova recuperação do banco hospedado.
+5. Storage privado persistente gratuito continua pendente; uploads permanecem desabilitados. Nenhum bucket ou serviço pago foi criado.
+6. Zoom real foi validado no runner do GitHub Actions. A execução local continua limitada pela política do Chromium, que não foi contornada.
 
-Links previstos: [repositório](https://github.com/ZaraTakion/takion-campus), [PR #20](https://github.com/ZaraTakion/takion-campus/pull/20), [PR #21](https://github.com/ZaraTakion/takion-campus/pull/21), [painel Render existente](https://dashboard.render.com/web/srv-db4rlfvlot8c73cp2ks0). `https://takion-campus-api.onrender.com` é o domínio previsto, sem readiness pública comprovada. Não há URL Vercel operacional verificada nesta sessão.
+Links verificados: [readiness pública](https://takion-campus-api.onrender.com/health/ready/), [Admin](https://takion-campus-api.onrender.com/admin/), [deploy Render](https://dashboard.render.com/web/srv-db4rlfvlot8c73cp2ks0/deploys/dep-db56cdid0e5s73ec3a40), [PR #25](https://github.com/ZaraTakion/takion-campus/pull/25). Não há URL Vercel operacional verificada. Main e branches originais permanecem preservadas.
