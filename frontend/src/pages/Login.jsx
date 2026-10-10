@@ -1,4 +1,4 @@
-import { ArrowRight, GraduationCap } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarDays, GraduationCap, LibraryBig } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -6,15 +6,14 @@ import api from "../api/axios";
 import Alert from "../components/feedback/Alert";
 import Button from "../components/ui/Button";
 import TextInput from "../components/ui/TextInput";
+import { useAuth } from "../context/AuthContext";
 import { saveTokens } from "../utils/auth";
 import { getLoginErrorMessage } from "../utils/loginErrors";
 import { getRoleHome } from "../utils/roles";
-import { useAuth } from "../context/AuthContext";
 
 function Login() {
   const navigate = useNavigate();
   const { loadUser } = useAuth();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -22,27 +21,23 @@ function Login() {
 
   async function handleSubmit(event) {
     event.preventDefault();
-
+    if (loading) return;
     setLoading(true);
     setErrorMessage("");
-
     try {
       const tokenResponse = await api.post("/token/", {
-        username,
+        username: username.trim(),
         password,
       });
-
       saveTokens(tokenResponse.data.access);
-
       const loggedInUser = await loadUser();
       if (!loggedInUser) {
-        setErrorMessage("A autenticação foi aceita, mas o perfil não pôde ser carregado. Verifique a conexão com a API.");
+        setErrorMessage("O acesso foi autenticado, mas não foi possível carregar seu perfil acadêmico.");
         return;
       }
-
       navigate(getRoleHome(loggedInUser), { replace: true });
     } catch (error) {
-      console.error("Erro no login:", error);
+      console.error("Erro no acesso ao portal:", error);
       setErrorMessage(getLoginErrorMessage(error));
     } finally {
       setLoading(false);
@@ -51,69 +46,37 @@ function Login() {
 
   return (
     <main className="auth-page">
-      <section className="auth-panel">
+      <section className="auth-panel" aria-labelledby="login-heading">
         <div className="auth-brand">
-          <div className="auth-logo">
-            <GraduationCap size={32} />
-          </div>
-
-          <div>
-            <strong>UPA</strong>
-            <span>Portal Acadêmico</span>
-          </div>
+          <div className="auth-logo"><GraduationCap size={26} aria-hidden="true" /></div>
+          <div><strong>takion campus</strong><span>Campus Folio</span></div>
         </div>
-
         <div className="auth-copy">
-          <h1>Bem-vindo de volta</h1>
-          <p>
-            Acesse seu ambiente acadêmico para acompanhar notas, disciplinas,
-            calendário, arquivos e comunicados.
-          </p>
+          <span className="auth-intro">Seu espaço de aprendizagem</span>
+          <h1 id="login-heading">Um espaço para aprender.</h1>
+          <p>Disciplinas, notas, calendário e atividades. O que você precisa acompanhar, em um só lugar.</p>
         </div>
-
         <form className="auth-form" onSubmit={handleSubmit}>
-          <TextInput
-            label="Usuário"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            placeholder="Digite seu usuário"
-            required
-          />
-
-          <TextInput
-            label="Senha"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Digite sua senha"
-            required
-          />
-
-          <Alert type="error" message={errorMessage} />
-
-          <Button type="submit" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar no Portal"}
-            {!loading && <ArrowRight size={18} />}
-          </Button>
+          <TextInput label="Usuário" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" placeholder="Seu usuário acadêmico" required />
+          <TextInput label="Senha" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" placeholder="Sua senha" required />
+          <div aria-live="polite"><Alert type="error" message={errorMessage} /></div>
+          <Button type="submit" disabled={loading}>{loading ? "Verificando acesso..." : "Entrar no campus"}{!loading && <ArrowRight size={18} aria-hidden="true" />}</Button>
         </form>
-
-        <Link to="/forgot-password" className="auth-link">
-          Esqueci minha senha
-        </Link>
+        <Link to="/forgot-password" className="auth-link">Esqueci minha senha</Link>
       </section>
-
-      <aside className="auth-visual">
+      <aside className="auth-visual" aria-label="Visão do Campus Folio">
         <div className="auth-visual-card">
-          <span>Sua vida acadêmica</span>
-          <strong>Consulte informações acadêmicas em um único ambiente.</strong>
-          <p>
-            Dashboard moderno, notificações, calendário e desempenho acadêmico
-            com acesso simples e responsivo.
-          </p>
+          <span className="folio-tagline">Takion Software / Campus Folio</span>
+          <strong>Seu campus, com mais clareza.</strong>
+          <p>Uma experiência acadêmica que coloca as prioridades em primeiro lugar e mantém tudo organizado.</p>
+          <div className="folio-preview" aria-label="Recursos disponíveis">
+            <div><BookOpen size={20} aria-hidden="true" />Disciplinas</div>
+            <div><CalendarDays size={20} aria-hidden="true" />Calendário</div>
+            <div><LibraryBig size={20} aria-hidden="true" />Materiais</div>
+          </div>
         </div>
       </aside>
     </main>
   );
 }
-
 export default Login;

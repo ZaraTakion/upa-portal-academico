@@ -1,6 +1,5 @@
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
-
 import api from "../../api/axios";
 import EmptyState from "../../components/feedback/EmptyState";
 import Loading from "../../components/feedback/Loading";
@@ -15,26 +14,22 @@ function Subjects() {
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState("");
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
   const [appliedFilters, setAppliedFilters] = useState({ search: "", period: "" });
-
-  // Keep draft filter input separate from the last submitted query.
   useEffect(() => {
     let active = true;
     async function loadSubjects() {
       setLoading(true);
+      setErrorMessage("");
       try {
-        const response = await api.get("/academic/subjects/", {
-          params: {
-            search: appliedFilters.search || undefined,
-            period: appliedFilters.period || undefined,
-          },
+        const { data } = await api.get("/academic/subjects/", {
+          params: { search: appliedFilters.search || undefined, period: appliedFilters.period || undefined },
         });
-        if (active) setSubjects(response.data);
+        if (active) setSubjects(Array.isArray(data) ? data : data.results || []);
       } catch (error) {
         console.error("Erro ao carregar disciplinas:", error);
-      } finally {
-        if (active) setLoading(false);
-      }
+        if (active) { setSubjects([]); setErrorMessage("Não foi possível consultar as disciplinas. Verifique sua conexão."); }
+      } finally { if (active) setLoading(false); }
     }
     loadSubjects();
     return () => { active = false; };
@@ -42,69 +37,43 @@ function Subjects() {
 
   function handleSearch(event) {
     event.preventDefault();
-    setAppliedFilters({ search, period });
+    setAppliedFilters({ search: search.trim(), period });
   }
-
   return (
     <MainLayout>
-      <PageHeader
-        eyebrow="Vida acadêmica"
-        title="Disciplinas"
-        description="Consulte disciplinas, docentes das ofertas recentes, carga horária e disponibilidade no catálogo."
-      />
-
-      <form className="toolbar" onSubmit={handleSearch}>
-        <div className="toolbar-input">
-          <Search size={18} />
-          <input
-            type="text"
-            aria-label="Buscar disciplina"
-            placeholder="Buscar disciplina..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
+      <PageHeader eyebrow="Sua vida acadêmica" title="Disciplinas" description="Acompanhe a oferta de disciplinas, os docentes e a carga horária em uma visão organizada." />
+      <form className="toolbar folio-toolbar" onSubmit={handleSearch}>
+        <div className="toolbar-input"><Search size={18} aria-hidden="true" />
+          <input type="search" aria-label="Buscar disciplina" placeholder="Buscar disciplina..." value={search} onChange={(event) => setSearch(event.target.value)} />
         </div>
-
         <select aria-label="Filtrar disciplinas por período" value={period} onChange={(event) => setPeriod(event.target.value)}>
           <option value="">Todos os períodos</option>
-          <option value="1">1º período</option>
-          <option value="2">2º período</option>
-          <option value="3">3º período</option>
-          <option value="4">4º período</option>
-          <option value="5">5º período</option>
-          <option value="6">6º período</option>
+          {[1, 2, 3, 4, 5, 6].map((value) => <option key={value} value={String(value)}>{value}º período</option>)}
         </select>
-
-        <Button type="submit" variant="secondary">
-          Buscar
-        </Button>
+        <Button type="submit" variant="secondary">Filtrar</Button>
       </form>
-
-      {loading ? (
-        <Loading text="Carregando disciplinas..." />
+      {loading ? <Loading text="Buscando disciplinas..." /> : errorMessage ? (
+        <div className="folio-error" role="alert"><p>{errorMessage}</p><button className="btn btn-secondary" type="button" onClick={() => setAppliedFilters((current) => ({ ...current }))}>Tentar novamente</button></div>
       ) : subjects.length === 0 ? (
-        <EmptyState
-          title="Nenhuma disciplina"
-          message="Nenhuma disciplina encontrada para os filtros selecionados."
-        />
+        <EmptyState title="Nenhuma disciplina" message="Nenhuma disciplina encontrada. Experimente outros filtros." />
       ) : (
-        <section className="cards-grid">
-          {subjects.map((subject) => (
-            <BaseCard key={subject.id} className="subject-card">
-              <Badge type={subject.status}>{subject.status_display}</Badge>
-
-              <h2>{subject.name}</h2>
-
-              <p><strong>Código:</strong> {subject.code}</p>
-              <p><strong>Docente(s) da oferta:</strong> {subject.professor}</p>
-              <p><strong>Período:</strong> {subject.period}</p>
-              <p><strong>Carga horária:</strong> {subject.workload}h</p>
-            </BaseCard>
-          ))}
+        <section aria-label="Disciplinas encontradas">
+          <p className="folio-date-subtitle">{subjects.length} disciplina(s) encontrada(s)</p>
+          <div className="table-wrapper folio-subject-table">
+            <table><thead><tr><th scope="col">Disciplina</th><th scope="col">Docente(s)</th><th scope="col">Período</th><th scope="col">Carga</th><th scope="col">Status</th></tr></thead>
+              <tbody>{subjects.map((subject) => <tr key={subject.id}><td><strong>{subject.name}</strong><p className="folio-date-subtitle">{subject.code}</p></td>
+                <td>{subject.professor || "A definir"}</td><td>{subject.period}º</td><td>{subject.workload}h</td><td><Badge type={subject.status}>{subject.status_display}</Badge></td></tr>)}</tbody></table>
+          </div>
+          <div className="folio-subject-mobile">
+            {subjects.map((subject) => <BaseCard className="subject-card" key={subject.id}>
+              <Badge type={subject.status}>{subject.status_display}</Badge><h2>{subject.name}</h2>
+              <p><strong>Código:</strong> {subject.code}</p><p><strong>Docentes:</strong> {subject.professor || "A definir"}</p>
+              <p><strong>Período:</strong> {subject.period}º · <strong>Carga:</strong> {subject.workload}h</p>
+            </BaseCard>)}
+          </div>
         </section>
       )}
     </MainLayout>
   );
 }
-
 export default Subjects;

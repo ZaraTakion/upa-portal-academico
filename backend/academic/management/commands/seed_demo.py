@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from django.conf import settings
+from django.utils import timezone
 from django.contrib.auth.models import Group, User
 from django.core.management.base import BaseCommand, CommandError
 
@@ -130,7 +133,9 @@ class Command(BaseCommand):
                 defaults={"grade": grade_value, "absence": absence},
             )
 
+        demo_today = timezone.localdate()
         events = [
+            ("Orientações acadêmicas da semana", "Confira as informações e organize sua rotina de estudos.", "event", str(demo_today + timedelta(days=2)), None, str(demo_today + timedelta(days=3))),
             ("Feriado - Confraternização Universal", "Não haverá atividades acadêmicas.", "holiday", "2026-01-01", None, "2026-01-02"),
             ("Renovação de matrícula", "Período de renovação de matrícula para veteranos.", "enrollment", "2026-01-05", "2026-01-31", "2026-01-31"),
             ("Feriado - Tiradentes", "Não haverá atividades acadêmicas e administrativas.", "holiday", "2026-04-21", None, "2026-04-22"),
@@ -194,6 +199,17 @@ class Command(BaseCommand):
                 message="Não haverá atividades acadêmicas no feriado informado.",
                 notification_type="notice",
                 expires_at="2026-04-22",
+            )
+
+        for student in students:
+            Notification.objects.update_or_create(
+                user=student.user,
+                title="Seu campus está organizado",
+                defaults={
+                    "message": "Consulte disciplinas e próximos compromissos no painel.",
+                    "notification_type": "academic",
+                    "expires_at": demo_today + timedelta(days=14),
+                },
             )
 
         FinancialInvoice.objects.update_or_create(
