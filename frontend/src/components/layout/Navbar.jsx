@@ -36,7 +36,7 @@ function Navbar({ onOpenMenu, sidebarOpen = false }) {
         <button type="button" className="icon-button" onClick={toggleTheme} aria-label={theme === "light" ? "Ativar tema escuro" : "Ativar tema claro"}>
           {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
         </button>
-        <Link to={profilePath} className="profile-button" aria-label="Abrir meu perfil"><User size={18} /><span>{user?.full_name || user?.username || "Usuário"}</span></Link>
+        <Link to={profilePath} className="profile-button" aria-label={user?.full_name || user?.username || "Usuário"}><User size={18} /><span>{user?.full_name || user?.username || "Usuário"}</span></Link>
         <button type="button" className="logout-button" aria-label="Sair do campus" onClick={() => void logout()}><LogOut size={18} /><span>Sair</span></button>
       </div>
     </header>
