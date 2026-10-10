@@ -15,19 +15,74 @@ import {
   User,
   Users,
 } from "lucide-react";
-
-import { NavLink } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getUserRole } from "../../utils/roles";
+import Brand from "../brand/Brand";
 
-function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse, hidden = false }) {
+const menus = {
+  student: [
+    ["/dashboard", "Dashboard", Home],
+    ["/profile", "Perfil", User],
+    ["/subjects", "Disciplinas", GraduationCap],
+    ["/grades", "Notas", FileText],
+    ["/calendar", "Calendário", CalendarDays],
+    ["/files", "Arquivos", FolderOpen],
+    ["/financial", "Financeiro", Receipt],
+  ],
+  professor: [
+    ["/teacher/classes", "Minhas Turmas", Users],
+    ["/teacher/students", "Alunos", User],
+    ["/teacher/assessments", "Avaliações", ClipboardCheck],
+    ["/teacher/attendance", "Frequência", CalendarCheck2],
+    ["/teacher/grades", "Lançar Notas", FileText],
+    ["/files", "Materiais", FolderOpen],
+  ],
+  admin: [
+    ["/admin-panel", "Painel de Gestão", Home],
+    ["/admin/management?section=users", "Gestão acadêmica", GraduationCap],
+    ["/admin/management?section=calendar", "Calendário", CalendarDays],
+    ["/admin/management?section=invoices", "Financeiro", Receipt],
+  ],
+};
+export default function Sidebar({
+  isOpen,
+  isCollapsed,
+  onClose,
+  onToggleCollapse,
+  hidden = false,
+}) {
   const { user } = useAuth();
-
   const role = getUserRole(user);
-  const isProfessor = role === "professor";
-  const isAdmin = role === "admin";
-  const isStudent = role === "student";
-
+  const location = useLocation();
+  function active(to) {
+    const [path, query] = to.split("?");
+    if (location.pathname !== path) return false;
+    if (!query) return true;
+    const section =
+      new URLSearchParams(location.search).get("section") || "courses";
+    const target = new URLSearchParams(query).get("section");
+    return target === "users"
+      ? !["calendar", "invoices"].includes(section)
+      : section === target;
+  }
+  function item([to, label, Icon]) {
+    const current = active(to);
+    return (
+      <Link
+        key={to}
+        to={to}
+        onClick={onClose}
+        title={label}
+        aria-label={label}
+        aria-current={current ? "page" : undefined}
+        className={current ? "active" : undefined}
+      >
+        <Icon size={19} aria-hidden="true" />
+        <span>{label}</span>
+      </Link>
+    );
+  }
   return (
     <aside
       inert={hidden}
@@ -35,136 +90,62 @@ function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse, hidden = fals
       aria-label="Navegação principal"
       className={`sidebar ${isOpen ? "sidebar-open" : ""} ${isCollapsed ? "is-collapsed" : ""}`}
     >
-      <div className="sidebar-brand">
-        <div className="sidebar-logo">U</div>
-
-        <div className="sidebar-brand-text">
-          <strong>UPA</strong>
-          <span>Portal Acadêmico</span>
-        </div>
-      </div>
-
       <button
         type="button"
-        className="sidebar-collapse-button"
-        onClick={onToggleCollapse}
-        aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
-        aria-expanded={!isCollapsed}
-        aria-controls="sidebar-nav"
+        className="icon-button sidebar-close"
+        onClick={onClose}
+        aria-label="Fechar menu de navegação"
       >
-        {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        <X size={20} />
       </button>
-
-      <button type="button" className="icon-button sidebar-close" onClick={onClose} aria-label="Fechar menu de navegação"><X size={20} /></button>
+      <div className="sidebar-brand">
+        <Brand />
+      </div>
       <nav id="sidebar-nav" className="sidebar-nav">
-        {isStudent && (
-          <NavLink to="/dashboard" onClick={onClose} title="Dashboard">
-            <Home size={20} />
-            <span>Dashboard</span>
-          </NavLink>
-        )}
-
-        {!isProfessor && !isAdmin && (
-          <>
-            <NavLink to="/profile" onClick={onClose} title="Perfil">
-              <User size={20} />
-              <span>Perfil</span>
-            </NavLink>
-
-            <NavLink to="/subjects" onClick={onClose} title="Disciplinas">
-              <GraduationCap size={20} />
-              <span>Disciplinas</span>
-            </NavLink>
-
-            <NavLink to="/grades" onClick={onClose} title="Notas">
-              <FileText size={20} />
-              <span>Notas</span>
-            </NavLink>
-
-            <NavLink to="/calendar" onClick={onClose} title="Calendário">
-              <CalendarDays size={20} />
-              <span>Calendário</span>
-            </NavLink>
-
-            <NavLink to="/files" onClick={onClose} title="Arquivos">
-              <FolderOpen size={20} />
-              <span>Arquivos</span>
-            </NavLink>
-
-            <NavLink to="/financial" onClick={onClose} title="Financeiro">
-              <Receipt size={20} />
-              <span>Financeiro</span>
-            </NavLink>
-          </>
-        )}
-
-        {isProfessor && (
-          <>
-            <NavLink to="/teacher/classes" onClick={onClose} title="Minhas Turmas">
-              <Users size={20} />
-              <span>Minhas Turmas</span>
-            </NavLink>
-
-            <NavLink to="/teacher/students" onClick={onClose} title="Alunos">
-              <User size={20} />
-              <span>Alunos</span>
-            </NavLink>
-
-            <NavLink to="/teacher/assessments" onClick={onClose} title="Avaliações">
-              <ClipboardCheck size={20} />
-              <span>Avaliações</span>
-            </NavLink>
-
-            <NavLink to="/teacher/attendance" onClick={onClose} title="Frequência">
-              <CalendarCheck2 size={20} />
-              <span>Frequência</span>
-            </NavLink>
-
-            <NavLink to="/teacher/grades" onClick={onClose} title="Lançar Notas">
-              <FileText size={20} />
-              <span>Lançar Notas</span>
-            </NavLink>
-
-            <NavLink to="/files" onClick={onClose} title="Materiais">
-              <FolderOpen size={20} />
-              <span>Materiais</span>
-            </NavLink>
-          </>
-        )}
-
-        {isAdmin && (
-          <>
-            <NavLink to="/admin-panel" onClick={onClose} title="Painel de Gestão">
-              <Users size={20} />
-              <span>Painel de Gestão</span>
-            </NavLink>
-
-            <NavLink to="/admin/management?section=calendar" onClick={onClose} title="Calendário">
-              <CalendarDays size={20} />
-              <span>Calendário</span>
-            </NavLink>
-
-            <NavLink to="/admin/management?section=users" onClick={onClose} title="Gestão acadêmica">
-              <GraduationCap size={20} /><span>Gestão acadêmica</span>
-            </NavLink>
-            <NavLink to="/admin/management?section=invoices" onClick={onClose} title="Financeiro">
-              <Receipt size={20} /><span>Financeiro</span>
-            </NavLink>
-          </>
-        )}
-
-        <NavLink to="/notifications" onClick={onClose} title="Notificações">
-          <Bell size={20} />
-          <span>Notificações</span>
-        </NavLink>
-
-        <NavLink to="/contact" onClick={onClose} title="Atendimento">
-          <Mail size={20} />
-          <span>Atendimento</span>
-        </NavLink>
+        <div className="sidebar-section-label">
+          {role === "professor"
+            ? "Espaço docente"
+            : role === "admin"
+              ? "Administração"
+              : "Vida acadêmica"}
+        </div>
+        {(menus[role] || menus.student).map(item)}
+        <div className="sidebar-section-label">Comunicação</div>
+        {[
+          ["/notifications", "Notificações", Bell],
+          ["/contact", "Atendimento", Mail],
+        ].map(item)}
       </nav>
+      <div className="sidebar-footer">
+        {user && (
+          <div className="sidebar-user">
+            <strong>{user.full_name || user.username}</strong>
+            <span>
+              {role === "professor"
+                ? "Professor"
+                : role === "admin"
+                  ? "Administrador"
+                  : "Estudante"}
+            </span>
+          </div>
+        )}
+        <button
+          type="button"
+          className="sidebar-collapse-button"
+          onClick={onToggleCollapse}
+          aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+          aria-expanded={!isCollapsed}
+          aria-controls="sidebar-nav"
+        >
+          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          <span>Recolher menu</span>
+        </button>
+        <p>
+          Sistema acadêmico independente.
+          <br />
+          Portfólio · Takion Software
+        </p>
+      </div>
     </aside>
   );
 }
-
-export default Sidebar;

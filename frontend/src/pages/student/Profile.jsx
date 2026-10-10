@@ -59,7 +59,13 @@ function Profile() {
 
   return (
     <MainLayout>
-      {loadError && <Alert type="error" message={loadError} onRetry={() => window.location.reload()} />}
+      {loadError && (
+        <Alert
+          type="error"
+          message={loadError}
+          onRetry={() => window.location.reload()}
+        />
+      )}
       <PageHeader
         eyebrow="Dados acadêmicos"
         title="Perfil do Aluno"
@@ -75,19 +81,30 @@ function Profile() {
           <article className="base-card">
             <h2>Dados institucionais</h2>
 
-            <p><strong>Nome:</strong> {profile.full_name}</p>
-            <p><strong>Usuário:</strong> {profile.username}</p>
-            <p><strong>Email:</strong> {profile.email || "Não informado"}</p>
-            <p><strong>Matrícula:</strong> {profile.registration}</p>
-            <p><strong>Curso:</strong> {profile.course}</p>
-            <p><strong>Semestre:</strong> {profile.semester}</p>
-            <p><strong>CPF:</strong> {profile.cpf || "Não informado"}</p>
-            <p><strong>Mãe:</strong> {profile.mother_name || "Não informado"}</p>
-            <p><strong>Pai:</strong> {profile.father_name || "Não informado"}</p>
+            <dl className="profile-record">
+              {[
+                ["Nome", profile.full_name],
+                ["Usuário", profile.username],
+                ["Email", profile.email],
+                ["Matrícula", profile.registration],
+                ["Curso", profile.course],
+                ["Semestre", profile.semester],
+                ["CPF", profile.cpf],
+                ["Mãe", profile.mother_name],
+                ["Pai", profile.father_name],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value || "Não informado"}</dd>
+                </div>
+              ))}
+            </dl>
           </article>
 
           <article className="base-card">
-            <h2>Edição limitada</h2>
+            <span className="mini-eyebrow">Dados de contato</span>
+            <h2>Suas informações</h2>
+            <p>Atualize os campos autorizados do seu cadastro.</p>
 
             <form className="form-stack" onSubmit={handleSubmit}>
               <TextInput

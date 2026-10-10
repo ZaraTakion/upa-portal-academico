@@ -33,7 +33,7 @@ test("unauthenticated visitors are redirected to login", async ({ page }) => {
 
   await expect(page).toHaveURL(`${baseUrl}/`);
   await expect(
-    page.getByRole("heading", { name: "Bem-vindo de volta" }),
+    page.getByRole("heading", { name: "Seu próximo capítulo." }),
   ).toBeVisible();
   await expectNoAccessibilityViolations(page);
 });

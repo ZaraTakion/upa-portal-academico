@@ -1,10 +1,10 @@
-# Estudo de caso — UPA Portal Acadêmico
+# Estudo de caso — Takion Campus, by Takion Software
 
 ## Problema
 
 Um portal acadêmico precisa integrar consulta, registro e autorização. Uma tela pronta não comprova que a matrícula, a nota ou o arquivo correto foi persistido, nem que outra conta será bloqueada.
 
-O UPA usa Django REST Framework e React para oferecer fluxos de estudante, professor e administração. A revisão partiu da `main` existente, preservou módulos e contratos e corrigiu problemas reproduzidos por testes.
+Takion Campus, originado no UPA Portal Acadêmico, usa Django REST Framework e React para oferecer fluxos de estudante, professor e administração. A revisão partiu da `main` existente, preservou módulos e contratos e corrigiu problemas reproduzidos por testes.
 
 ## Decisões de engenharia
 
@@ -17,7 +17,11 @@ O UPA usa Django REST Framework e React para oferecer fluxos de estudante, profe
 
 ## Experiência e acessibilidade
 
-A identidade acadêmica e a paleta do redesign existente foram preservadas. A revisão corrigiu overflow causado por pseudo-elementos, nomes acessíveis ocultados no celular, filtros sem label, formulário administrativo e comportamento de teclado do menu. Feedback de erro/sucesso acompanha operações reais. Os testes cobrem temas claro/escuro, seis larguras e fluxos com axe.
+Após a estabilização funcional, a interface passou por um redesign dedicado, mantendo APIs, autenticação, banco e regras acadêmicas. A identidade Takion Campus combina superfícies creme/mint, títulos Fraunces, interface Manrope e acentos vinho. O arco e o monograma TC são vetores originais; as fontes OFL são hospedadas localmente.
+
+A composição muda por tarefa: o estudante encontra percurso e agenda; o professor encontra turmas e ações operacionais; a administração encontra indicadores e diretório de gestão. Perfil usa um registro semântico, calendário usa uma agenda editorial e notificações usam lista contínua. As tabelas preservam todas as colunas em regiões focáveis com rolagem contida. A nova identidade está em autenticação, navegação, metadados, ícones, estados e estilos compartilhados de todas as páginas.
+
+Os cinco arquivos CSS foram reorganizados, eliminando regras contraditórias de mobile/tema. A navegação identifica uma seção administrativa por vez e mantém nomes acessíveis quando recolhida. O teste visual percorre as páginas e as 13 seções administrativas em 11 larguras e ambos os temas, com verificações axe em 320/1440 px, ampliação de texto, foco e redução de movimento. Resultados executados e capturas reais estão em [QA do redesign](design/QA.md); não se declara conformidade integral WCAG.
 
 ## Evidência e limites
 

@@ -2,7 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
-      "improve/verified-release-20261010": false
+      "improve/verified-release-20261010": false,
+      "design/takion-campus-20261010": false
     }
   }
 }
