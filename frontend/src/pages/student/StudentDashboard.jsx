@@ -1,4 +1,5 @@
 import {
+  ArrowUpRight,
   Bell,
   CalendarDays,
   Clock,
@@ -86,8 +87,8 @@ function StudentDashboard() {
           <span className="eyebrow">{summary.role || "Aluno"}</span>
           <h1>Olá, {summary.user?.full_name || "aluno"}</h1>
           <p>
-            Seu mural acadêmico está pronto. Veja notas, eventos, agenda e
-            pendências em um só lugar.
+            Seu percurso, em perspectiva. Acompanhe o desempenho e organize os
+            próximos compromissos.
           </p>
         </div>
 
@@ -127,6 +128,17 @@ function StudentDashboard() {
         />
       </section>
 
+      <nav className="dashboard-shortcuts" aria-label="Atalhos acadêmicos">
+        <Link to="/subjects">
+          Explorar disciplinas <ArrowUpRight size={18} aria-hidden="true" />
+        </Link>
+        <Link to="/grades">
+          Consultar notas <ArrowUpRight size={18} aria-hidden="true" />
+        </Link>
+        <Link to="/notifications">
+          Ler avisos <ArrowUpRight size={18} aria-hidden="true" />
+        </Link>
+      </nav>
       <section
         className="dashboard-grid premium-dashboard-grid"
         aria-label="Agenda acadêmica"

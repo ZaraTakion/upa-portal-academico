@@ -4,13 +4,16 @@ function Button({
   variant = "primary",
   disabled = false,
   onClick,
+  className = "",
+  ...props
 }) {
   return (
     <button
       type={type}
-      className={`btn btn-${variant}`}
+      className={`btn btn-${variant} ${className}`}
       disabled={disabled}
       onClick={onClick}
+      {...props}
     >
       {children}
     </button>

@@ -1,4 +1,5 @@
-import { ArrowRight, GraduationCap } from "lucide-react";
+import AuthLayout from "../components/layout/AuthLayout";
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -37,78 +38,56 @@ function Login() {
       if (!user) throw new Error("Não foi possível carregar a sessão.");
       navigate(getRoleHome(user));
     } catch (error) {
-      setErrorMessage(error.response?.status === 429 ? "Muitas tentativas. Aguarde antes de tentar novamente." : error.response?.status === 401 ? "Usuário ou senha inválidos." : "Não foi possível entrar. Verifique sua conexão e tente novamente.");
+      setErrorMessage(
+        error.response?.status === 429
+          ? "Muitas tentativas. Aguarde antes de tentar novamente."
+          : error.response?.status === 401
+            ? "Usuário ou senha inválidos."
+            : "Não foi possível entrar. Verifique sua conexão e tente novamente.",
+      );
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-panel">
-        <div className="auth-brand">
-          <div className="auth-logo">
-            <GraduationCap size={32} />
-          </div>
+    <AuthLayout
+      eyebrow="Acesso ao Campus"
+      title="Seu próximo capítulo."
+      description="Acesse suas disciplinas, acompanhe seu percurso e organize a vida acadêmica."
+    >
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <TextInput
+          label="Usuário"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+          placeholder="Digite seu usuário"
+          autoComplete="username"
+          required
+        />
 
-          <div>
-            <strong>UPA</strong>
-            <span>Portal Acadêmico</span>
-          </div>
-        </div>
+        <TextInput
+          label="Senha"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="Digite sua senha"
+          autoComplete="current-password"
+          required
+        />
 
-        <div className="auth-copy">
-          <h1>Bem-vindo de volta</h1>
-          <p>
-            Acesse seu ambiente acadêmico para acompanhar notas, disciplinas,
-            calendário, arquivos e comunicados.
-          </p>
-        </div>
+        <Alert type="error" message={errorMessage || sessionError} />
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <TextInput
-            label="Usuário"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            placeholder="Digite seu usuário"
-            autoComplete="username"
-            required
-          />
+        <Button type="submit" disabled={loading}>
+          {loading ? "Entrando..." : "Entrar no Portal"}
+          {!loading && <ArrowRight size={18} />}
+        </Button>
+      </form>
 
-          <TextInput
-            label="Senha"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Digite sua senha"
-            autoComplete="current-password"
-            required
-          />
-
-          <Alert type="error" message={errorMessage || sessionError} />
-
-          <Button type="submit" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar no Portal"}
-            {!loading && <ArrowRight size={18} />}
-          </Button>
-        </form>
-
-        <Link to="/forgot-password" className="auth-link">
-          Esqueci minha senha
-        </Link>
-      </section>
-
-      <aside className="auth-visual">
-        <div className="auth-visual-card">
-          <span>Sua vida acadêmica</span>
-          <strong>Consulte informações acadêmicas em um único ambiente.</strong>
-          <p>
-            Dashboard moderno, notificações, calendário e desempenho acadêmico
-            com acesso simples e responsivo.
-          </p>
-        </div>
-      </aside>
-    </main>
+      <Link to="/forgot-password" className="auth-link">
+        Esqueci minha senha
+      </Link>
+    </AuthLayout>
   );
 }
 
