@@ -36,7 +36,7 @@ export function clearSession() {
 export async function logout({ revoke = true } = {}) {
   if (revoke) {
     try {
-      const base = (import.meta.env.VITE_API_URL || "http://localhost:8000/api").replace(/\/$/, "");
+      const base = (import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "/api" : "http://localhost:8000/api")).replace(/\/$/, "");
       const csrfResponse = await fetch(`${base}/token/csrf/`, {
         credentials: "include",
       });

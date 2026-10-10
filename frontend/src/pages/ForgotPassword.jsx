@@ -35,7 +35,7 @@ function ForgotPassword() {
       <section className="auth-panel">
         <div className="auth-brand">
           <div className="auth-logo"><Mail size={28} /></div>
-          <div><strong>Recuperação de senha</strong><span>UPA Portal Acadêmico</span></div>
+          <div><strong>Recuperação de senha</strong><span>Takion Campus · Campus Folio</span></div>
         </div>
 
         <div className="auth-copy">
